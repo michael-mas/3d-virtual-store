@@ -8,6 +8,7 @@ import { FLOOR_Y, PEDESTALS, productPosition } from "@/lib/explore/layout";
 import { player } from "@/lib/explore/player";
 import { isTryOnMode } from "@/lib/modes";
 import { MEDIAPIPE_VERTICAL_FOV_DEG, TRY_ON_FAR, TRY_ON_NEAR } from "@/lib/tryon/constants";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useAppStore } from "@/store/useAppStore";
 
 type Vec3 = [number, number, number];
@@ -55,6 +56,7 @@ export default function CameraRig() {
   const controls = useRef<CameraControls>(null);
   const mode = useAppStore((s) => s.mode);
   const productId = useAppStore((s) => s.activeProductId);
+  const reducedMotion = useReducedMotion();
   const lastPlayer = useRef<[number, number]>([...player.position]);
 
   useEffect(() => {
@@ -105,7 +107,8 @@ export default function CameraRig() {
     <CameraControls
       ref={controls}
       makeDefault
-      smoothTime={0.5}
+      // Reduced motion: near-instant camera moves instead of 0.5 s glides.
+      smoothTime={reducedMotion ? 0.08 : 0.5}
       minDistance={customize ? 0.18 : 0.9}
       maxDistance={customize ? 0.6 : 3}
       minPolarAngle={customize ? 0 : Math.PI * 0.2}

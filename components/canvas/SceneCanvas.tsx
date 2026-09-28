@@ -4,10 +4,14 @@ import dynamic from "next/dynamic";
 import { useRef, type CSSProperties } from "react";
 import { useTryOnSession } from "@/hooks/useTryOnSession";
 import { isTryOnMode } from "@/lib/modes";
+import { installNetworkGuard } from "@/lib/networkGuard";
 import { setCaptureStage } from "@/lib/tryon/capture";
 import { TRY_ON_MIRRORED } from "@/lib/tryon/constants";
 import { useAppStore } from "@/store/useAppStore";
 import RendererErrorBoundary from "./RendererErrorBoundary";
+
+// No request may leave the device (see lib/networkGuard.ts); installed before anything else runs client-side.
+installNetworkGuard();
 
 // Client-only: WebGPU/WebGL cannot run during static prerendering. The chunk download starts as soon as this
 // module is evaluated on the client, not after hydration.
@@ -36,14 +40,29 @@ export default function SceneCanvas() {
         position: "fixed",
         left: "50%",
         top: "50%",
-        width: `max(100vw, calc(100vh * ${aspect}))`,
+        // dvh: the visible viewport on mobile (100vh would include the collapsed address bar).
+        width: `max(100vw, calc(100dvh * ${aspect}))`,
         aspectRatio: aspect,
         transform: `translate(-50%, -50%)${TRY_ON_MIRRORED ? " scaleX(-1)" : ""}`,
       }
     : { position: "fixed", inset: 0 };
+  // The 3D view owns its gestures (drag to look, tap to walk, pinch in CUSTOMIZE): no browser pan/zoom on it.
+  style.touchAction = "none";
 
   return (
-    <div ref={setCaptureStage} style={style} data-testid="stage">
+    <div
+      ref={setCaptureStage}
+      style={style}
+      data-testid="stage"
+      role="region"
+      aria-roledescription="3D view"
+      aria-label="3D store"
+      aria-describedby="stage-help"
+    >
+      <p id="stage-help" className="sr-only">
+        Interactive 3D showroom. Walk with W A S D, Z Q S D or the arrow keys; press E near a pedestal to open a
+        product. All actions are also available from the on-screen controls.
+      </p>
       <video
         ref={videoRef}
         muted

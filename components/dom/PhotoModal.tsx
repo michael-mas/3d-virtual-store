@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 import { capturePhoto } from "@/lib/tryon/capture";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -11,6 +12,7 @@ export default function PhotoModal() {
   const transition = useAppStore((s) => s.transition);
   const [error, setError] = useState<string | null>(null);
   const returnButton = useRef<HTMLButtonElement>(null);
+  const dialog = useRef<HTMLDivElement>(null);
   const close = () => {
     setError(null);
     transition("RETAKE");
@@ -32,31 +34,36 @@ export default function PhotoModal() {
     };
   }, [mode]);
 
-  useEffect(() => {
-    if (mode !== "PHOTO") return;
-    returnButton.current?.focus();
-  }, [mode]);
+  useDialogFocus(dialog, mode === "PHOTO", close, returnButton);
 
   if (mode !== "PHOTO") return null;
 
   return (
     <div
+      ref={dialog}
       role="dialog"
       aria-modal="true"
       aria-label="Your try-on photo"
-      onKeyDown={(e) => e.key === "Escape" && close()}
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
     >
-      <div className="w-full max-w-2xl space-y-4 rounded-2xl bg-neutral-900 p-4 text-neutral-100 shadow-2xl ring-1 ring-white/10">
-        <div className="flex aspect-video items-center justify-center overflow-hidden rounded-lg bg-black">
+      <div className="flex max-h-full w-full max-w-2xl flex-col gap-4 rounded-2xl bg-neutral-900 p-4 text-neutral-100 shadow-2xl ring-1 ring-white/10">
+        {/* Preview keeps the photo's own aspect (portrait on phones, landscape on desktop). */}
+        <div className="flex min-h-48 min-w-0 flex-1 items-center justify-center overflow-hidden rounded-lg bg-black">
           {photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- object URL preview
-            <img src={photoUrl} alt="Try-on capture" data-testid="photo" className="max-h-full max-w-full object-contain" />
+            <img
+              src={photoUrl}
+              alt="Your try-on photo"
+              data-testid="photo"
+              className="max-h-[70dvh] max-w-full object-contain"
+            />
           ) : (
-            <p className="text-sm text-neutral-400">{error ?? "Capturing…"}</p>
+            <p role="status" className="text-sm text-neutral-400">
+              {error ?? "Capturing…"}
+            </p>
           )}
         </div>
-        <div className="flex justify-end gap-2">
+        <div className="flex shrink-0 justify-end gap-2">
           <button
             ref={returnButton}
             type="button"
