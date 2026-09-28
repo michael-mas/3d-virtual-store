@@ -30,7 +30,7 @@ export const PRODUCTS: readonly Product[] = [
     id: "aviator",
     name: "Aviator",
     price: 149,
-    model: "/models/aviator.glb",
+    model: "/models/glasses.glb",
     defaultConfig: { finish: "metal", frameColor: "#c9a44c", lens: "clear" },
     calibration: { offset: [0, 0, 0], scale: 1 },
   },

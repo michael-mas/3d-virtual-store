@@ -3,11 +3,27 @@ import type { Slice } from "./types";
 
 export type RenderBackend = "WebGPU" | "WebGL2";
 
+export type FrameStats = {
+  /** Average frames per second over the last sample window. */
+  fps: number;
+  /** Longest frame (ms) in the last sample window. */
+  worstMs: number;
+  /** Average GPU render time per frame (ms) from timestamp queries; null if unsupported. */
+  gpuMs: number | null;
+  /** Compiled shader programs; should stay flat when switching product options (all variants pre-warmed). */
+  programs: number;
+};
+
 export type WorldSlice = {
   mode: Mode;
   /** Active WebGPURenderer backend; null until `renderer.init()` resolves. */
   backend: RenderBackend | null;
   setBackend: (backend: RenderBackend) => void;
+  /** TSL post-processing (CUSTOMIZE background dim) on/off, for A/B cost measurement. */
+  postFx: boolean;
+  setPostFx: (enabled: boolean) => void;
+  frameStats: FrameStats | null;
+  setFrameStats: (stats: FrameStats) => void;
   /** Applies a mode event via the transition table. Returns false (and ignores it) if invalid. */
   transition: (event: ModeEvent) => boolean;
 };
@@ -16,6 +32,10 @@ export const createWorldSlice: Slice<WorldSlice> = (set, get) => ({
   mode: "EXPLORE",
   backend: null,
   setBackend: (backend) => set({ backend }),
+  postFx: true,
+  setPostFx: (postFx) => set({ postFx }),
+  frameStats: null,
+  setFrameStats: (frameStats) => set({ frameStats }),
   transition: (event) => {
     const from = get().mode;
     const to = nextMode(from, event);
