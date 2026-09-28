@@ -2,34 +2,30 @@
 
 import { formatPrice, priceOf } from "@/lib/cart/pricing";
 import { renderThumbnail } from "@/lib/cart/registry";
-import type { FrameFinish, LensEffect } from "@/lib/products";
+import { getProduct, type ChoiceOption, type ColorOption, type OptionSchema } from "@/lib/products";
 import { useAppStore } from "@/store/useAppStore";
 
-const FINISHES: FrameFinish[] = ["matte", "metal", "glass"];
-const LENSES: LensEffect[] = ["clear", "iridescent", "holographic"];
-const SWATCHES = ["#111827", "#c9a44c", "#b91c1c", "#1d4ed8", "#e5e7eb", "#7c3aed"];
+const legendClass = "mb-1.5 text-xs font-medium tracking-wide text-neutral-400 uppercase";
 
-function Segmented<T extends string>(props: {
-  label: string;
-  options: readonly T[];
-  value: T;
-  onChange: (v: T) => void;
-}) {
+function ChoiceControl({ option, value, onChange }: { option: ChoiceOption; value: string; onChange: (v: string) => void }) {
   return (
     <fieldset>
-      <legend className="mb-1.5 text-xs font-medium tracking-wide text-neutral-400 uppercase">{props.label}</legend>
-      <div className="grid grid-cols-3 gap-1 rounded-lg bg-neutral-800 p-1">
-        {props.options.map((o) => (
+      <legend className={legendClass}>{option.label}</legend>
+      <div
+        className="grid gap-1 rounded-lg bg-neutral-800 p-1"
+        style={{ gridTemplateColumns: `repeat(${Math.min(option.values.length, 3)}, minmax(0, 1fr))` }}
+      >
+        {option.values.map((v) => (
           <button
-            key={o}
+            key={v.value}
             type="button"
-            aria-pressed={props.value === o}
-            onClick={() => props.onChange(o)}
-            className={`rounded-md px-2 py-1.5 text-sm capitalize transition-colors ${
-              props.value === o ? "bg-white text-neutral-900" : "text-neutral-300 hover:bg-neutral-700"
+            aria-pressed={value === v.value}
+            onClick={() => onChange(v.value)}
+            className={`rounded-md px-2 py-1.5 text-sm transition-colors ${
+              value === v.value ? "bg-white text-neutral-900" : "text-neutral-300 hover:bg-neutral-700"
             }`}
           >
-            {o}
+            {v.label}
           </button>
         ))}
       </div>
@@ -37,11 +33,54 @@ function Segmented<T extends string>(props: {
   );
 }
 
+function ColorControl({ option, value, onChange }: { option: ColorOption; value: string; onChange: (v: string) => void }) {
+  return (
+    <fieldset>
+      <legend className={legendClass}>{option.label}</legend>
+      <div className="flex flex-wrap items-center gap-2">
+        {option.presets.map((c) => (
+          <button
+            key={c.value}
+            type="button"
+            aria-label={`Color ${c.value}`}
+            title={c.label}
+            aria-pressed={value === c.value}
+            onClick={() => onChange(c.value)}
+            style={{ backgroundColor: c.value }}
+            className={`size-7 rounded-full ring-2 ring-offset-2 ring-offset-neutral-900 ${
+              value === c.value ? "ring-white" : "ring-transparent"
+            }`}
+          />
+        ))}
+        {option.allowCustom && (
+          <input
+            type="color"
+            aria-label={`Custom ${option.label.toLowerCase()}`}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="size-7 cursor-pointer rounded-full bg-transparent"
+          />
+        )}
+      </div>
+    </fieldset>
+  );
+}
+
+function OptionControl(props: { option: OptionSchema; value: string; onChange: (v: string) => void }) {
+  return props.option.kind === "choice" ? (
+    <ChoiceControl option={props.option} value={props.value} onChange={props.onChange} />
+  ) : (
+    <ColorControl option={props.option} value={props.value} onChange={props.onChange} />
+  );
+}
+
+/** CUSTOMIZE panel, generated from the active product's customization schema. */
 export default function CustomizerPanel() {
   const mode = useAppStore((s) => s.mode);
   const config = useAppStore((s) => s.configs[s.activeProductId]);
   const productId = useAppStore((s) => s.activeProductId);
-  const { setFinish, setFrameColor, setLensEffect, transition, addToCart, setItemThumbnail } = useAppStore.getState();
+  const { setOption, transition, addToCart, setItemThumbnail } = useAppStore.getState();
+  const product = getProduct(productId);
 
   const onAddToCart = () => {
     // The thumbnail is rendered synchronously here (same config as the item); only readback is async.
@@ -60,39 +99,13 @@ export default function CustomizerPanel() {
       </p>
     );
   }
-  if (mode !== "CUSTOMIZE") return null;
+  if (mode !== "CUSTOMIZE" || !product) return null;
 
   return (
     <aside className="fixed bottom-4 left-1/2 z-40 w-[min(92vw,22rem)] -translate-x-1/2 space-y-4 rounded-2xl bg-neutral-900/85 p-4 text-neutral-100 shadow-2xl ring-1 ring-white/10 backdrop-blur md:top-1/2 md:right-6 md:bottom-auto md:left-auto md:translate-x-0 md:-translate-y-1/2">
-      <Segmented label="Frame finish" options={FINISHES} value={config.finish} onChange={setFinish} />
-
-      <fieldset>
-        <legend className="mb-1.5 text-xs font-medium tracking-wide text-neutral-400 uppercase">Frame color</legend>
-        <div className="flex items-center gap-2">
-          {SWATCHES.map((c) => (
-            <button
-              key={c}
-              type="button"
-              aria-label={`Color ${c}`}
-              aria-pressed={config.frameColor === c}
-              onClick={() => setFrameColor(c)}
-              style={{ backgroundColor: c }}
-              className={`size-7 rounded-full ring-2 ring-offset-2 ring-offset-neutral-900 ${
-                config.frameColor === c ? "ring-white" : "ring-transparent"
-              }`}
-            />
-          ))}
-          <input
-            type="color"
-            aria-label="Custom color"
-            value={config.frameColor}
-            onChange={(e) => setFrameColor(e.target.value)}
-            className="size-7 cursor-pointer rounded-full bg-transparent"
-          />
-        </div>
-      </fieldset>
-
-      <Segmented label="Lens" options={LENSES} value={config.lens} onChange={setLensEffect} />
+      {product.options.map((o) => (
+        <OptionControl key={o.id} option={o} value={config[o.id]} onChange={(v) => setOption(o.id, v)} />
+      ))}
 
       <button
         type="button"

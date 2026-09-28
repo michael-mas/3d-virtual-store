@@ -1,19 +1,19 @@
-import type { FrameFinish, LensEffect, ProductConfig } from "@/lib/products";
-import { getProduct } from "@/lib/products";
+import { getProduct, optionPriceDelta, optionValueLabel, type ProductConfig } from "@/lib/products";
 
-/** Surcharges on top of the product's base price. */
-export const PRICE_TABLE = {
-  finish: { matte: 0, metal: 20, glass: 35 } satisfies Record<FrameFinish, number>,
-  lens: { clear: 0, iridescent: 25, holographic: 40 } satisfies Record<LensEffect, number>,
-} as const;
+export type PriceLine = { optionId: string; label: string; valueLabel: string; delta: number };
+export type PriceBreakdown = { base: number; lines: PriceLine[]; total: number };
 
-export type PriceBreakdown = { base: number; finish: number; lens: number; total: number };
-
+/** Base price + every option's price delta, straight from the product schema. */
 export function priceBreakdown(productId: string, config: ProductConfig): PriceBreakdown {
-  const base = getProduct(productId)?.price ?? 0;
-  const finish = PRICE_TABLE.finish[config.finish];
-  const lens = PRICE_TABLE.lens[config.lens];
-  return { base, finish, lens, total: base + finish + lens };
+  const product = getProduct(productId);
+  if (!product) return { base: 0, lines: [], total: 0 };
+  const lines = product.options.map((o) => ({
+    optionId: o.id,
+    label: o.label,
+    valueLabel: optionValueLabel(o, config[o.id]),
+    delta: optionPriceDelta(o, config[o.id]),
+  }));
+  return { base: product.basePrice, lines, total: product.basePrice + lines.reduce((s, l) => s + l.delta, 0) };
 }
 
 export const priceOf = (productId: string, config: ProductConfig) => priceBreakdown(productId, config).total;

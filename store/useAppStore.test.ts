@@ -51,19 +51,28 @@ describe("useAppStore", () => {
   it("updates the active product config and per-product calibration", () => {
     const s = useAppStore.getState();
     const id = s.activeProductId;
-    s.setFinish("glass");
-    s.setFrameColor("#ff0000");
-    s.setLensEffect("holographic");
+    s.setOption("finish", "glass");
+    s.setOption("frameColor", "#ff0000");
+    s.setOption("lens", "holographic");
     s.setCalibration(id, { scale: 1.1 });
     const next = useAppStore.getState();
     expect(next.configs[id]).toEqual({ finish: "glass", frameColor: "#ff0000", lens: "holographic" });
     expect(next.calibrations[id]).toEqual({ offset: [0, 0, 0], scale: 1.1 });
   });
 
+  it("ignores options and values outside the product schema", () => {
+    const s = useAppStore.getState();
+    const before = s.configs[s.activeProductId];
+    s.setOption("finish", "wood");
+    s.setOption("frameColor", "not-a-color");
+    s.setOption("nope", "x");
+    expect(useAppStore.getState().configs[s.activeProductId]).toEqual(before);
+  });
+
   it("adds the active config to the cart as a snapshot", () => {
     const s = useAppStore.getState();
     s.addToCart();
-    s.setLensEffect("iridescent");
+    s.setOption("lens", "iridescent");
     const { items, activeProductId } = useAppStore.getState();
     expect(items).toHaveLength(1);
     expect(items[0].productId).toBe(activeProductId);
@@ -120,11 +129,11 @@ describe("cart", () => {
     ["PHOTO", ["INTERACT", "TRY_ON", "CAPTURE"]],
   ] as const)("Try On from %s restores the config and ends in TRY_ON", (_, path) => {
     const s = useAppStore.getState();
-    s.setLensEffect("holographic");
-    s.setFinish("glass");
+    s.setOption("lens", "holographic");
+    s.setOption("finish", "glass");
     const id = s.addToCart();
-    s.setLensEffect("clear");
-    s.setFinish("matte");
+    s.setOption("lens", "clear");
+    s.setOption("finish", "matte");
     for (const e of path) s.transition(e);
     s.setCartOpen(true);
     s.tryOnCartItem(id);

@@ -4,8 +4,9 @@ import { Canvas, extend, type Catalogue } from "@react-three/fiber";
 import * as THREE from "three/webgpu";
 import { isDebugEnabled } from "@/lib/debug";
 import { PEDESTALS } from "@/lib/explore/layout";
+import { getProduct, type ProductRenderer } from "@/lib/products";
 import { useAppStore } from "@/store/useAppStore";
-import { Suspense } from "react";
+import { Suspense, type ComponentType } from "react";
 import CartParticles from "./CartParticles";
 import CameraRig from "./CameraRig";
 import FrameStats from "./FrameStats";
@@ -20,6 +21,11 @@ import ThumbnailRenderer from "./ThumbnailRenderer";
 
 // Register three/webgpu classes (node materials etc.) with the R3F reconciler.
 extend(THREE as unknown as Catalogue);
+
+/** Scene component per product renderer (see `Product.renderer` in the registry). */
+const RENDERERS: Record<ProductRenderer, ComponentType<{ productId: string }>> = {
+  glasses: Glasses,
+};
 
 export default function Scene() {
   const setBackend = useAppStore((s) => s.setBackend);
@@ -55,9 +61,10 @@ export default function Scene() {
       <Lighting />
       <Suspense fallback={null}>
         <Showroom />
-        {PEDESTALS.map((p) => (
-          <Glasses key={p.productId} productId={p.productId} />
-        ))}
+        {PEDESTALS.map((p) => {
+          const Renderer = RENDERERS[getProduct(p.productId)!.renderer];
+          return <Renderer key={p.productId} productId={p.productId} />;
+        })}
         <ThumbnailRenderer />
       </Suspense>
       <Player />
