@@ -1,6 +1,5 @@
 "use client";
 
-import { useGLTF } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { useEffect, useMemo } from "react";
 import {
@@ -15,9 +14,7 @@ import {
   Vector3,
   type WebGPURenderer,
 } from "three/webgpu";
-import { setThumbnailRenderer } from "@/lib/cart/registry";
-import { DRACO_DECODER_PATH } from "@/lib/assets";
-import { getProduct } from "@/lib/products";
+import { getProductModel, setThumbnailRenderer } from "@/lib/cart/registry";
 import { useAppStore } from "@/store/useAppStore";
 
 const SIZE = 256;
@@ -31,8 +28,6 @@ const VIEW_DIR = new Vector3(0.55, 0.25, 1).normalize();
 export default function ThumbnailRenderer() {
   const gl = useThree((s) => s.gl) as unknown as WebGPURenderer;
   const mainScene = useThree((s) => s.scene);
-  const productId = useAppStore((s) => s.activeProductId);
-  const { scene: model } = useGLTF(getProduct(productId)!.model, DRACO_DECODER_PATH);
 
   const { target, camera, scene } = useMemo(() => {
     const target = new RenderTarget(SIZE, SIZE, { samples: 4 });
@@ -51,6 +46,8 @@ export default function ThumbnailRenderer() {
     // Everything before the first `await` (clone + render) runs synchronously in the caller's task,
     // so the thumbnail reflects the configuration at call time even though readback is async.
     const render = async (): Promise<Blob> => {
+      const model = getProductModel(useAppStore.getState().activeProductId);
+      if (!model) throw new Error("Product model not loaded");
       const snapshot = model.clone();
       snapshot.position.set(0, 0, 0);
       snapshot.updateMatrixWorld(true);
@@ -98,7 +95,7 @@ export default function ThumbnailRenderer() {
 
     setThumbnailRenderer(render);
     return () => setThumbnailRenderer(null);
-  }, [gl, mainScene, model, target, camera, scene]);
+  }, [gl, mainScene, target, camera, scene]);
 
   return null;
 }

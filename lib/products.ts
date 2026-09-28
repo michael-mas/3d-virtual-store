@@ -34,6 +34,22 @@ export const PRODUCTS: readonly Product[] = [
     defaultConfig: { finish: "metal", frameColor: "#c9a44c", lens: "clear" },
     calibration: { offset: [0, 0, 0], scale: 1 },
   },
+  {
+    id: "studio",
+    name: "Studio",
+    price: 129,
+    model: "/models/glasses.glb",
+    defaultConfig: { finish: "matte", frameColor: "#111827", lens: "clear" },
+    calibration: { offset: [0, 0, 0], scale: 1 },
+  },
+  {
+    id: "crystal",
+    name: "Crystal",
+    price: 179,
+    model: "/models/glasses.glb",
+    defaultConfig: { finish: "glass", frameColor: "#7c3aed", lens: "iridescent" },
+    calibration: { offset: [0, 0, 0], scale: 1 },
+  },
 ];
 
 export const DEFAULT_PRODUCT_ID = PRODUCTS[0].id;

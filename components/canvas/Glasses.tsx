@@ -11,6 +11,10 @@ import {
   disposeMaterials,
   setFrameColor,
 } from "@/lib/materials";
+import { setProductModel } from "@/lib/cart/registry";
+import { PEDESTALS, productPosition } from "@/lib/explore/layout";
+import { approachPoint } from "@/lib/explore/movement";
+import { player, walkTo } from "@/lib/explore/player";
 import { getProduct } from "@/lib/products";
 import { isTryOnMode } from "@/lib/modes";
 import { useAppStore } from "@/store/useAppStore";
@@ -22,14 +26,24 @@ const isLens = (o: Object3D) =>
 /** Frames during which every material variant is drawn once (invisibly) so its pipeline is compiled up front. */
 const WARMUP_FRAMES = 2;
 
-export default function Glasses() {
-  const productId = useAppStore((s) => s.activeProductId);
-  const config = useAppStore((s) => s.configs[s.activeProductId]);
+/**
+ * One configurable product on its pedestal. Each instance owns a clone of the model and its material set.
+ * During try-on the active product's model is re-parented into the FaceAnchor (same objects, no reload).
+ */
+export default function Glasses({ productId }: { productId: string }) {
+  const config = useAppStore((s) => s.configs[productId]);
   const mode = useAppStore((s) => s.mode);
-  const transition = useAppStore((s) => s.transition);
+  const active = useAppStore((s) => s.activeProductId === productId);
+  const interactWith = useAppStore((s) => s.interactWith);
   const product = getProduct(productId)!;
 
-  const { scene } = useGLTF(product.model, DRACO_DECODER_PATH);
+  const { scene: source } = useGLTF(product.model, DRACO_DECODER_PATH);
+  // The loader caches one scene per URL; products sharing a model need their own copy.
+  const scene = useMemo(() => source.clone(true), [source]);
+  useEffect(() => {
+    setProductModel(productId, scene);
+    return () => setProductModel(productId, null);
+  }, [productId, scene]);
   const frameMats = useMemo(() => createFrameMaterials(), []);
   const lensMats = useMemo(() => createLensMaterials(), []);
   useEffect(
@@ -83,8 +97,14 @@ export default function Glasses() {
   }, [scene]);
 
   const onClick = (e: ThreeEvent<MouseEvent>) => {
+    if (mode !== "EXPLORE") return;
     e.stopPropagation();
-    if (mode === "EXPLORE") transition("INTERACT");
+    // Near the pedestal: interact. Otherwise walk up to it.
+    if (useAppStore.getState().nearPedestal === productId) interactWith(productId);
+    else {
+      const pedestal = PEDESTALS.find((p) => p.productId === productId);
+      if (pedestal) walkTo(approachPoint(pedestal, player.position, 0.9));
+    }
   };
   const setCursor = (cursor: string) => () => {
     document.body.style.cursor = mode === "EXPLORE" ? cursor : "auto";
@@ -93,7 +113,8 @@ export default function Glasses() {
   const warmupNode = warming && <primitive object={warmup} />;
 
   // Same model instance and materials in both placements; only its parent changes.
-  if (isTryOnMode(mode)) {
+  const tryOn = isTryOnMode(mode);
+  if (tryOn && active) {
     return (
       <FaceAnchor>
         <primitive object={scene} />
@@ -102,8 +123,9 @@ export default function Glasses() {
     );
   }
 
+  // Other products stay mounted (materials kept) but hidden during try-on.
   return (
-    <group>
+    <group position={productPosition(productId)} visible={!tryOn}>
       <primitive object={scene} />
       <mesh
         visible={false}

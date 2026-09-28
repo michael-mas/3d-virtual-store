@@ -3,13 +3,16 @@
 import { Canvas, extend, type Catalogue } from "@react-three/fiber";
 import * as THREE from "three/webgpu";
 import { isDebugEnabled } from "@/lib/debug";
+import { PEDESTALS } from "@/lib/explore/layout";
 import { useAppStore } from "@/store/useAppStore";
 import { Suspense } from "react";
-import Backdrop from "./Backdrop";
 import CartParticles from "./CartParticles";
 import CameraRig from "./CameraRig";
 import FrameStats from "./FrameStats";
 import Glasses from "./Glasses";
+import InteractPrompt from "./InteractPrompt";
+import Player from "./Player";
+import Showroom from "./Showroom";
 import Lighting from "./Lighting";
 import PostFx from "./PostFx";
 import SceneBackground from "./SceneBackground";
@@ -23,7 +26,7 @@ export default function Scene() {
 
   return (
     <Canvas
-      camera={{ position: [0.34, 0.16, 0.62], fov: 40, near: 0.01, far: 20 }}
+      camera={{ position: [0, 0.4, 4.5], fov: 50, near: 0.01, far: 30 }}
       // R3F defaults to PCFSoftShadowMap, which WebGPURenderer no longer supports.
       shadows={{ enabled: false, type: THREE.PCFShadowMap }}
       gl={async (defaults) => {
@@ -44,11 +47,15 @@ export default function Scene() {
     >
       <SceneBackground />
       <Lighting />
-      <Backdrop />
       <Suspense fallback={null}>
-        <Glasses />
+        <Showroom />
+        {PEDESTALS.map((p) => (
+          <Glasses key={p.productId} productId={p.productId} />
+        ))}
         <ThumbnailRenderer />
       </Suspense>
+      <Player />
+      <InteractPrompt />
       <CartParticles />
       <CameraRig />
       <PostFx />
