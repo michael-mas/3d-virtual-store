@@ -36,7 +36,7 @@ export default function CalibrationPanel() {
   };
 
   return (
-    <div className="fixed top-3 right-3 z-50 w-64 space-y-2 rounded-lg bg-neutral-900/90 p-3 font-mono text-xs text-neutral-200 ring-1 ring-white/10">
+    <div className="fixed top-20 right-3 z-50 w-64 space-y-2 rounded-lg bg-neutral-900/90 p-3 font-mono text-xs text-neutral-200 ring-1 ring-white/10">
       <div className="flex justify-between text-neutral-400">
         <span>calibration · {productId}</span>
         <button type="button" onClick={reset} className="hover:text-white">
