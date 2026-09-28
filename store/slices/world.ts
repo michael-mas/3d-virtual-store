@@ -46,6 +46,7 @@ export const createWorldSlice: Slice<WorldSlice> = (set, get) => ({
       return false;
     }
     set({ mode: to });
+    if (to !== "PHOTO" && get().photoUrl) get().setPhotoUrl(null);
     return true;
   },
 });

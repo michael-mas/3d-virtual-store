@@ -5,6 +5,7 @@ import { useEffect, useMemo } from "react";
 import { max, oneMinus, pass, screenUV, smoothstep, uniform, vec4 } from "three/tsl";
 import { ACESFilmicToneMapping, NoToneMapping, RenderPipeline, type WebGPURenderer } from "three/webgpu";
 import { isTryOnMode } from "@/lib/modes";
+import { setCaptureRenderer } from "@/lib/tryon/capture";
 import { useAppStore } from "@/store/useAppStore";
 
 /**
@@ -42,15 +43,29 @@ export default function PostFx() {
     pipeline.needsUpdate = true;
   }, [gl, pipeline, tryOn]);
 
+  const renderFrame = useMemo(
+    () => () => {
+      const camera = get().camera;
+      scenePass.camera = camera;
+      if (enabled) pipeline.render();
+      else gl.render(scene, camera);
+    },
+    [get, gl, scene, scenePass, pipeline, enabled],
+  );
+
+  // Photo capture renders synchronously through the same path, then reads the canvas in the same task.
+  useEffect(() => {
+    setCaptureRenderer(renderFrame);
+    return () => setCaptureRenderer(null);
+  }, [renderFrame]);
+
   useFrame((state, delta) => {
     const target = useAppStore.getState().mode === "CUSTOMIZE" ? 1 : 0;
     // Frame-rate independent ease toward target.
     dim.value += (target - dim.value) * (1 - Math.exp(-delta * 6));
     // Focus distance = camera distance to the product (at the origin).
     focus.value = state.camera.position.length();
-    scenePass.camera = state.camera;
-    if (enabled) pipeline.render();
-    else gl.render(scene, state.camera);
+    renderFrame();
   }, 1);
 
   return null;

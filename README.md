@@ -42,6 +42,11 @@ a group holding the glasses and a depth-only head occluder. The 3D camera matche
 (origin, looking down -Z, 63° vertical FOV) and the stage takes the video's aspect ratio; mirroring is one CSS
 transform on the stage. The webcam is stopped when leaving TRY_ON/PHOTO.
 
+PHOTO composites the video frame and then the 3D canvas onto an offscreen 2D canvas with the same mirroring,
+cropped to what is visible on screen (`lib/tryon/capture.ts`). The scene is rendered and read in the same task:
+the WebGL drawing buffer is not preserved and the WebGPU canvas texture is only valid until it is presented,
+so reading in a later task gives a blank image.
+
 ### Try-on model: `face_landmarker.task`
 
 Download the Face Landmarker model (float16) and place it at `public/mediapipe/face_landmarker.task`:
