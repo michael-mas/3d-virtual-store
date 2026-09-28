@@ -14,7 +14,8 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 const layout = JSON.parse(await readFile(new URL("../lib/explore/showroom-layout.json", import.meta.url), "utf8"));
 const OUT = new URL("../public/models/showroom.glb", import.meta.url);
 
-const { floorY, room, pedestal, pedestals } = layout;
+// One pedestal per slot; products are assigned to slots in registry order at runtime.
+const { floorY, room, pedestal, slots: pedestals } = layout;
 const HW = room.halfWidth;
 const HD = room.halfDepth;
 const CEIL = floorY + room.height;

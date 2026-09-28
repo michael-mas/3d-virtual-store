@@ -61,21 +61,24 @@ export default function CartDrawer() {
                     </p>
                   </div>
                   <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-2 text-xs text-neutral-400">
-                    <dt>Finish</dt>
-                    <dd className="capitalize">
-                      {item.config.finish}
-                      {price.finish > 0 && ` (+${formatPrice(price.finish)})`}
-                    </dd>
-                    <dt>Color</dt>
-                    <dd className="flex items-center gap-1.5">
-                      <span className="inline-block size-3 rounded-full ring-1 ring-white/30" style={{ backgroundColor: item.config.frameColor }} />
-                      {item.config.frameColor}
-                    </dd>
-                    <dt>Lens</dt>
-                    <dd className="capitalize">
-                      {item.config.lens}
-                      {price.lens > 0 && ` (+${formatPrice(price.lens)})`}
-                    </dd>
+                    {price.lines.map((line) => {
+                      const isColor = product?.options.find((o) => o.id === line.optionId)?.kind === "color";
+                      return (
+                        <div key={line.optionId} className="contents">
+                          <dt>{line.label}</dt>
+                          <dd className="flex items-center gap-1.5">
+                            {isColor && (
+                              <span
+                                className="inline-block size-3 rounded-full ring-1 ring-white/30"
+                                style={{ backgroundColor: item.config[line.optionId] }}
+                              />
+                            )}
+                            {line.valueLabel}
+                            {line.delta > 0 && ` (+${formatPrice(line.delta)})`}
+                          </dd>
+                        </div>
+                      );
+                    })}
                   </dl>
                   <div className="mt-auto flex gap-2 pt-2">
                     <button

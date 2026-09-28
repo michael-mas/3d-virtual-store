@@ -16,6 +16,7 @@ import { PEDESTALS, productPosition } from "@/lib/explore/layout";
 import { approachPoint } from "@/lib/explore/movement";
 import { player, walkTo } from "@/lib/explore/player";
 import { getProduct } from "@/lib/products";
+import { readGlassesConfig } from "@/lib/products/glasses";
 import { isTryOnMode } from "@/lib/modes";
 import { useAppStore } from "@/store/useAppStore";
 import FaceAnchor from "./FaceAnchor";
@@ -31,11 +32,12 @@ const TINY = 1e-4;
  * During try-on the active product's model is re-parented into the FaceAnchor (same objects, no reload).
  */
 export default function Glasses({ productId }: { productId: string }) {
-  const config = useAppStore((s) => s.configs[productId]);
+  const config = readGlassesConfig(useAppStore((s) => s.configs[productId]));
   const mode = useAppStore((s) => s.mode);
   const active = useAppStore((s) => s.activeProductId === productId);
   const interactWith = useAppStore((s) => s.interactWith);
   const product = getProduct(productId)!;
+  if (!product.model) throw new Error(`Glasses product "${productId}" has no model`);
 
   const { scene: source } = useGLTF(product.model, DRACO_DECODER_PATH);
   // The loader caches one scene per URL; products sharing a model need their own copy.

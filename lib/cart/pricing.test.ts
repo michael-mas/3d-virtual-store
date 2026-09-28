@@ -1,18 +1,26 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_PRODUCT_ID, getProduct } from "@/lib/products";
-import { formatPrice, priceBreakdown, priceOf, PRICE_TABLE } from "./pricing";
+import { formatPrice, priceBreakdown, priceOf } from "./pricing";
 
-const base = getProduct(DEFAULT_PRODUCT_ID)!.price;
+const product = getProduct(DEFAULT_PRODUCT_ID)!;
 
 describe("pricing", () => {
-  it("adds finish and lens surcharges to the base price", () => {
+  it("adds every option's price delta from the schema to the base price", () => {
     const b = priceBreakdown(DEFAULT_PRODUCT_ID, { finish: "glass", frameColor: "#000000", lens: "holographic" });
-    expect(b).toEqual({
-      base,
-      finish: PRICE_TABLE.finish.glass,
-      lens: PRICE_TABLE.lens.holographic,
-      total: base + PRICE_TABLE.finish.glass + PRICE_TABLE.lens.holographic,
-    });
+    expect(b.base).toBe(product.basePrice);
+    expect(b.lines.map((l) => [l.optionId, l.valueLabel, l.delta])).toEqual([
+      ["finish", "Glass", 35],
+      ["frameColor", "#000000", 0],
+      ["lens", "Holographic", 40],
+    ]);
+    expect(b.total).toBe(product.basePrice + 35 + 40);
+  });
+
+  it("keeps the glasses prices unchanged by the registry migration", () => {
+    expect(priceOf("aviator", { finish: "metal", frameColor: "#c9a44c", lens: "clear" })).toBe(169);
+    expect(priceOf("aviator", { finish: "matte", frameColor: "#b91c1c", lens: "iridescent" })).toBe(174);
+    expect(priceOf("aviator", { finish: "glass", frameColor: "#1d4ed8", lens: "holographic" })).toBe(224);
+    expect(priceOf("crystal", { finish: "glass", frameColor: "#7c3aed", lens: "iridescent" })).toBe(239);
   });
 
   it("does not depend on frame color", () => {

@@ -1,6 +1,6 @@
 import { MeshPhysicalNodeMaterial } from "three/webgpu";
 import { abs, dot, hue, normalView, oneMinus, positionLocal, positionViewDirection, pow, time, vec3 } from "three/tsl";
-import type { FrameFinish, LensEffect } from "./products";
+import type { FrameFinish, LensEffect } from "./products/glasses";
 
 export type FrameMaterials = Record<FrameFinish, MeshPhysicalNodeMaterial>;
 export type LensMaterials = Record<LensEffect, MeshPhysicalNodeMaterial>;

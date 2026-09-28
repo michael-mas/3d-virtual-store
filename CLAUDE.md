@@ -14,7 +14,11 @@
 - A single persistent `<Canvas>` for the whole app; modes swap scene content, never remount the Canvas.
 
 ## Scope
-- Product: glasses only (for now).
+- Products come from the registry in `lib/products` (not glasses only): each entry defines id, name, category,
+  attachment type (`rigid` | `surface` | `landmark`), a customization schema (options, allowed values, price
+  modifiers), try-on calibration, and its scene renderer. The customizer UI and cart pricing are generated from
+  the schema — never hardcode product options. Adding a product = a registry entry + its assets (and a pedestal
+  slot in `lib/explore/showroom-layout.json`, placed in registry order).
 - Modes: EXPLORE | CUSTOMIZE | TRY_ON | PHOTO. Cart is an orthogonal drawer (`cartOpen`), not a mode.
 
 ## Workflow
