@@ -33,22 +33,22 @@ function RendererError() {
 function PerformanceWarning() {
   const stats = useAppStore((s) => s.frameStats);
   const lowStreak = useRef(0);
+  const dismissedRef = useRef(false);
   const [show, setShow] = useState(false);
   const [lastFps, setLastFps] = useState<number | null>(null);
 
   useEffect(() => {
     if (!stats || document.visibilityState !== "visible") return;
     lowStreak.current = stats.fps < LOW_FPS ? lowStreak.current + 1 : 0;
-    if (lowStreak.current < LOW_FPS_WINDOWS) return;
-    let dismissed = false;
+    if (lowStreak.current < LOW_FPS_WINDOWS || dismissedRef.current) return;
     try {
-      dismissed = sessionStorage.getItem(DISMISS_KEY) === "1";
+      if (sessionStorage.getItem(DISMISS_KEY) === "1") return;
     } catch {
       // Storage unavailable (private mode / blocked): just show the warning.
     }
-    if (dismissed) return;
-    // Deferred so the state update is not synchronous within the effect.
+    // Deferred so the state update is not synchronous within the effect; re-checks a dismissal in between.
     const id = requestAnimationFrame(() => {
+      if (dismissedRef.current) return;
       setLastFps(stats.fps);
       setShow(true);
     });
@@ -57,6 +57,7 @@ function PerformanceWarning() {
 
   if (!show) return null;
   const dismiss = () => {
+    dismissedRef.current = true;
     try {
       sessionStorage.setItem(DISMISS_KEY, "1");
     } catch {

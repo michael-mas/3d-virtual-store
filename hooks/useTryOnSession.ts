@@ -2,7 +2,7 @@
 
 import type { FaceLandmarker } from "@mediapipe/tasks-vision";
 import { useEffect, type RefObject } from "react";
-import { DEMO_VIDEO_PATH } from "@/lib/assets";
+import { DEMO_VIDEO_SOURCES } from "@/lib/assets";
 import { isDebugEnabled } from "@/lib/debug";
 import {
   classifyCameraError,
@@ -105,9 +105,11 @@ export function useTryOnSession(
     };
 
     const openDemo = () => {
+      const playable = DEMO_VIDEO_SOURCES.find((s) => video.canPlayType(s.type) !== "");
+      if (!playable) throw new SessionError("demo");
       video.srcObject = null;
       video.loop = true;
-      video.src = DEMO_VIDEO_PATH;
+      video.src = playable.src;
     };
 
     setTryOnStatus("camera");
@@ -158,11 +160,25 @@ export function useTryOnSession(
         };
         frameHandle = video.requestVideoFrameCallback(onFrame);
 
-        // Frozen camera (no frames while the page is visible) → explicit error instead of a stuck image.
+        // Frozen camera (no new video frames while the page is visible) → explicit error instead of a stuck
+        // image. Progress = a detection callback ran OR the compositor presented new frames (it keeps counting
+        // while the main thread is blocked, e.g. by shader compilation). A late tick means the page itself
+        // stalled, not the camera, so the timer restarts. The clock starts now, not at session start.
+        lastFrameAt = performance.now();
+        let presented = video.getVideoPlaybackQuality?.().totalVideoFrames ?? 0;
+        let lastTick = performance.now();
         document.addEventListener("visibilitychange", onVisible);
         watchdog = window.setInterval(() => {
-          if (document.visibilityState !== "visible") return;
-          if (performance.now() - lastFrameAt > STALL_TIMEOUT_MS) fail(source === "demo" ? "demo" : "stalled");
+          const now = performance.now();
+          const late = now - lastTick > 1500;
+          lastTick = now;
+          const frames = video.getVideoPlaybackQuality?.().totalVideoFrames ?? presented;
+          if (frames !== presented || late || document.visibilityState !== "visible") {
+            presented = frames;
+            lastFrameAt = Math.max(lastFrameAt, now);
+            return;
+          }
+          if (now - lastFrameAt > STALL_TIMEOUT_MS) fail(source === "demo" ? "demo" : "stalled");
         }, 500);
 
         setTryOnStatus("running");
