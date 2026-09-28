@@ -19,6 +19,9 @@ export type WorldSlice = {
   /** Active WebGPURenderer backend; null until `renderer.init()` resolves. */
   backend: RenderBackend | null;
   setBackend: (backend: RenderBackend) => void;
+  /** The first frame has been rendered (initial loading screen can go). */
+  sceneReady: boolean;
+  setSceneReady: () => void;
   /** Fatal rendering problem (no WebGPU/WebGL2, GPU device lost); shown instead of a blank canvas. */
   rendererError: string | null;
   setRendererError: (message: string | null) => void;
@@ -40,6 +43,8 @@ export const createWorldSlice: Slice<WorldSlice> = (set, get) => ({
   mode: "EXPLORE",
   backend: null,
   setBackend: (backend) => set({ backend }),
+  sceneReady: false,
+  setSceneReady: () => set({ sceneReady: true }),
   rendererError: null,
   setRendererError: (rendererError) => set({ rendererError }),
   postFx: true,

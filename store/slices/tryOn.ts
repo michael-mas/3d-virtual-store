@@ -19,6 +19,9 @@ export type TryOnSlice = {
   videoAspect: number | null;
   /** A face was tracked recently (within the grace period). */
   faceDetected: boolean;
+  /** Face-tracking download progress (0..1) while status is "model"; null otherwise. */
+  tryOnProgress: number | null;
+  setTryOnProgress: (progress: number | null) => void;
   setTryOnStatus: (status: TryOnStatus, error?: TryOnError) => void;
   setTryOnSource: (source: TryOnSource) => void;
   retryTryOn: () => void;
@@ -35,6 +38,8 @@ export const createTryOnSlice: Slice<TryOnSlice> = (set) => ({
   photoUrl: null,
   videoAspect: null,
   faceDetected: false,
+  tryOnProgress: null,
+  setTryOnProgress: (tryOnProgress) => set({ tryOnProgress }),
   setTryOnStatus: (tryOnStatus, error) => set({ tryOnStatus, tryOnError: error ?? null }),
   setTryOnSource: (tryOnSource) => set((s) => ({ tryOnSource, tryOnAttempt: s.tryOnAttempt + 1 })),
   retryTryOn: () => set((s) => ({ tryOnAttempt: s.tryOnAttempt + 1 })),

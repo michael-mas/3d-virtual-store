@@ -18,6 +18,19 @@ npm start        # serve ./out locally
 project's Framework Preset in the Vercel dashboard. `npm install` runs `postinstall`, which copies the Draco and
 MediaPipe WASM files into `public/` before `next build`.
 
+## Loading & performance
+
+- Startup loads only the scene: the showroom and glasses GLBs and the Draco decoder are preloaded in parallel with the
+  JS (`<link rel="preload">`); a loading screen driven by drei `useProgress` stays up until the first frame that
+  actually shows the scene (`first-frame` performance mark, visible in DevTools → Performance → Timings).
+- MediaPipe (JS, WASM, model) is not part of the startup bundle: it is imported/downloaded when entering TRY_ON,
+  with a percentage (`lib/tryon/assets.ts`), or prefetched while idle in CUSTOMIZE (skipped with Data Saver / slow
+  connections). The head occluder GLB is preloaded while idle in EXPLORE.
+- Pixel ratio clamped to [1, 2]; face detection runs every video frame when rendering is smooth and is capped to
+  15 Hz / 10 Hz below 30 / 20 fps (and never more often than twice its own cost).
+- Meshes are Draco-compressed (113 KB gzipped including the decoder vs 224 KB uncompressed). There are no image
+  textures, so KTX2 does not apply.
+
 ## Local runtime assets
 
 The app makes zero external requests at runtime. All binary assets are served from `/public`:

@@ -10,6 +10,7 @@ import { Suspense, type ComponentType } from "react";
 import CartParticles from "./CartParticles";
 import CameraRig from "./CameraRig";
 import FrameStats from "./FrameStats";
+import IdlePrefetch from "./IdlePrefetch";
 import Glasses from "./Glasses";
 import InteractPrompt from "./InteractPrompt";
 import Player from "./Player";
@@ -17,6 +18,7 @@ import Showroom from "./Showroom";
 import Lighting from "./Lighting";
 import PostFx from "./PostFx";
 import SceneBackground from "./SceneBackground";
+import SceneReadyMarker from "./SceneReadyMarker";
 import ThumbnailRenderer from "./ThumbnailRenderer";
 
 // Register three/webgpu classes (node materials etc.) with the R3F reconciler.
@@ -33,6 +35,8 @@ export default function Scene() {
   return (
     <Canvas
       camera={{ position: [0, 0.4, 4.5], fov: 50, near: 0.01, far: 30 }}
+      // Pixel ratio clamped to [1, 2]: 3x phone screens would otherwise render 2.25x the pixels for little gain.
+      dpr={[1, 2]}
       // R3F defaults to PCFSoftShadowMap, which WebGPURenderer no longer supports.
       shadows={{ enabled: false, type: THREE.PCFShadowMap }}
       gl={async (defaults) => {
@@ -66,6 +70,7 @@ export default function Scene() {
           return <Renderer key={p.productId} productId={p.productId} />;
         })}
         <ThumbnailRenderer />
+        <SceneReadyMarker />
       </Suspense>
       <Player />
       <InteractPrompt />
@@ -73,6 +78,7 @@ export default function Scene() {
       <CameraRig />
       <PostFx />
       <FrameStats />
+      <IdlePrefetch />
     </Canvas>
   );
 }

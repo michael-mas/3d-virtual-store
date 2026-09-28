@@ -9,8 +9,11 @@ import { TRY_ON_MIRRORED } from "@/lib/tryon/constants";
 import { useAppStore } from "@/store/useAppStore";
 import RendererErrorBoundary from "./RendererErrorBoundary";
 
-// Client-only: WebGPU/WebGL cannot run during static prerendering.
-const Scene = dynamic(() => import("./Scene"), { ssr: false });
+// Client-only: WebGPU/WebGL cannot run during static prerendering. The chunk download starts as soon as this
+// module is evaluated on the client, not after hydration.
+const loadScene = () => import("./Scene");
+if (typeof window !== "undefined") void loadScene();
+const Scene = dynamic(loadScene, { ssr: false });
 
 const FALLBACK_ASPECT = 4 / 3;
 

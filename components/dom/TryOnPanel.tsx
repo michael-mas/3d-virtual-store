@@ -17,6 +17,7 @@ export default function TryOnPanel() {
   const error = useAppStore((s) => s.tryOnError);
   const source = useAppStore((s) => s.tryOnSource);
   const faceDetected = useAppStore((s) => s.faceDetected);
+  const progress = useAppStore((s) => s.tryOnProgress);
   const { transition, retryTryOn, setTryOnSource } = useAppStore.getState();
   const primaryAction = useRef<HTMLButtonElement>(null);
 
@@ -75,8 +76,11 @@ export default function TryOnPanel() {
     );
   }
 
-  const message =
-    status !== "running" ? STATUS_TEXT[status === "error" ? "idle" : status] : !faceDetected ? "Face the camera" : null;
+  const loadingText =
+    status === "model" && progress !== null && progress < 1
+      ? `Downloading face tracking… ${Math.round(progress * 100)}%`
+      : STATUS_TEXT[status === "error" || status === "running" ? "idle" : status];
+  const message = status !== "running" ? loadingText : !faceDetected ? "Face the camera" : null;
 
   return (
     <>

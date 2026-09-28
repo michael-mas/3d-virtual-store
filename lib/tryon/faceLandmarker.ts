@@ -1,26 +1,32 @@
-import { FaceLandmarker, FilesetResolver, type FaceLandmarkerOptions } from "@mediapipe/tasks-vision";
-import { FACE_LANDMARKER_MODEL_PATH, MEDIAPIPE_WASM_PATH } from "@/lib/assets";
+import type { FaceLandmarker, FaceLandmarkerOptions } from "@mediapipe/tasks-vision";
+import { loadTryOnAssets, releaseTryOnAssets } from "./assets";
 
 let instance: Promise<FaceLandmarker> | null = null;
 
-const options = (delegate: "GPU" | "CPU"): FaceLandmarkerOptions => ({
-  baseOptions: { modelAssetPath: FACE_LANDMARKER_MODEL_PATH, delegate },
+const options = (delegate: "GPU" | "CPU", model: Uint8Array): FaceLandmarkerOptions => ({
+  baseOptions: { modelAssetBuffer: model, delegate },
   runningMode: "VIDEO",
   numFaces: 1,
   outputFaceBlendshapes: false,
   outputFacialTransformationMatrixes: true,
 });
 
-/** Lazily creates one FaceLandmarker (WASM + model from /public), reused across try-on sessions. */
+/**
+ * Lazily creates one FaceLandmarker, reused across try-on sessions. Nothing MediaPipe-related (JS, WASM, model)
+ * is loaded before this is called (or before the idle prefetch in CUSTOMIZE); the JS is a dynamic import.
+ */
 export function getFaceLandmarker(): Promise<FaceLandmarker> {
   instance ??= (async () => {
-    const fileset = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_PATH);
+    const [{ FaceLandmarker }, assets] = await Promise.all([import("@mediapipe/tasks-vision"), loadTryOnAssets()]);
+    let landmarker: FaceLandmarker;
     try {
-      return await FaceLandmarker.createFromOptions(fileset, options("GPU"));
+      landmarker = await FaceLandmarker.createFromOptions(assets.fileset, options("GPU", assets.model));
     } catch (error) {
       console.warn("[tryOn] GPU delegate unavailable, falling back to CPU", error);
-      return FaceLandmarker.createFromOptions(fileset, options("CPU"));
+      landmarker = await FaceLandmarker.createFromOptions(assets.fileset, options("CPU", assets.model));
     }
+    releaseTryOnAssets();
+    return landmarker;
   })();
   instance.catch(() => (instance = null));
   return instance;

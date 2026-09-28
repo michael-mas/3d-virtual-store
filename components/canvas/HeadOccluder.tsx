@@ -27,4 +27,4 @@ export default function HeadOccluder() {
   return <primitive object={occluder} />;
 }
 
-useGLTF.preload(HEAD_OCCLUDER_MODEL_PATH, DRACO_DECODER_PATH);
+// Preloaded during idle time (IdlePrefetch); FaceAnchor wraps this in its own Suspense boundary.
