@@ -54,8 +54,9 @@ export default function CustomizerPanel() {
 
   if (mode === "EXPLORE") {
     return (
-      <p className="pointer-events-none fixed inset-x-0 bottom-10 text-center text-sm text-neutral-300">
-        Click the floor to walk · drag to look around
+      <p className="pointer-events-none fixed inset-x-0 bottom-8 px-4 text-center text-sm text-neutral-300">
+        <kbd className="font-mono">WASD</kbd> / <kbd className="font-mono">ZQSD</kbd> / arrows or scroll to walk ·
+        Shift to run · drag to look around · click the floor to go there
       </p>
     );
   }

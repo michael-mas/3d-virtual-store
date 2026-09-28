@@ -7,11 +7,14 @@ import {
   Box3,
   Color,
   DirectionalLight,
+  Mesh,
+  MeshPhysicalNodeMaterial,
   PerspectiveCamera,
   RenderTarget,
   Scene,
   Sphere,
   Vector3,
+  type Material,
   type WebGPURenderer,
 } from "three/webgpu";
 import { getProductModel, setThumbnailRenderer } from "@/lib/cart/registry";
@@ -49,6 +52,28 @@ export default function ThumbnailRenderer() {
       const model = getProductModel(useAppStore.getState().activeProductId);
       if (!model) throw new Error("Product model not loaded");
       const snapshot = model.clone();
+      // Own material copies without transmission: transmission samples a screen copy that three shares with
+      // the main render, and rendering it at 256px leaves the live materials bound to a freed texture
+      // (three r186). Plain transparency looks the same at thumbnail size.
+      const copies = new Map<Material, Material>();
+      snapshot.traverse((o) => {
+        if (!(o instanceof Mesh)) return;
+        const source = o.material as Material;
+        if (!copies.has(source)) {
+          const copy = source.clone();
+          if (copy instanceof MeshPhysicalNodeMaterial && copy.transmission > 0) {
+            const isFrame = copy.name.startsWith("frame-");
+            // Glass frames are tinted through absorption; carry the tint over to the base color.
+            if (isFrame) copy.color.copy(copy.attenuationColor);
+            copy.opacity = isFrame ? 0.55 : 0.12;
+            copy.transmission = 0;
+            copy.transparent = true;
+            copy.depthWrite = false;
+          }
+          copies.set(source, copy);
+        }
+        o.material = copies.get(source)!;
+      });
       snapshot.position.set(0, 0, 0);
       snapshot.updateMatrixWorld(true);
 
@@ -77,7 +102,9 @@ export default function ThumbnailRenderer() {
         scene.remove(snapshot);
       }
 
-      const pixels = await gl.readRenderTargetPixelsAsync(target, 0, 0, SIZE, SIZE);
+      const pixels = await gl.readRenderTargetPixelsAsync(target, 0, 0, SIZE, SIZE).finally(() => {
+        for (const m of copies.values()) m.dispose();
+      });
       const rgba = new Uint8ClampedArray(pixels.buffer, pixels.byteOffset, SIZE * SIZE * 4);
       const image = new ImageData(SIZE, SIZE);
       // WebGL readPixels rows are bottom-up; WebGPU texture copies are top-down.

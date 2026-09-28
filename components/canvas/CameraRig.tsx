@@ -1,6 +1,7 @@
 "use client";
 
 import { CameraControls, PerspectiveCamera } from "@react-three/drei";
+import type CameraControlsImpl from "camera-controls";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import { FLOOR_Y, PEDESTALS, productPosition } from "@/lib/explore/layout";
@@ -59,6 +60,16 @@ export default function CameraRig() {
   useEffect(() => {
     const c = controls.current;
     if (!c) return;
+    // EXPLORE: drag (or one finger) looks around the player; wheel/right-drag/pinch are not camera controls
+    // (the wheel walks, see Player). CUSTOMIZE: regular orbit + dolly + truck around the product.
+    const { ACTION } = c.constructor as typeof CameraControlsImpl;
+    if (mode === "EXPLORE") {
+      c.mouseButtons = { left: ACTION.ROTATE, middle: ACTION.NONE, right: ACTION.NONE, wheel: ACTION.NONE };
+      c.touches = { one: ACTION.TOUCH_ROTATE, two: ACTION.NONE, three: ACTION.NONE };
+    } else {
+      c.mouseButtons = { left: ACTION.ROTATE, middle: ACTION.DOLLY, right: ACTION.TRUCK, wheel: ACTION.DOLLY };
+      c.touches = { one: ACTION.TOUCH_ROTATE, two: ACTION.TOUCH_DOLLY_TRUCK, three: ACTION.TOUCH_TRUCK };
+    }
     const pose = mode === "EXPLORE" ? explorePose() : mode === "CUSTOMIZE" ? customizePose(productId) : null;
     if (pose) void c.setLookAt(...pose.position, ...pose.target, true);
     lastPlayer.current = [...player.position];

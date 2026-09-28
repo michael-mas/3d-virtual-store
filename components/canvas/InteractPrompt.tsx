@@ -15,7 +15,7 @@ export default function InteractPrompt() {
     if (!near) return;
     const onKey = (e: KeyboardEvent) => {
       const typing = e.target instanceof HTMLElement && e.target.closest("input, textarea, select, [contenteditable]");
-      if (!typing && !e.repeat && e.key.toLowerCase() === "e") interactWith(near);
+      if (!typing && !e.repeat && e.code === "KeyE") interactWith(near);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

@@ -45,10 +45,18 @@ the origin at the bridge, lenses in the z=0 plane and temples along -z; per-prod
 
 The showroom is unlit geometry with lighting baked into vertex colors at generation time (no runtime lights or
 shadow maps). Room size and pedestal positions live in `lib/explore/showroom-layout.json`, shared by the generator
-and the runtime. Click the floor to walk (damped movement toward the raycast point); the player collides with
-pedestals and walls via simple circle/bounds push-out (`lib/explore/movement.ts`) — no physics engine needed.
+and the runtime. Walk with WASD / ZQSD / arrow keys (physical keys, camera-relative, Shift to run) or the mouse
+wheel (forward/backward); drag to look around; clicking the floor walks there (handy on touch). Movement eases
+in/out (`stepMotion`) and the player collides with pedestals and walls via simple circle/bounds push-out
+(`lib/explore/movement.ts`) — no physics engine needed.
 Standing within range of a pedestal shows a "Press E / Click" prompt (drei `Html`) that selects the product and
 fires `transition('INTERACT')`.
+
+**three r186 transmission caveat:** transmission samples a screen copy that three reallocates when the render
+size changes. A material that is not drawn at that moment can keep a binding to the freed texture (WebGL warning,
+WebGPU validation error). Every product therefore keeps a tiny, never-culled copy of all its material variants
+drawn each frame (which also pre-compiles them), inactive products are shrunk rather than hidden in try-on, and
+thumbnails render with non-transmissive material copies.
 
 ### Try-on
 
@@ -75,8 +83,10 @@ ray through the cart icon, recomputed each frame (`lib/screenToWorld.ts`), so th
 
 The showroom is unlit geometry with lighting baked into vertex colors at generation time (no runtime lights or
 shadow maps). Room size and pedestal positions live in `lib/explore/showroom-layout.json`, shared by the generator
-and the runtime. Click the floor to walk (damped movement toward the raycast point); the player collides with
-pedestals and walls via simple circle/bounds push-out (`lib/explore/movement.ts`) — no physics engine needed.
+and the runtime. Walk with WASD / ZQSD / arrow keys (physical keys, camera-relative, Shift to run) or the mouse
+wheel (forward/backward); drag to look around; clicking the floor walks there (handy on touch). Movement eases
+in/out (`stepMotion`) and the player collides with pedestals and walls via simple circle/bounds push-out
+(`lib/explore/movement.ts`) — no physics engine needed.
 Standing within range of a pedestal shows a "Press E / Click" prompt (drei `Html`) that selects the product and
 fires `transition('INTERACT')`.
 
