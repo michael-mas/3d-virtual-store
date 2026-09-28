@@ -7,6 +7,7 @@ import { createWorldSlice } from "./slices/world";
 
 export type { AppState } from "./slices/types";
 export type { RenderBackend } from "./slices/world";
+export type { TryOnSource, TryOnStatus } from "./slices/tryOn";
 
 export const useAppStore = create<AppState>()((...a) => ({
   ...createWorldSlice(...a),

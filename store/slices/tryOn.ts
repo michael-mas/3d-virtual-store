@@ -1,16 +1,27 @@
+import type { TryOnError } from "@/lib/tryon/errors";
 import type { Slice } from "./types";
 
-export type TryOnStatus = "idle" | "starting" | "running" | "error";
+/** idle → camera (opening the video source) → model (loading face tracking) → running; any step may → error. */
+export type TryOnStatus = "idle" | "camera" | "model" | "running" | "error";
+
+/** Webcam, or the bundled sample video run through the same pipeline. */
+export type TryOnSource = "camera" | "demo";
 
 export type TryOnSlice = {
   tryOnStatus: TryOnStatus;
-  tryOnError: string | null;
+  tryOnError: TryOnError | null;
+  tryOnSource: TryOnSource;
+  /** Bumped to restart the session (retry). */
+  tryOnAttempt: number;
   /** Object URL / data URL of the last captured photo (PHOTO mode). */
   photoUrl: string | null;
   /** Webcam frame aspect (width / height); sizes the try-on stage so the 3D camera matches the video. */
   videoAspect: number | null;
+  /** A face was tracked recently (within the grace period). */
   faceDetected: boolean;
-  setTryOnStatus: (status: TryOnStatus, error?: string) => void;
+  setTryOnStatus: (status: TryOnStatus, error?: TryOnError) => void;
+  setTryOnSource: (source: TryOnSource) => void;
+  retryTryOn: () => void;
   setPhotoUrl: (url: string | null) => void;
   setVideoAspect: (aspect: number) => void;
   setFaceDetected: (detected: boolean) => void;
@@ -19,10 +30,14 @@ export type TryOnSlice = {
 export const createTryOnSlice: Slice<TryOnSlice> = (set) => ({
   tryOnStatus: "idle",
   tryOnError: null,
+  tryOnSource: "camera",
+  tryOnAttempt: 0,
   photoUrl: null,
   videoAspect: null,
   faceDetected: false,
   setTryOnStatus: (tryOnStatus, error) => set({ tryOnStatus, tryOnError: error ?? null }),
+  setTryOnSource: (tryOnSource) => set((s) => ({ tryOnSource, tryOnAttempt: s.tryOnAttempt + 1 })),
+  retryTryOn: () => set((s) => ({ tryOnAttempt: s.tryOnAttempt + 1 })),
   setPhotoUrl: (photoUrl) =>
     set((s) => {
       // Photos are object URLs; release the previous one.
@@ -30,5 +45,7 @@ export const createTryOnSlice: Slice<TryOnSlice> = (set) => ({
       return { photoUrl };
     }),
   setVideoAspect: (videoAspect) => set({ videoAspect }),
-  setFaceDetected: (faceDetected) => set({ faceDetected }),
+  setFaceDetected: (faceDetected) => {
+    set((s) => (s.faceDetected === faceDetected ? s : { faceDetected }));
+  },
 });

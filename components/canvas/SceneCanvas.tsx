@@ -7,6 +7,7 @@ import { isTryOnMode } from "@/lib/modes";
 import { setCaptureStage } from "@/lib/tryon/capture";
 import { TRY_ON_MIRRORED } from "@/lib/tryon/constants";
 import { useAppStore } from "@/store/useAppStore";
+import RendererErrorBoundary from "./RendererErrorBoundary";
 
 // Client-only: WebGPU/WebGL cannot run during static prerendering.
 const Scene = dynamic(() => import("./Scene"), { ssr: false });
@@ -22,8 +23,10 @@ export default function SceneCanvas() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const tryOn = useAppStore((s) => isTryOnMode(s.mode));
   const aspect = useAppStore((s) => s.videoAspect) ?? FALLBACK_ASPECT;
+  const source = useAppStore((s) => s.tryOnSource);
+  const attempt = useAppStore((s) => s.tryOnAttempt);
 
-  useTryOnSession(videoRef, tryOn);
+  useTryOnSession(videoRef, tryOn, source, attempt);
 
   const style: CSSProperties = tryOn
     ? {
@@ -45,7 +48,9 @@ export default function SceneCanvas() {
         className={`absolute inset-0 h-full w-full object-cover ${tryOn ? "" : "hidden"}`}
       />
       <div className="absolute inset-0">
-        <Scene />
+        <RendererErrorBoundary>
+          <Scene />
+        </RendererErrorBoundary>
       </div>
     </div>
   );
