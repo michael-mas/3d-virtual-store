@@ -146,8 +146,8 @@ npm run lint
 ```
 
 - The camera needs a secure context: `localhost` works, and other hosts need HTTPS.
-- To regenerate the procedural models (glasses, head occluder, showroom with baked lighting) after editing a
-  generator or `lib/explore/showroom-layout.json`, run `npm run generate:models`.
+- To regenerate the procedural models (glasses, head occluder, showroom with baked lighting) and the face mesh
+  topology after editing a generator or `lib/explore/showroom-layout.json`, run `npm run generate:models`.
 
 **Debug tools.** They are always on in `next dev`. In production, add `?debug` to the URL to get:
 - a mode-transition panel with fps, GPU time and program count;
