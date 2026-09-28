@@ -38,8 +38,14 @@ export default function Scene() {
           // GPU timings for the dev panel only.
           trackTimestamp: isDebugEnabled(),
         });
-        // Falls back to the WebGL2 backend internally if WebGPU is unavailable.
+        // Falls back to the WebGL2 backend internally if WebGPU is unavailable. If both fail, init() throws
+        // and RendererErrorBoundary shows an explanation.
         await renderer.init();
+        // GPU reset / driver crash: explain instead of leaving a frozen canvas.
+        renderer.onDeviceLost = (info) => {
+          console.error("[renderer] device lost", info);
+          useAppStore.getState().setRendererError("The graphics device was lost (GPU reset or driver crash). Reload to continue.");
+        };
         const isWebGPU = "isWebGPUBackend" in renderer.backend;
         setBackend(isWebGPU ? "WebGPU" : "WebGL2");
         return renderer;

@@ -7,6 +7,7 @@ import CartDrawer from "@/components/dom/CartDrawer";
 import CustomizerPanel from "@/components/dom/CustomizerPanel";
 import DevPanel from "@/components/dom/DevPanel";
 import PhotoModal from "@/components/dom/PhotoModal";
+import StatusOverlays from "@/components/dom/StatusOverlays";
 import TryOnPanel from "@/components/dom/TryOnPanel";
 import "./globals.css";
 
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <CartDrawer />
         <BackendBadge />
         <DevPanel />
+        <StatusOverlays />
       </body>
     </html>
   );

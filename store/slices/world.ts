@@ -1,4 +1,4 @@
-import { nextMode, type Mode, type ModeEvent } from "@/lib/modes";
+import { isTryOnMode, nextMode, type Mode, type ModeEvent } from "@/lib/modes";
 import type { Slice } from "./types";
 
 export type RenderBackend = "WebGPU" | "WebGL2";
@@ -19,6 +19,9 @@ export type WorldSlice = {
   /** Active WebGPURenderer backend; null until `renderer.init()` resolves. */
   backend: RenderBackend | null;
   setBackend: (backend: RenderBackend) => void;
+  /** Fatal rendering problem (no WebGPU/WebGL2, GPU device lost); shown instead of a blank canvas. */
+  rendererError: string | null;
+  setRendererError: (message: string | null) => void;
   /** TSL post-processing (CUSTOMIZE background dim) on/off, for A/B cost measurement. */
   postFx: boolean;
   setPostFx: (enabled: boolean) => void;
@@ -37,6 +40,8 @@ export const createWorldSlice: Slice<WorldSlice> = (set, get) => ({
   mode: "EXPLORE",
   backend: null,
   setBackend: (backend) => set({ backend }),
+  rendererError: null,
+  setRendererError: (rendererError) => set({ rendererError }),
   postFx: true,
   setPostFx: (postFx) => set({ postFx }),
   frameStats: null,
@@ -61,6 +66,8 @@ export const createWorldSlice: Slice<WorldSlice> = (set, get) => ({
     }
     set({ mode: to });
     if (to !== "PHOTO" && get().photoUrl) get().setPhotoUrl(null);
+    // Demo mode lasts for one try-on session.
+    if (!isTryOnMode(to) && get().tryOnSource !== "camera") set({ tryOnSource: "camera" });
     return true;
   },
 });
