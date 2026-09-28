@@ -42,7 +42,7 @@ function ColorControl({ option, value, onChange }: { option: ColorOption; value:
           <button
             key={c.value}
             type="button"
-            aria-label={`Color ${c.value}`}
+            aria-label={`${option.label}: ${c.label}`}
             title={c.label}
             aria-pressed={value === c.value}
             onClick={() => onChange(c.value)}
@@ -94,15 +94,21 @@ export default function CustomizerPanel() {
   if (mode === "EXPLORE") {
     return (
       <p className="pointer-events-none fixed inset-x-0 bottom-8 px-4 text-center text-sm text-neutral-300">
-        <kbd className="font-mono">WASD</kbd> / <kbd className="font-mono">ZQSD</kbd> / arrows or scroll to walk ·
-        Shift to run · drag to look around · click the floor to go there
+        <span className="pointer-coarse:hidden">
+          <kbd className="font-mono">WASD</kbd> / <kbd className="font-mono">ZQSD</kbd> / arrows or scroll to walk ·
+          Shift to run · drag to look around · click the floor to go there
+        </span>
+        <span className="hidden pointer-coarse:inline">Tap the floor to walk · drag to look around</span>
       </p>
     );
   }
   if (mode !== "CUSTOMIZE" || !product) return null;
 
   return (
-    <aside className="fixed bottom-4 left-1/2 z-40 w-[min(92vw,22rem)] -translate-x-1/2 space-y-4 rounded-2xl bg-neutral-900/85 p-4 text-neutral-100 shadow-2xl ring-1 ring-white/10 backdrop-blur md:top-1/2 md:right-6 md:bottom-auto md:left-auto md:translate-x-0 md:-translate-y-1/2">
+    <aside
+      aria-label={`Customize ${product.name}`}
+      className="fixed bottom-4 left-1/2 z-40 max-h-[calc(100dvh-6rem)] w-[min(92vw,22rem)] -translate-x-1/2 space-y-4 overflow-y-auto rounded-2xl bg-neutral-900/85 p-4 text-neutral-100 shadow-2xl ring-1 ring-white/10 backdrop-blur md:top-1/2 md:right-6 md:bottom-auto md:left-auto md:translate-x-0 md:-translate-y-1/2"
+    >
       {product.options.map((o) => (
         <OptionControl key={o.id} option={o} value={config[o.id]} onChange={(v) => setOption(o.id, v)} />
       ))}

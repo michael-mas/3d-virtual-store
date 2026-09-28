@@ -69,11 +69,11 @@ function PerformanceWarning() {
     <div
       role="status"
       data-testid="perf-warning"
-      className="fixed top-16 left-1/2 z-50 flex w-[min(92vw,28rem)] -translate-x-1/2 items-start gap-3 rounded-xl bg-amber-500/95 p-3 text-sm text-neutral-950 shadow-lg"
+      className="fixed top-16 left-1/2 z-50 flex w-[min(92vw,28rem)] -translate-x-1/2 items-start gap-3 rounded-xl bg-amber-500/95 px-3 py-2 text-xs text-neutral-950 shadow-lg sm:p-3 sm:text-sm"
     >
       <p className="flex-1">
-        This device is struggling ({lastFps?.toFixed(0)} fps). Try closing other tabs or apps; the experience may feel
-        choppy.
+        Low frame rate ({lastFps?.toFixed(0)} fps): the experience may feel choppy.
+        <span className="hidden sm:inline"> Try closing other tabs or apps.</span>
       </p>
       <button type="button" onClick={dismiss} className="font-medium underline" aria-label="Dismiss performance warning">
         Dismiss

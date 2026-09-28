@@ -1,5 +1,7 @@
 "use client";
 
+import { useRef } from "react";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 import { formatPrice, priceBreakdown } from "@/lib/cart/pricing";
 import { getProduct } from "@/lib/products";
 import { useAppStore } from "@/store/useAppStore";
@@ -8,6 +10,8 @@ export default function CartDrawer() {
   const open = useAppStore((s) => s.cartOpen);
   const items = useAppStore((s) => s.items);
   const { setCartOpen, removeFromCart, tryOnCartItem } = useAppStore.getState();
+  const drawer = useRef<HTMLElement>(null);
+  useDialogFocus(drawer, open, () => setCartOpen(false));
 
   const total = items.reduce((sum, i) => sum + priceBreakdown(i.productId, i.config).total, 0);
 
@@ -19,7 +23,9 @@ export default function CartDrawer() {
         className={`fixed inset-0 z-[55] bg-black/40 transition-opacity ${open ? "opacity-100" : "pointer-events-none opacity-0"}`}
       />
       <aside
+        ref={drawer}
         role="dialog"
+        aria-modal="true"
         aria-label="Cart"
         aria-hidden={!open}
         inert={!open}
@@ -29,7 +35,12 @@ export default function CartDrawer() {
       >
         <header className="flex items-center justify-between border-b border-white/10 p-4">
           <h2 className="text-lg font-semibold">Cart</h2>
-          <button type="button" onClick={() => setCartOpen(false)} className="text-sm text-neutral-400 hover:text-white">
+          <button
+            type="button"
+            onClick={() => setCartOpen(false)}
+            aria-label="Close cart"
+            className="rounded px-2 py-1 text-sm text-neutral-400 hover:text-white"
+          >
             Close
           </button>
         </header>
@@ -84,6 +95,7 @@ export default function CartDrawer() {
                     <button
                       type="button"
                       onClick={() => tryOnCartItem(item.id)}
+                      aria-label={`Try on ${product?.name ?? "item"}`}
                       className="rounded-md bg-indigo-600 px-3 py-1 text-xs font-medium hover:bg-indigo-500"
                     >
                       Try On
@@ -91,6 +103,7 @@ export default function CartDrawer() {
                     <button
                       type="button"
                       onClick={() => removeFromCart(item.id)}
+                      aria-label={`Remove ${product?.name ?? "item"} from cart`}
                       className="rounded-md px-2 py-1 text-xs text-neutral-400 hover:text-white"
                     >
                       Remove

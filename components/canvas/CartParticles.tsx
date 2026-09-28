@@ -10,6 +10,7 @@ import { productPosition } from "@/lib/explore/layout";
 import { isTryOnMode } from "@/lib/modes";
 import { screenToWorld, worldToScreen } from "@/lib/screenToWorld";
 import { TRY_ON_MIRRORED } from "@/lib/tryon/constants";
+import { prefersReducedMotion } from "@/hooks/useReducedMotion";
 import { useAppStore } from "@/store/useAppStore";
 
 const COUNT = 36;
@@ -50,6 +51,11 @@ export default function CartParticles() {
 
   useEffect(() => {
     if (fxId === 0) return;
+    // Reduced motion: no particle burst, just the cart icon acknowledgement.
+    if (prefersReducedMotion()) {
+      useAppStore.getState().bumpCart();
+      return;
+    }
     const from: Vector3[] = [];
     const lift: Vector3[] = [];
     const origin = new Vector3(...productPosition(useAppStore.getState().activeProductId));
