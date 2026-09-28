@@ -1,8 +1,9 @@
 "use client";
 
-import { CameraControls } from "@react-three/drei";
+import { CameraControls, PerspectiveCamera } from "@react-three/drei";
 import { useEffect, useRef } from "react";
-import type { Mode } from "@/lib/modes";
+import { isTryOnMode, type Mode } from "@/lib/modes";
+import { MEDIAPIPE_VERTICAL_FOV_DEG, TRY_ON_FAR, TRY_ON_NEAR } from "@/lib/tryon/constants";
 import { useAppStore } from "@/store/useAppStore";
 
 type Vec3 = [number, number, number];
@@ -30,6 +31,20 @@ export default function CameraRig() {
     if (!pose || !controls.current) return;
     void controls.current.setLookAt(...pose.position, ...pose.target, true);
   }, [mode]);
+
+  if (isTryOnMode(mode)) {
+    // Matches MediaPipe's face geometry camera: at the origin, looking down -Z, 63° vertical FOV.
+    // Aspect follows the canvas, which the stage sizes to the video aspect.
+    return (
+      <PerspectiveCamera
+        makeDefault
+        position={[0, 0, 0]}
+        fov={MEDIAPIPE_VERTICAL_FOV_DEG}
+        near={TRY_ON_NEAR}
+        far={TRY_ON_FAR}
+      />
+    );
+  }
 
   const customize = mode === "CUSTOMIZE";
   return (

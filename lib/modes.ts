@@ -16,3 +16,6 @@ export const TRANSITIONS: Readonly<Record<Mode, Partial<Record<ModeEvent, Mode>>
 export function nextMode(mode: Mode, event: ModeEvent): Mode | null {
   return TRANSITIONS[mode][event] ?? null;
 }
+
+/** Modes that run the webcam + face tracking. */
+export const isTryOnMode = (mode: Mode) => mode === "TRY_ON" || mode === "PHOTO";

@@ -42,6 +42,6 @@ Dev dependencies:
 - `@types/three` 0.186.0, `@types/react` 19.2.18, `@types/react-dom` 19.2.7, `@types/node` 22.20.4
 
 Scripts: `dev`, `build` (static export to `out/`), `start` (serve `out/`), `lint`, `test`, `test:watch`,
-`generate:models` (`scripts/generate-glasses.mjs` → Draco `public/models/glasses.glb`),
+`generate:models` (Draco `public/models/glasses.glb` + `head-occluder.glb` from `scripts/data/canonical_face_model.obj`),
 `postinstall` (`scripts/copy-wasm.mjs` copies Draco → `public/draco/`, MediaPipe WASM → `public/mediapipe/wasm/`).
 Asset paths live in `lib/assets.ts`.

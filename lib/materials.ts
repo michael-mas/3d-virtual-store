@@ -34,7 +34,9 @@ export function setFrameColor(materials: FrameMaterials, color: string) {
 }
 
 export function createLensMaterials(): LensMaterials {
-  const base = { roughness: 0.03, metalness: 0, transmission: 1, thickness: 0.0016, ior: 1.5 };
+  // Low specular = anti-reflective coating: at full strength the flat lenses mirror the environment's
+  // light panels and turn milky over the eyes.
+  const base = { roughness: 0.03, metalness: 0, transmission: 1, thickness: 0.0016, ior: 1.5, specularIntensity: 0.2 };
 
   const holographic = new MeshPhysicalNodeMaterial({ name: "lens-holographic", ...base, transmission: 0.85 });
   // Fresnel term: 0 facing the camera, 1 at grazing angles.
@@ -51,6 +53,7 @@ export function createLensMaterials(): LensMaterials {
       name: "lens-iridescent",
       ...base,
       transmission: 0.9,
+      specularIntensity: 0.6,
       iridescence: 1,
       iridescenceIOR: 1.8,
       iridescenceThicknessRange: [250, 800],
