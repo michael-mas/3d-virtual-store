@@ -1,0 +1,14 @@
+{
+  "$comment": "Shared by scripts/generate-showroom.mjs (baked GLB) and the runtime (movement, proximity, product placement). Meters; floor at floorY; a product origin (lens centre) sits productOffsetY above the pedestal top.",
+  "floorY": -1.05,
+  "room": { "halfWidth": 5, "halfDepth": 4.5, "height": 3.2 },
+  "pedestal": { "radiusTop": 0.11, "radiusBottom": 0.13, "top": -0.024, "productOffsetY": 0.024, "collisionRadius": 0.45 },
+  "pedestals": [
+    { "productId": "aviator", "position": [0, 0], "accent": [1.0, 0.78, 0.45] },
+    { "productId": "studio", "position": [-2, -1.2], "accent": [0.55, 0.62, 1.0] },
+    { "productId": "crystal", "position": [2, -1.2], "accent": [0.6, 1.0, 0.85] }
+  ],
+  "spawn": [0, 3],
+  "playerRadius": 0.3,
+  "interactRadius": 1.3
+}

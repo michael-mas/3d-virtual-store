@@ -6,6 +6,7 @@ import { color } from "three/tsl";
 import { IcosahedronGeometry, InstancedMesh, MeshBasicNodeMaterial, Object3D, Vector3 } from "three/webgpu";
 import { getCartIcon } from "@/lib/cart/registry";
 import { isDebugEnabled } from "@/lib/debug";
+import { productPosition } from "@/lib/explore/layout";
 import { isTryOnMode } from "@/lib/modes";
 import { screenToWorld, worldToScreen } from "@/lib/screenToWorld";
 import { TRY_ON_MIRRORED } from "@/lib/tryon/constants";
@@ -51,8 +52,11 @@ export default function CartParticles() {
     if (fxId === 0) return;
     const from: Vector3[] = [];
     const lift: Vector3[] = [];
+    const origin = new Vector3(...productPosition(useAppStore.getState().activeProductId));
     for (let i = 0; i < COUNT; i++) {
-      from.push(new Vector3((Math.random() - 0.5) * 0.12, (Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.04));
+      from.push(
+        new Vector3((Math.random() - 0.5) * 0.12, (Math.random() - 0.5) * 0.04, (Math.random() - 0.5) * 0.04).add(origin),
+      );
       lift.push(new Vector3((Math.random() - 0.5) * 0.08, 0.04 + Math.random() * 0.08, (Math.random() - 0.5) * 0.06));
     }
     burst.current = { start: clock.current, from, lift, landed: new Array(COUNT).fill(false) };
@@ -75,10 +79,11 @@ export default function CartParticles() {
     m.visible = true;
 
     // Target: world point on the ray through the icon centre, halfway between camera and product.
+    const { activeProductId } = useAppStore.getState();
     const rect = gl.domElement.getBoundingClientRect();
     const ir = icon.getBoundingClientRect();
     const mirrored = TRY_ON_MIRRORED && isTryOnMode(useAppStore.getState().mode);
-    const depth = camera.position.length() * 0.5;
+    const depth = camera.position.distanceTo(tmp.p.set(...productPosition(activeProductId))) * 0.5;
     screenToWorld(ir.left + ir.width / 2, ir.top + ir.height / 2, rect, camera, depth, mirrored, tmp.target);
 
     let active = 0;

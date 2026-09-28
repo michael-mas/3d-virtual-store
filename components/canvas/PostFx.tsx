@@ -3,7 +3,8 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo } from "react";
 import { max, oneMinus, pass, screenUV, smoothstep, uniform, vec4 } from "three/tsl";
-import { ACESFilmicToneMapping, NoToneMapping, RenderPipeline, type WebGPURenderer } from "three/webgpu";
+import { ACESFilmicToneMapping, NoToneMapping, RenderPipeline, Vector3, type WebGPURenderer } from "three/webgpu";
+import { productPosition } from "@/lib/explore/layout";
 import { isTryOnMode } from "@/lib/modes";
 import { setCaptureRenderer } from "@/lib/tryon/capture";
 import { useAppStore } from "@/store/useAppStore";
@@ -59,12 +60,15 @@ export default function PostFx() {
     return () => setCaptureRenderer(null);
   }, [renderFrame]);
 
+  const productPos = useMemo(() => new Vector3(), []);
+
   useFrame((state, delta) => {
-    const target = useAppStore.getState().mode === "CUSTOMIZE" ? 1 : 0;
+    const { mode, activeProductId } = useAppStore.getState();
+    const target = mode === "CUSTOMIZE" ? 1 : 0;
     // Frame-rate independent ease toward target.
     dim.value += (target - dim.value) * (1 - Math.exp(-delta * 6));
-    // Focus distance = camera distance to the product (at the origin).
-    focus.value = state.camera.position.length();
+    // Focus distance = camera distance to the active product.
+    focus.value = state.camera.position.distanceTo(productPos.set(...productPosition(activeProductId)));
     renderFrame();
   }, 1);
 
