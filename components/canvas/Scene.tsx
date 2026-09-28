@@ -6,12 +6,14 @@ import { isDebugEnabled } from "@/lib/debug";
 import { useAppStore } from "@/store/useAppStore";
 import { Suspense } from "react";
 import Backdrop from "./Backdrop";
+import CartParticles from "./CartParticles";
 import CameraRig from "./CameraRig";
 import FrameStats from "./FrameStats";
 import Glasses from "./Glasses";
 import Lighting from "./Lighting";
 import PostFx from "./PostFx";
 import SceneBackground from "./SceneBackground";
+import ThumbnailRenderer from "./ThumbnailRenderer";
 
 // Register three/webgpu classes (node materials etc.) with the R3F reconciler.
 extend(THREE as unknown as Catalogue);
@@ -45,7 +47,9 @@ export default function Scene() {
       <Backdrop />
       <Suspense fallback={null}>
         <Glasses />
+        <ThumbnailRenderer />
       </Suspense>
+      <CartParticles />
       <CameraRig />
       <PostFx />
       <FrameStats />

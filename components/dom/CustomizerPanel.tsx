@@ -1,5 +1,7 @@
 "use client";
 
+import { formatPrice, priceOf } from "@/lib/cart/pricing";
+import { renderThumbnail } from "@/lib/cart/registry";
 import type { FrameFinish, LensEffect } from "@/lib/products";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -38,7 +40,17 @@ function Segmented<T extends string>(props: {
 export default function CustomizerPanel() {
   const mode = useAppStore((s) => s.mode);
   const config = useAppStore((s) => s.configs[s.activeProductId]);
-  const { setFinish, setFrameColor, setLensEffect, transition } = useAppStore.getState();
+  const productId = useAppStore((s) => s.activeProductId);
+  const { setFinish, setFrameColor, setLensEffect, transition, addToCart, setItemThumbnail } = useAppStore.getState();
+
+  const onAddToCart = () => {
+    // The thumbnail is rendered synchronously here (same config as the item); only readback is async.
+    const thumbnail = renderThumbnail();
+    const itemId = addToCart();
+    thumbnail
+      .then((blob) => setItemThumbnail(itemId, URL.createObjectURL(blob)))
+      .catch((error: unknown) => console.warn("[cart] thumbnail failed", error));
+  };
 
   if (mode === "EXPLORE") {
     return (
@@ -81,7 +93,16 @@ export default function CustomizerPanel() {
 
       <Segmented label="Lens" options={LENSES} value={config.lens} onChange={setLensEffect} />
 
-      <div className="flex gap-2 pt-1">
+      <button
+        type="button"
+        onClick={onAddToCart}
+        className="flex w-full items-center justify-between rounded-lg bg-white px-3 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-200"
+      >
+        <span>Add to cart</span>
+        <span data-testid="config-price">{formatPrice(priceOf(productId, config))}</span>
+      </button>
+
+      <div className="flex gap-2">
         <button
           type="button"
           onClick={() => transition("BACK")}

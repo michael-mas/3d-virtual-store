@@ -19,6 +19,8 @@ export type ProductSlice = {
   setFrameColor: (color: string) => void;
   setLensEffect: (lens: LensEffect) => void;
   setCalibration: (id: string, calibration: Partial<TryOnCalibration>) => void;
+  /** Selects `id` and replaces its configuration (e.g. restoring a cart item). */
+  applyConfig: (id: string, config: ProductConfig) => void;
 };
 
 export const createProductSlice: Slice<ProductSlice> = (set, get) => {
@@ -40,6 +42,10 @@ export const createProductSlice: Slice<ProductSlice> = (set, get) => {
     setFinish: (finish) => updateActiveConfig({ finish }),
     setFrameColor: (frameColor) => updateActiveConfig({ frameColor }),
     setLensEffect: (lens) => updateActiveConfig({ lens }),
+    applyConfig: (id, config) => {
+      if (!(id in get().configs)) return;
+      set((s) => ({ activeProductId: id, configs: { ...s.configs, [id]: { ...config } } }));
+    },
     setCalibration: (id, calibration) =>
       set((s) =>
         id in s.calibrations
