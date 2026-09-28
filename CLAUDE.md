@@ -38,8 +38,10 @@ Dev dependencies:
 - `tailwindcss` 4.3.3, `@tailwindcss/postcss` 4.3.3
 - `eslint` 9.39.5, `eslint-config-next` 16.3.6
 - `vitest` 5.0.2 (config: `vitest.config.mts`, tests are `**/*.test.ts`)
+- `@gltf-transform/core` 4.5.0, `@gltf-transform/extensions` 4.5.0, `@gltf-transform/functions` 4.5.0, `draco3dgltf` 1.5.7 (model generation only)
 - `@types/three` 0.186.0, `@types/react` 19.2.18, `@types/react-dom` 19.2.7, `@types/node` 22.20.4
 
 Scripts: `dev`, `build` (static export to `out/`), `start` (serve `out/`), `lint`, `test`, `test:watch`,
+`generate:models` (`scripts/generate-glasses.mjs` → Draco `public/models/glasses.glb`),
 `postinstall` (`scripts/copy-wasm.mjs` copies Draco → `public/draco/`, MediaPipe WASM → `public/mediapipe/wasm/`).
 Asset paths live in `lib/assets.ts`.
