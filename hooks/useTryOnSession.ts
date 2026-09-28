@@ -11,6 +11,7 @@ import {
   tryOnError,
   type TryOnErrorKind,
 } from "@/lib/tryon/errors";
+import { onTryOnAssetsProgress } from "@/lib/tryon/assets";
 import { getFaceLandmarker } from "@/lib/tryon/faceLandmarker";
 import { PoseSmoother } from "@/lib/tryon/poseSmoother";
 import { tracking } from "@/lib/tryon/tracking";
@@ -64,6 +65,17 @@ export function useTryOnSession(
     let lastTimestamp = -1;
     let lastFrameAt = performance.now();
     let lastFaceAt = -Infinity;
+    let detectMs = 0;
+    /**
+     * Minimum time between detections. Every video frame when the app runs smoothly; capped at 15 Hz / 10 Hz when
+     * rendering drops below 30 / 20 fps, and never more often than twice the (smoothed) detection cost, so
+     * tracking cannot starve rendering. The One Euro smoother handles the irregular timestamps.
+     */
+    const detectionInterval = () => {
+      const fps = useAppStore.getState().frameStats?.fps ?? 60;
+      const cap = fps < 20 ? 100 : fps < 30 ? 66 : 0;
+      return Math.max(cap, detectMs * 2);
+    };
 
     // Returning to the tab restarts the stall timer (rVFC pauses while hidden).
     const onVisible = () => {
@@ -127,12 +139,16 @@ export function useTryOnSession(
         setVideoAspect(video.videoWidth / video.videoHeight);
 
         setTryOnStatus("model");
+        const unsubscribe = onTryOnAssetsProgress((f) => useAppStore.getState().setTryOnProgress(f));
         let landmarker: FaceLandmarker;
         try {
           landmarker = await getFaceLandmarker();
         } catch (error) {
           console.error("[tryOn] face landmarker failed to load", error);
           throw new SessionError("model");
+        } finally {
+          unsubscribe();
+          useAppStore.getState().setTryOnProgress(null);
         }
         if (stopped) return;
         tracking.video = video;
@@ -142,9 +158,11 @@ export function useTryOnSession(
         const onFrame: VideoFrameRequestCallback = (now) => {
           if (stopped) return;
           lastFrameAt = performance.now();
-          if (now > lastTimestamp) {
+          if (now > lastTimestamp && now - lastTimestamp >= detectionInterval()) {
             lastTimestamp = now;
+            const t0 = performance.now();
             const matrix = landmarker.detectForVideo(video, now).facialTransformationMatrixes[0];
+            detectMs = detectMs * 0.8 + (performance.now() - t0) * 0.2;
             if (matrix) {
               checkLayout(matrix.data);
               smoother.update(matrix.data, now / 1000, tracking.pose);

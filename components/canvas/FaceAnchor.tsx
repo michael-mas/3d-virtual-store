@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useRef, type ReactNode } from "react";
+import { Suspense, useRef, type ReactNode } from "react";
 import { Matrix4, type Group } from "three/webgpu";
 import { CM, GLASSES_ANCHOR } from "@/lib/tryon/constants";
 import { tracking } from "@/lib/tryon/tracking";
@@ -33,7 +33,10 @@ export default function FaceAnchor({ children }: { children: ReactNode }) {
   const [ox, oy, oz] = calibration.offset;
   return (
     <group ref={anchor} matrixAutoUpdate={false} matrix={HIDDEN}>
-      <HeadOccluder />
+      {/* Own boundary: if the occluder is still loading, only it waits — not the whole scene. */}
+      <Suspense fallback={null}>
+        <HeadOccluder />
+      </Suspense>
       <group position={[ax + ox, ay + oy, az + oz]} scale={calibration.scale}>
         {children}
       </group>
