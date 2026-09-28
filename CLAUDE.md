@@ -37,8 +37,9 @@ Dev dependencies:
 - `typescript` 5.9.3
 - `tailwindcss` 4.3.3, `@tailwindcss/postcss` 4.3.3
 - `eslint` 9.39.5, `eslint-config-next` 16.3.6
+- `vitest` 5.0.2 (config: `vitest.config.mts`, tests are `**/*.test.ts`)
 - `@types/three` 0.186.0, `@types/react` 19.2.18, `@types/react-dom` 19.2.7, `@types/node` 22.20.4
 
-Scripts: `dev`, `build` (static export to `out/`), `start` (serve `out/`), `lint`,
+Scripts: `dev`, `build` (static export to `out/`), `start` (serve `out/`), `lint`, `test`, `test:watch`,
 `postinstall` (`scripts/copy-wasm.mjs` copies Draco → `public/draco/`, MediaPipe WASM → `public/mediapipe/wasm/`).
 Asset paths live in `lib/assets.ts`.

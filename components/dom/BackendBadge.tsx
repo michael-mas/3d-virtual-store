@@ -7,7 +7,7 @@ export default function BackendBadge() {
 
   return (
     <div
-      className={`pointer-events-none fixed bottom-3 left-3 z-50 rounded px-2 py-1 font-mono text-xs text-white ${
+      className={`pointer-events-none fixed right-3 bottom-3 z-50 rounded px-2 py-1 font-mono text-xs text-white ${
         backend === "WebGPU" ? "bg-emerald-600" : backend === "WebGL2" ? "bg-amber-600" : "bg-neutral-600"
       }`}
     >

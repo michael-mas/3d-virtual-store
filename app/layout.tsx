@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import SceneCanvas from "@/components/canvas/SceneCanvas";
 import BackendBadge from "@/components/dom/BackendBadge";
+import DevPanel from "@/components/dom/DevPanel";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SceneCanvas />
         <div className="pointer-events-none relative h-full">{children}</div>
         <BackendBadge />
+        <DevPanel />
       </body>
     </html>
   );
