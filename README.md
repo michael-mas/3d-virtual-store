@@ -12,6 +12,12 @@ npm run build    # static export to ./out
 npm start        # serve ./out locally
 ```
 
+## Deployment (Vercel)
+
+`vercel.json` pins the build to a static deployment of `out/` (the `output: 'export'` result), independent of the
+project's Framework Preset in the Vercel dashboard. `npm install` runs `postinstall`, which copies the Draco and
+MediaPipe WASM files into `public/` before `next build`.
+
 ## Local runtime assets
 
 The app makes zero external requests at runtime. All binary assets are served from `/public`:
