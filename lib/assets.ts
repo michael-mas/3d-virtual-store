@@ -6,6 +6,10 @@ export const HEAD_OCCLUDER_MODEL_PATH = "/models/head-occluder.glb";
 export const SHOWROOM_MODEL_PATH = "/models/showroom.glb";
 /**
  * Short looping face clip for demo mode (no webcam): runs through the same try-on pipeline.
- * See docs/demo-video.md. Missing file → "Demo video unavailable" error state.
+ * H.264 MP4 first (plays everywhere incl. iOS Safari), VP9 WebM for browsers built without H.264.
+ * See docs/demo-video.md. Unplayable/missing file → "Demo video unavailable" error state.
  */
-export const DEMO_VIDEO_PATH = "/demo/try-on-demo.mp4";
+export const DEMO_VIDEO_SOURCES = [
+  { src: "/demo/try-on-demo.mp4", type: 'video/mp4; codecs="avc1.4D401F"' },
+  { src: "/demo/try-on-demo.webm", type: 'video/webm; codecs="vp9"' },
+] as const;
