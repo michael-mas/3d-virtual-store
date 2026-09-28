@@ -1,7 +1,12 @@
 "use client";
 
-/** Minimal store set: a display pedestal for the product and a few background fixtures. */
+import { isTryOnMode } from "@/lib/modes";
+import { useAppStore } from "@/store/useAppStore";
+
+/** Minimal store set: a display pedestal for the product and a few background fixtures. Hidden during try-on. */
 export default function Backdrop() {
+  const hidden = useAppStore((s) => isTryOnMode(s.mode));
+  if (hidden) return null;
   return (
     <group>
       {/* Pedestal top at y = -0.024, where the glasses rest. */}

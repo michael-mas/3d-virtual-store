@@ -51,16 +51,18 @@ function tube(points, radius, segments = 48) {
   return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), segments, radius, 10, false);
 }
 
+// Temples flare out to rest on the side of the head (canonical face is ±7.7cm wide at the ears,
+// ~8cm behind the lens plane) and hook down behind the ear.
 function temple(side) {
   const x = side * (LENS_CX + LENS_A + RIM_R);
   return tube(
     [
       new THREE.Vector3(x, 0.008, 0),
       new THREE.Vector3(x + side * 0.004, 0.008, -0.006),
-      new THREE.Vector3(x + side * 0.006, 0.007, -0.04),
-      new THREE.Vector3(x + side * 0.007, 0.005, -0.11),
-      new THREE.Vector3(x + side * 0.006, -0.008, -0.135),
-      new THREE.Vector3(x + side * 0.004, -0.02, -0.145),
+      new THREE.Vector3(x + side * 0.01, 0.006, -0.04),
+      new THREE.Vector3(x + side * 0.017, 0.0, -0.085),
+      new THREE.Vector3(x + side * 0.018, -0.008, -0.1),
+      new THREE.Vector3(x + side * 0.016, -0.028, -0.112),
     ],
     TEMPLE_R,
     96,

@@ -1,0 +1,36 @@
+"use client";
+
+import { useThree } from "@react-three/fiber";
+import { useEffect } from "react";
+import { Color, SRGBColorSpace, VideoTexture } from "three/webgpu";
+import { isTryOnMode } from "@/lib/modes";
+import { tracking } from "@/lib/tryon/tracking";
+import { useAppStore } from "@/store/useAppStore";
+
+const STORE_BACKGROUND = new Color("#1c1917");
+
+/**
+ * Store backdrop color, or the webcam feed during try-on. The video is part of the rendered frame so
+ * transmissive lenses refract the face and a photo is a single canvas capture.
+ */
+export default function SceneBackground() {
+  const scene = useThree((s) => s.scene);
+  const running = useAppStore((s) => isTryOnMode(s.mode) && s.tryOnStatus === "running");
+
+  useEffect(() => {
+    const video = tracking.video;
+    if (!running || !video) {
+      scene.background = STORE_BACKGROUND;
+      return;
+    }
+    const texture = new VideoTexture(video);
+    texture.colorSpace = SRGBColorSpace;
+    scene.background = texture;
+    return () => {
+      scene.background = STORE_BACKGROUND;
+      texture.dispose();
+    };
+  }, [scene, running]);
+
+  return null;
+}

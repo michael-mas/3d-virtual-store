@@ -12,7 +12,9 @@ import {
   setFrameColor,
 } from "@/lib/materials";
 import { getProduct } from "@/lib/products";
+import { isTryOnMode } from "@/lib/modes";
 import { useAppStore } from "@/store/useAppStore";
+import FaceAnchor from "./FaceAnchor";
 
 const isLens = (o: Object3D) =>
   /lens/i.test(o.name) || (o instanceof Mesh && /lens/i.test((o.material as { name?: string }).name ?? ""));
@@ -88,6 +90,18 @@ export default function Glasses() {
     document.body.style.cursor = mode === "EXPLORE" ? cursor : "auto";
   };
 
+  const warmupNode = warming && <primitive object={warmup} />;
+
+  // Same model instance and materials in both placements; only its parent changes.
+  if (isTryOnMode(mode)) {
+    return (
+      <FaceAnchor>
+        <primitive object={scene} />
+        {warmupNode}
+      </FaceAnchor>
+    );
+  }
+
   return (
     <group>
       <primitive object={scene} />
@@ -100,7 +114,7 @@ export default function Glasses() {
       >
         <boxGeometry args={hitBox.size} />
       </mesh>
-      {warming && <primitive object={warmup} />}
+      {warmupNode}
     </group>
   );
 }
