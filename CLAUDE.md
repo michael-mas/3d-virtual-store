@@ -22,4 +22,23 @@
 - Run `npm run build` and fix all errors before declaring a step done.
 
 ## package.json
-(to be filled after scaffolding)
+Exact installed versions (pinned, no ranges). Read `node_modules/next/dist/docs/` for Next.js APIs.
+
+Dependencies:
+- `next` 16.3.6
+- `react` 19.2.8, `react-dom` 19.2.8
+- `three` 0.186.1
+- `@react-three/fiber` 9.8.1
+- `@react-three/drei` 10.7.9
+- `@mediapipe/tasks-vision` 1.0.1
+- `zustand` 5.0.15
+
+Dev dependencies:
+- `typescript` 5.9.3
+- `tailwindcss` 4.3.3, `@tailwindcss/postcss` 4.3.3
+- `eslint` 9.39.5, `eslint-config-next` 16.3.6
+- `@types/three` 0.186.0, `@types/react` 19.2.18, `@types/react-dom` 19.2.7, `@types/node` 22.20.4
+
+Scripts: `dev`, `build` (static export to `out/`), `start` (serve `out/`), `lint`,
+`postinstall` (`scripts/copy-wasm.mjs` copies Draco → `public/draco/`, MediaPipe WASM → `public/mediapipe/wasm/`).
+Asset paths live in `lib/assets.ts`.
