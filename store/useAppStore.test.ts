@@ -70,3 +70,21 @@ describe("useAppStore", () => {
     expect(items[0].config.lens).toBe("clear");
   });
 });
+
+describe("photo lifecycle", () => {
+  beforeEach(() => useAppStore.setState(initial, true));
+
+  it("revokes the photo URL when replaced and when leaving PHOTO", () => {
+    const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+    const s = useAppStore.getState();
+    s.transition("INTERACT");
+    s.transition("TRY_ON");
+    s.transition("CAPTURE");
+    s.setPhotoUrl("blob:a");
+    s.setPhotoUrl("blob:b");
+    expect(revoke).toHaveBeenCalledWith("blob:a");
+    s.transition("RETAKE");
+    expect(revoke).toHaveBeenCalledWith("blob:b");
+    expect(useAppStore.getState().photoUrl).toBeNull();
+  });
+});

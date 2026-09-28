@@ -9,7 +9,8 @@ export default function TryOnPanel() {
   const faceDetected = useAppStore((s) => s.faceDetected);
   const transition = useAppStore((s) => s.transition);
 
-  if (mode !== "TRY_ON" && mode !== "PHOTO") return null;
+  // PHOTO is handled by PhotoModal.
+  if (mode !== "TRY_ON") return null;
 
   const message =
     status === "error"
@@ -38,24 +39,14 @@ export default function TryOnPanel() {
         >
           Exit
         </button>
-        {mode === "TRY_ON" ? (
-          <button
-            type="button"
-            disabled={!faceDetected}
-            onClick={() => transition("CAPTURE")}
-            className="rounded-full bg-white px-5 py-2.5 text-sm font-medium text-neutral-900 disabled:opacity-40"
-          >
-            Capture
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => transition("RETAKE")}
-            className="rounded-full bg-white px-5 py-2.5 text-sm font-medium text-neutral-900"
-          >
-            Retake
-          </button>
-        )}
+        <button
+          type="button"
+          disabled={!faceDetected}
+          onClick={() => transition("CAPTURE")}
+          className="rounded-full bg-white px-5 py-2.5 text-sm font-medium text-neutral-900 disabled:opacity-40"
+        >
+          Capture
+        </button>
       </div>
     </>
   );
