@@ -1,25 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { INTERACT_RADIUS, PEDESTAL, PEDESTALS, PLAYER_RADIUS, ROOM, SPAWN } from "./layout";
-import { approachPoint, dampTowards, nearestPedestal, resolveCollisions } from "./movement";
+import { approachPoint, cameraRelative, nearestPedestal, resolveCollisions, stepMotion, WALK, type Motion } from "./movement";
 
 const obstacles = PEDESTALS.map((p) => ({ position: p.position, radius: PEDESTAL.collisionRadius }));
-
-describe("dampTowards", () => {
-  it("is frame-rate independent", () => {
-    let a: [number, number] = [0, 0];
-    for (let i = 0; i < 60; i++) a = dampTowards(a, [10, 0], 5, 1 / 60);
-    let b: [number, number] = [0, 0];
-    for (let i = 0; i < 30; i++) b = dampTowards(b, [10, 0], 5, 1 / 30);
-    expect(a[0]).toBeCloseTo(b[0], 6);
-  });
-
-  it("converges to the target", () => {
-    let p: [number, number] = [0, 0];
-    for (let i = 0; i < 600; i++) p = dampTowards(p, [3, -2], 6, 1 / 60);
-    expect(p[0]).toBeCloseTo(3, 4);
-    expect(p[1]).toBeCloseTo(-2, 4);
-  });
-});
 
 describe("resolveCollisions", () => {
   it("pushes the player out of a pedestal", () => {
@@ -62,5 +45,71 @@ describe("layout", () => {
   it("places every catalog product on exactly one pedestal", async () => {
     const { PRODUCTS } = await import("@/lib/products");
     expect(PEDESTALS.map((p) => p.productId).sort()).toEqual(PRODUCTS.map((p) => p.id).sort());
+  });
+});
+
+
+const run = (m: Motion, input: [number, number], seconds: number, dt = 1 / 60) => {
+  const steps = Math.round(seconds / dt);
+  for (let i = 0; i < steps; i++) m = stepMotion(m, input, dt, WALK);
+  return m;
+};
+
+describe("stepMotion", () => {
+  const still: Motion = { position: [0, 0], velocity: [0, 0], target: null };
+
+  it("accelerates to walking speed and stays there while a key is held", () => {
+    const m = run(still, [0, -1], 1);
+    expect(Math.hypot(...m.velocity)).toBeCloseTo(WALK.speed, 2);
+    expect(m.position[1]).toBeLessThan(-1);
+  });
+
+  it("brakes to a stop when the key is released", () => {
+    const moving = run(still, [1, 0], 1);
+    const stopped = run(moving, [0, 0], 1);
+    expect(stopped.velocity).toEqual([0, 0]);
+    expect(stopped.position[0] - moving.position[0]).toBeLessThan(0.3);
+  });
+
+  it("normalises diagonal input (no faster diagonals)", () => {
+    const m = run(still, cameraRelative([0, -1], [1, 1]), 1);
+    expect(Math.hypot(...m.velocity)).toBeCloseTo(WALK.speed, 2);
+  });
+
+  it("arrives at a target without overshooting and clears it", () => {
+    let m: Motion = { ...still, target: [0, -2] };
+    let minZ = 0;
+    for (let i = 0; i < 600; i++) {
+      m = stepMotion(m, [0, 0], 1 / 60, WALK);
+      minZ = Math.min(minZ, m.position[1]);
+    }
+    expect(m.position[1]).toBeCloseTo(-2, 1);
+    expect(minZ).toBeGreaterThan(-2.05);
+    expect(m.target).toBeNull();
+  });
+
+  it("keyboard input cancels the target", () => {
+    const m = stepMotion({ ...still, target: [5, 5] }, [0, 1], 1 / 60, WALK);
+    expect(m.target).toBeNull();
+  });
+
+  it("is roughly frame-rate independent", () => {
+    const a = run(still, [0, -1], 1, 1 / 30);
+    const b = run(still, [0, -1], 1, 1 / 120);
+    expect(Math.abs(a.position[1] - b.position[1])).toBeLessThan(0.05);
+  });
+});
+
+describe("cameraRelative", () => {
+  it("maps forward/strafe to the camera's view on the floor", () => {
+    // Camera looking down -Z: forward = -Z, right = +X.
+    expect(cameraRelative([0, -1], [0, 1])).toEqual([0, -1]);
+    const right = cameraRelative([0, -1], [1, 0]);
+    expect(right[0]).toBeCloseTo(1);
+    expect(right[1]).toBeCloseTo(0);
+    // Camera looking down +X: forward = +X, right = +Z.
+    const r2 = cameraRelative([1, 0], [1, 0]);
+    expect(r2[0]).toBeCloseTo(0);
+    expect(r2[1]).toBeCloseTo(1);
   });
 });

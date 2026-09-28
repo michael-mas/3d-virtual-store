@@ -1,8 +1,8 @@
 "use client";
 
 import { useGLTF } from "@react-three/drei";
-import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import type { ThreeEvent } from "@react-three/fiber";
+import { useEffect, useMemo } from "react";
 import { Box3, Group, Mesh, Vector3, type Object3D } from "three/webgpu";
 import { DRACO_DECODER_PATH } from "@/lib/assets";
 import {
@@ -23,8 +23,8 @@ import FaceAnchor from "./FaceAnchor";
 const isLens = (o: Object3D) =>
   /lens/i.test(o.name) || (o instanceof Mesh && /lens/i.test((o.material as { name?: string }).name ?? ""));
 
-/** Frames during which every material variant is drawn once (invisibly) so its pipeline is compiled up front. */
-const WARMUP_FRAMES = 2;
+/** Scale used to keep objects drawn (bindings/pipelines kept current) while effectively invisible. */
+const TINY = 1e-4;
 
 /**
  * One configurable product on its pedestal. Each instance owns a clone of the model and its material set.
@@ -58,7 +58,10 @@ export default function Glasses({ productId }: { productId: string }) {
     const frames: Mesh[] = [];
     const lenses: Mesh[] = [];
     scene.traverse((o) => {
-      if (o instanceof Mesh) (isLens(o) || isLens(o.parent ?? o) ? lenses : frames).push(o);
+      if (!(o instanceof Mesh)) return;
+      (isLens(o) || isLens(o.parent ?? o) ? lenses : frames).push(o);
+      // Always drawn, even off-screen: see the keep-alive note below.
+      o.frustumCulled = false;
     });
     return { frames, lenses };
   }, [scene]);
@@ -72,23 +75,30 @@ export default function Glasses({ productId }: { productId: string }) {
     for (const m of lenses) m.material = lensMats[config.lens];
   }, [lenses, lensMats, config.lens]);
 
-  // Pre-compile every variant: tiny copies with each material, rendered for a couple of frames.
-  const warmup = useMemo(() => {
+  /*
+   * Keep-alive: a tiny, never-culled copy of the model with every material variant, drawn every frame.
+   * - Pipelines for all variants are compiled up front, so switching options never stalls.
+   * - Transmission samples a screen copy that three reallocates on resize (canvas, try-on stage, thumbnails).
+   *   In three r186 a material that is not drawn at that moment can keep a binding to the freed texture
+   *   (NodeSampledTexture/Bindings generation check), which is a WebGL warning and a WebGPU validation error.
+   *   Drawing every variant every frame keeps all bindings current. Cost: a few tiny draws per product.
+   */
+  const keepAlive = useMemo(() => {
     const group = new Group();
     const add = (meshes: Mesh[], mats: Record<string, Mesh["material"]>) => {
-      if (!meshes[0]) return;
-      for (const mat of Object.values(mats)) group.add(new Mesh(meshes[0].geometry, mat));
+      for (const source of meshes) {
+        for (const mat of Object.values(mats)) {
+          const m = new Mesh(source.geometry, mat);
+          m.frustumCulled = false;
+          group.add(m);
+        }
+      }
     };
     add(frames, frameMats);
     add(lenses, lensMats);
-    group.scale.setScalar(1e-4);
+    group.scale.setScalar(TINY);
     return group;
   }, [frames, lenses, frameMats, lensMats]);
-  const [warming, setWarming] = useState(true);
-  const warmFrames = useRef(0);
-  useFrame(() => {
-    if (warming && ++warmFrames.current > WARMUP_FRAMES) setWarming(false);
-  });
 
   // Invisible bounding-box hit target: thin frame wires are hard to click.
   const hitBox = useMemo(() => {
@@ -110,7 +120,7 @@ export default function Glasses({ productId }: { productId: string }) {
     document.body.style.cursor = mode === "EXPLORE" ? cursor : "auto";
   };
 
-  const warmupNode = warming && <primitive object={warmup} />;
+  const keepAliveNode = <primitive object={keepAlive} />;
 
   // Same model instance and materials in both placements; only its parent changes.
   const tryOn = isTryOnMode(mode);
@@ -118,14 +128,14 @@ export default function Glasses({ productId }: { productId: string }) {
     return (
       <FaceAnchor>
         <primitive object={scene} />
-        {warmupNode}
+        {keepAliveNode}
       </FaceAnchor>
     );
   }
 
-  // Other products stay mounted (materials kept) but hidden during try-on.
+  // Other products stay mounted and drawn during try-on, shrunk to nothing (not `visible=false`, see keep-alive).
   return (
-    <group position={productPosition(productId)} visible={!tryOn}>
+    <group position={productPosition(productId)} scale={tryOn ? TINY : 1}>
       <primitive object={scene} />
       <mesh
         visible={false}
@@ -136,7 +146,7 @@ export default function Glasses({ productId }: { productId: string }) {
       >
         <boxGeometry args={hitBox.size} />
       </mesh>
-      {warmupNode}
+      {keepAliveNode}
     </group>
   );
 }

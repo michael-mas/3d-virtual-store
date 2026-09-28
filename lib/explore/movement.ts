@@ -1,13 +1,5 @@
 import type { Pedestal, Vec2 } from "./layout";
 
-/** Frame-rate independent exponential approach: moves `current` toward `target` (critically damped feel). */
-export function dampTowards(current: Vec2, target: Vec2, lambda: number, dt: number, out: Vec2 = [0, 0]): Vec2 {
-  const k = 1 - Math.exp(-lambda * dt);
-  out[0] = current[0] + (target[0] - current[0]) * k;
-  out[1] = current[1] + (target[1] - current[1]) * k;
-  return out;
-}
-
 export type Bounds = { halfWidth: number; halfDepth: number };
 
 /**
@@ -59,4 +51,78 @@ export function approachPoint(pedestal: Pedestal, from: Vec2, distance: number):
   const dz = from[1] - pedestal.position[1];
   const d = Math.hypot(dx, dz) || 1;
   return [pedestal.position[0] + (dx / d) * distance, pedestal.position[1] + (dz / d) * distance];
+}
+
+export type Motion = {
+  position: Vec2;
+  velocity: Vec2;
+  /** Point to walk to (click / scroll); null when steering by keyboard or idle. */
+  target: Vec2 | null;
+};
+
+export type MotionParams = {
+  /** Max walking speed (m/s). */
+  speed: number;
+  /** Rate (1/s) at which velocity approaches the desired velocity (acceleration and braking). */
+  acceleration: number;
+  /** Below this distance the target counts as reached. */
+  arriveRadius: number;
+};
+
+export const WALK: MotionParams = { speed: 1.6, acceleration: 9, arriveRadius: 0.03 };
+
+/**
+ * One movement step. `input` is the desired direction in world XZ (length ≤ 1, e.g. from WASD relative to
+ * the camera); it overrides and cancels any target. Otherwise the player "arrives" at the target, slowing
+ * down as it gets close. Velocity eases toward the desired velocity, so starts and stops are smooth.
+ */
+export function stepMotion(m: Motion, input: Vec2, dt: number, params: MotionParams, speedScale = 1): Motion {
+  const speed = params.speed * speedScale;
+  let desired: Vec2 = [0, 0];
+  let target = m.target;
+
+  const inputLength = Math.hypot(input[0], input[1]);
+  if (inputLength > 1e-3) {
+    target = null;
+    const k = (speed * Math.min(inputLength, 1)) / inputLength;
+    desired = [input[0] * k, input[1] * k];
+  } else if (target) {
+    const dx = target[0] - m.position[0];
+    const dz = target[1] - m.position[1];
+    const d = Math.hypot(dx, dz);
+    if (d < params.arriveRadius) {
+      target = null;
+    } else {
+      // Arrive: full speed far away, proportional slowdown close in.
+      const s = Math.min(speed, d * params.acceleration * 0.5);
+      desired = [(dx / d) * s, (dz / d) * s];
+    }
+  }
+
+  const a = 1 - Math.exp(-params.acceleration * dt);
+  const velocity: Vec2 = [m.velocity[0] + (desired[0] - m.velocity[0]) * a, m.velocity[1] + (desired[1] - m.velocity[1]) * a];
+  if (!target && inputLength <= 1e-3 && Math.hypot(velocity[0], velocity[1]) < 1e-3) {
+    velocity[0] = 0;
+    velocity[1] = 0;
+  }
+  return {
+    position: [m.position[0] + velocity[0] * dt, m.position[1] + velocity[1] * dt],
+    velocity,
+    target,
+  };
+}
+
+/**
+ * Camera-relative walk direction on the floor. `forward` is the camera's view direction projected on XZ;
+ * `move` is [strafe right, forward] from the keys, each in -1..1.
+ */
+export function cameraRelative(forward: Vec2, move: Vec2): Vec2 {
+  const f = Math.hypot(forward[0], forward[1]) || 1;
+  const fx = forward[0] / f;
+  const fz = forward[1] / f;
+  // right = forward × up = (-fz, fx)
+  const x = fx * move[1] + -fz * move[0];
+  const z = fz * move[1] + fx * move[0];
+  const l = Math.hypot(x, z);
+  return l > 1 ? [x / l, z / l] : [x, z];
 }

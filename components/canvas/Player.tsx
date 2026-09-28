@@ -1,25 +1,36 @@
 "use client";
 
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { color } from "three/tsl";
-import { MeshBasicNodeMaterial, type Mesh } from "three/webgpu";
+import { MeshBasicNodeMaterial, Vector3, type Mesh } from "three/webgpu";
 import { isDebugEnabled } from "@/lib/debug";
-import { FLOOR_Y, INTERACT_RADIUS, PEDESTAL, PEDESTALS, PLAYER_RADIUS, ROOM } from "@/lib/explore/layout";
-import { dampTowards, nearestPedestal, resolveCollisions } from "@/lib/explore/movement";
+import { bindKeyboard, isRunning, moveAxes } from "@/lib/explore/input";
+import { FLOOR_Y, INTERACT_RADIUS, PEDESTAL, PEDESTALS, PLAYER_RADIUS, ROOM, type Vec2 } from "@/lib/explore/layout";
+import { cameraRelative, nearestPedestal, resolveCollisions, stepMotion, WALK } from "@/lib/explore/movement";
 import { player } from "@/lib/explore/player";
 import { useAppStore } from "@/store/useAppStore";
 
-const SPEED_DAMPING = 3.5; // 1/s — exponential approach rate toward the click target
 const OBSTACLES = PEDESTALS.map((p) => ({ position: p.position, radius: PEDESTAL.collisionRadius }));
+const RUN_MULTIPLIER = 1.8;
+/** Metres walked per pixel of wheel scroll, and the max step per wheel event. */
+const WHEEL_METRES_PER_PX = 0.004;
+const WHEEL_MAX_STEP = 0.6;
 
 /**
- * Explore-mode movement: damped motion toward the clicked point, circle collisions against pedestals and
- * room bounds, and distance-based pedestal proximity (published to the store only when it changes).
+ * Explore-mode movement:
+ * - keyboard (WASD / ZQSD / arrows, Shift to run), relative to where the camera looks;
+ * - mouse wheel walks forward / backward along the view direction;
+ * - click / tap on the floor walks there (secondary, mostly for touch).
+ * Smooth acceleration/braking, circle collisions against pedestals and walls, and distance-based pedestal
+ * proximity (published to the store only when it changes).
  */
 export default function Player() {
+  const gl = useThree((s) => s.gl);
+  const get = useThree((s) => s.get);
   const marker = useRef<Mesh>(null);
   const targetRing = useRef<Mesh>(null);
+  const forward = useMemo(() => new Vector3(), []);
 
   const materials = useMemo(
     () => ({
@@ -38,24 +49,49 @@ export default function Player() {
     if (isDebugEnabled()) Object.assign(window, { __player: player });
   }, []);
 
-  useFrame((_, delta) => {
+  useEffect(() => bindKeyboard(), []);
+
+  // Wheel = walk forward/backward (camera zoom is disabled in EXPLORE, see CameraRig).
+  useEffect(() => {
+    const el = gl.domElement;
+    const onWheel = (e: WheelEvent) => {
+      if (useAppStore.getState().mode !== "EXPLORE") return;
+      e.preventDefault();
+      const px = e.deltaMode === WheelEvent.DOM_DELTA_LINE ? e.deltaY * 16 : e.deltaMode === WheelEvent.DOM_DELTA_PAGE ? e.deltaY * 400 : e.deltaY;
+      const step = Math.max(-WHEEL_MAX_STEP, Math.min(WHEEL_MAX_STEP, -px * WHEEL_METRES_PER_PX));
+      get().camera.getWorldDirection(forward);
+      const [fx, fz] = cameraRelative([forward.x, forward.z], [0, 1]);
+      const from = player.target ?? player.position;
+      player.target = resolveCollisions([from[0] + fx * step, from[1] + fz * step], PLAYER_RADIUS, ROOM, OBSTACLES);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [gl, get, forward]);
+
+  useFrame(({ camera }, delta) => {
     const explore = useAppStore.getState().mode === "EXPLORE";
     if (explore) {
-      // Keep the target itself reachable, then move toward it.
-      player.target = resolveCollisions(player.target, PLAYER_RADIUS, ROOM, OBSTACLES);
-      const next = dampTowards(player.position, player.target, SPEED_DAMPING, Math.min(delta, 0.1));
-      player.position = resolveCollisions(next, PLAYER_RADIUS, ROOM, OBSTACLES);
+      camera.getWorldDirection(forward);
+      const input: Vec2 = cameraRelative([forward.x, forward.z], moveAxes());
+      if (player.target) player.target = resolveCollisions(player.target, PLAYER_RADIUS, ROOM, OBSTACLES);
+      const next = stepMotion(player, input, Math.min(delta, 0.1), WALK, isRunning() ? RUN_MULTIPLIER : 1);
+      const resolved = resolveCollisions(next.position, PLAYER_RADIUS, ROOM, OBSTACLES);
+      player.position = resolved;
+      player.velocity = next.velocity;
+      player.target = next.target;
       useAppStore.getState().setNearPedestal(nearestPedestal(player.position, PEDESTALS, INTERACT_RADIUS)?.productId ?? null);
+    } else {
+      player.velocity = [0, 0];
+      player.target = null;
     }
 
-    const moving = Math.hypot(player.target[0] - player.position[0], player.target[1] - player.position[1]) > 0.05;
     if (marker.current) {
       marker.current.visible = explore;
       marker.current.position.set(player.position[0], FLOOR_Y + 0.005, player.position[1]);
     }
     if (targetRing.current) {
-      targetRing.current.visible = explore && moving;
-      targetRing.current.position.set(player.target[0], FLOOR_Y + 0.006, player.target[1]);
+      targetRing.current.visible = explore && player.target !== null;
+      if (player.target) targetRing.current.position.set(player.target[0], FLOOR_Y + 0.006, player.target[1]);
     }
   });
 
