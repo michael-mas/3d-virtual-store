@@ -55,7 +55,7 @@ export default function CustomizerPanel() {
   if (mode === "EXPLORE") {
     return (
       <p className="pointer-events-none fixed inset-x-0 bottom-10 text-center text-sm text-neutral-300">
-        Click the glasses to customize
+        Click the floor to walk · drag to look around
       </p>
     );
   }

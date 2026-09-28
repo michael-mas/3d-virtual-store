@@ -22,6 +22,7 @@ The app makes zero external requests at runtime. All binary assets are served fr
 | `public/mediapipe/wasm/` | `@mediapipe/tasks-vision/wasm` | `postinstall` (gitignored) |
 | `public/mediapipe/face_landmarker.task` | Google MediaPipe model | manual download (committed) |
 | `public/models/glasses.glb` | procedural placeholder (`npm run generate:models`) | committed |
+| `public/models/showroom.glb` | low-poly showroom, lighting baked into vertex colors (`npm run generate:models`) | committed |
 | `public/models/head-occluder.glb` | MediaPipe canonical face + back-of-head volume (`npm run generate:models`) | committed |
 
 Paths are exported from `lib/assets.ts`.
@@ -33,6 +34,15 @@ Paths are exported from `lib/assets.ts`.
 `lens` in the lens mesh or material name — every other mesh is treated as frame. Model units are meters with
 the origin at the bridge, lenses in the z=0 plane and temples along -z; per-product try-on calibration
 (offset/scale) can be tuned live with the dev calibration panel in TRY_ON (`?debug`).
+
+### Explore
+
+The showroom is unlit geometry with lighting baked into vertex colors at generation time (no runtime lights or
+shadow maps). Room size and pedestal positions live in `lib/explore/showroom-layout.json`, shared by the generator
+and the runtime. Click the floor to walk (damped movement toward the raycast point); the player collides with
+pedestals and walls via simple circle/bounds push-out (`lib/explore/movement.ts`) — no physics engine needed.
+Standing within range of a pedestal shows a "Press E / Click" prompt (drei `Html`) that selects the product and
+fires `transition('INTERACT')`.
 
 ### Try-on
 
@@ -54,6 +64,15 @@ and camera (`components/canvas/ThumbnailRenderer.tsx`), reads the pixels back as
 blob URL on the cart item. Prices come from `lib/cart/pricing.ts` (base price + finish/lens surcharges).
 The feedback particles are one `InstancedMesh` following quadratic Bézier curves to a world point on the camera
 ray through the cart icon, recomputed each frame (`lib/screenToWorld.ts`), so they land on the icon at any size.
+
+### Explore
+
+The showroom is unlit geometry with lighting baked into vertex colors at generation time (no runtime lights or
+shadow maps). Room size and pedestal positions live in `lib/explore/showroom-layout.json`, shared by the generator
+and the runtime. Click the floor to walk (damped movement toward the raycast point); the player collides with
+pedestals and walls via simple circle/bounds push-out (`lib/explore/movement.ts`) — no physics engine needed.
+Standing within range of a pedestal shows a "Press E / Click" prompt (drei `Html`) that selects the product and
+fires `transition('INTERACT')`.
 
 ### Try-on model: `face_landmarker.task`
 

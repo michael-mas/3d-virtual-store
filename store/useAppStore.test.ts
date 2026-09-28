@@ -151,3 +151,22 @@ describe("late thumbnails", () => {
     expect(revoke).toHaveBeenCalledWith("blob:late");
   });
 });
+
+describe("interactWith", () => {
+  beforeEach(() => useAppStore.setState(initial, true));
+  afterEach(() => vi.restoreAllMocks());
+
+  it("selects the product and enters CUSTOMIZE from EXPLORE", () => {
+    expect(useAppStore.getState().interactWith("crystal")).toBe(true);
+    expect(useAppStore.getState().activeProductId).toBe("crystal");
+    expect(useAppStore.getState().mode).toBe("CUSTOMIZE");
+  });
+
+  it("does not change the product outside EXPLORE", () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const s = useAppStore.getState();
+    s.transition("INTERACT");
+    expect(s.interactWith("studio")).toBe(false);
+    expect(useAppStore.getState().activeProductId).toBe(initial.activeProductId);
+  });
+});
