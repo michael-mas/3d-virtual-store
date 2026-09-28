@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import SceneCanvas from "@/components/canvas/SceneCanvas";
 import BackendBadge from "@/components/dom/BackendBadge";
 import CalibrationPanel from "@/components/dom/CalibrationPanel";
+import CartButton from "@/components/dom/CartButton";
+import CartDrawer from "@/components/dom/CartDrawer";
 import CustomizerPanel from "@/components/dom/CustomizerPanel";
 import DevPanel from "@/components/dom/DevPanel";
 import PhotoModal from "@/components/dom/PhotoModal";
@@ -23,6 +25,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <TryOnPanel />
         <PhotoModal />
         <CalibrationPanel />
+        <CartButton />
+        <CartDrawer />
         <BackendBadge />
         <DevPanel />
       </body>

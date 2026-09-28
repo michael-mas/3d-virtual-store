@@ -88,3 +88,66 @@ describe("photo lifecycle", () => {
     expect(useAppStore.getState().photoUrl).toBeNull();
   });
 });
+
+describe("cart", () => {
+  beforeEach(() => useAppStore.setState(initial, true));
+  afterEach(() => vi.restoreAllMocks());
+
+  it("stores the thumbnail URL and bumps the fx counter", () => {
+    const s = useAppStore.getState();
+    const id = s.addToCart("blob:thumb");
+    const { items, cartFxId } = useAppStore.getState();
+    expect(items.find((i) => i.id === id)?.thumbnailUrl).toBe("blob:thumb");
+    expect(cartFxId).toBe(initial.cartFxId + 1);
+  });
+
+  it("revokes thumbnails on remove and clear", () => {
+    const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+    const s = useAppStore.getState();
+    const a = s.addToCart("blob:a");
+    s.addToCart("blob:b");
+    s.removeFromCart(a);
+    expect(revoke).toHaveBeenCalledWith("blob:a");
+    s.clearCart();
+    expect(revoke).toHaveBeenCalledWith("blob:b");
+    expect(useAppStore.getState().items).toHaveLength(0);
+  });
+
+  it.each([
+    ["EXPLORE", []],
+    ["CUSTOMIZE", ["INTERACT"]],
+    ["TRY_ON", ["INTERACT", "TRY_ON"]],
+    ["PHOTO", ["INTERACT", "TRY_ON", "CAPTURE"]],
+  ] as const)("Try On from %s restores the config and ends in TRY_ON", (_, path) => {
+    const s = useAppStore.getState();
+    s.setLensEffect("holographic");
+    s.setFinish("glass");
+    const id = s.addToCart();
+    s.setLensEffect("clear");
+    s.setFinish("matte");
+    for (const e of path) s.transition(e);
+    s.setCartOpen(true);
+    s.tryOnCartItem(id);
+    const next = useAppStore.getState();
+    expect(next.mode).toBe("TRY_ON");
+    expect(next.cartOpen).toBe(false);
+    expect(next.configs[next.activeProductId]).toMatchObject({ finish: "glass", lens: "holographic" });
+  });
+});
+
+describe("late thumbnails", () => {
+  beforeEach(() => useAppStore.setState(initial, true));
+  afterEach(() => vi.restoreAllMocks());
+
+  it("attaches to an existing item and is revoked if the item was removed", () => {
+    const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+    const s = useAppStore.getState();
+    const a = s.addToCart();
+    s.setItemThumbnail(a, "blob:a");
+    expect(useAppStore.getState().items[0].thumbnailUrl).toBe("blob:a");
+    const b = s.addToCart();
+    s.removeFromCart(b);
+    s.setItemThumbnail(b, "blob:late");
+    expect(revoke).toHaveBeenCalledWith("blob:late");
+  });
+});

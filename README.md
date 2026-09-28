@@ -47,6 +47,14 @@ cropped to what is visible on screen (`lib/tryon/capture.ts`). The scene is rend
 the WebGL drawing buffer is not preserved and the WebGPU canvas texture is only valid until it is presented,
 so reading in a later task gives a blank image.
 
+### Cart
+
+Add to cart renders the product (current configuration) into a dedicated 256px render target with its own scene
+and camera (`components/canvas/ThumbnailRenderer.tsx`), reads the pixels back asynchronously and stores a PNG
+blob URL on the cart item. Prices come from `lib/cart/pricing.ts` (base price + finish/lens surcharges).
+The feedback particles are one `InstancedMesh` following quadratic Bézier curves to a world point on the camera
+ray through the cart icon, recomputed each frame (`lib/screenToWorld.ts`), so they land on the icon at any size.
+
 ### Try-on model: `face_landmarker.task`
 
 Download the Face Landmarker model (float16) and place it at `public/mediapipe/face_landmarker.task`:
