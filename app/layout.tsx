@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import SceneCanvas from "@/components/canvas/SceneCanvas";
 import BackendBadge from "@/components/dom/BackendBadge";
+import CalibrationPanel from "@/components/dom/CalibrationPanel";
 import CustomizerPanel from "@/components/dom/CustomizerPanel";
 import DevPanel from "@/components/dom/DevPanel";
+import TryOnPanel from "@/components/dom/TryOnPanel";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,6 +19,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SceneCanvas />
         <div className="pointer-events-none relative h-full">{children}</div>
         <CustomizerPanel />
+        <TryOnPanel />
+        <CalibrationPanel />
         <BackendBadge />
         <DevPanel />
       </body>

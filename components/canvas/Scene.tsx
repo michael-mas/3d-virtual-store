@@ -11,6 +11,7 @@ import FrameStats from "./FrameStats";
 import Glasses from "./Glasses";
 import Lighting from "./Lighting";
 import PostFx from "./PostFx";
+import SceneBackground from "./SceneBackground";
 
 // Register three/webgpu classes (node materials etc.) with the R3F reconciler.
 extend(THREE as unknown as Catalogue);
@@ -39,7 +40,7 @@ export default function Scene() {
         return renderer;
       }}
     >
-      <color attach="background" args={["#1c1917"]} />
+      <SceneBackground />
       <Lighting />
       <Backdrop />
       <Suspense fallback={null}>
