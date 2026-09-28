@@ -7,6 +7,9 @@ export type TryOnStatus = "idle" | "camera" | "model" | "running" | "error";
 /** Webcam, or the bundled sample video run through the same pipeline. */
 export type TryOnSource = "camera" | "demo";
 
+/** Debug view of the surface (face mesh) layer: canonical-UV checker or the underlying video luminance. */
+export type SurfaceDebug = "off" | "uv" | "luma";
+
 export type TryOnSlice = {
   tryOnStatus: TryOnStatus;
   tryOnError: TryOnError | null;
@@ -21,6 +24,8 @@ export type TryOnSlice = {
   faceDetected: boolean;
   /** Face-tracking download progress (0..1) while status is "model"; null otherwise. */
   tryOnProgress: number | null;
+  surfaceDebug: SurfaceDebug;
+  setSurfaceDebug: (mode: SurfaceDebug) => void;
   setTryOnProgress: (progress: number | null) => void;
   setTryOnStatus: (status: TryOnStatus, error?: TryOnError) => void;
   setTryOnSource: (source: TryOnSource) => void;
@@ -39,6 +44,8 @@ export const createTryOnSlice: Slice<TryOnSlice> = (set) => ({
   videoAspect: null,
   faceDetected: false,
   tryOnProgress: null,
+  surfaceDebug: "off",
+  setSurfaceDebug: (surfaceDebug) => set({ surfaceDebug }),
   setTryOnProgress: (tryOnProgress) => set({ tryOnProgress }),
   setTryOnStatus: (tryOnStatus, error) => set({ tryOnStatus, tryOnError: error ?? null }),
   setTryOnSource: (tryOnSource) => set((s) => ({ tryOnSource, tryOnAttempt: s.tryOnAttempt + 1 })),

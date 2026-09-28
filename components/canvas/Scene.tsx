@@ -3,11 +3,12 @@
 import { Canvas, extend, type Catalogue } from "@react-three/fiber";
 import * as THREE from "three/webgpu";
 import { isDebugEnabled } from "@/lib/debug";
+import { isTryOnMode } from "@/lib/modes";
 import { PEDESTALS } from "@/lib/explore/layout";
 import { quietThreeConsole } from "@/lib/quietConsole";
 import { getProduct, type ProductRenderer } from "@/lib/products";
 import { useAppStore } from "@/store/useAppStore";
-import { Suspense, type ComponentType } from "react";
+import { lazy, Suspense, useState, type ComponentType } from "react";
 import CartParticles from "./CartParticles";
 import CameraRig from "./CameraRig";
 import FrameStats from "./FrameStats";
@@ -20,11 +21,27 @@ import Lighting from "./Lighting";
 import PostFx from "./PostFx";
 import SceneBackground from "./SceneBackground";
 import SceneReadyMarker from "./SceneReadyMarker";
+import { loadSurfaceLayer } from "./IdlePrefetch";
 import ThumbnailRenderer from "./ThumbnailRenderer";
 
 // Register three/webgpu classes (node materials etc.) with the R3F reconciler.
 extend(THREE as unknown as Catalogue);
 quietThreeConsole();
+
+// Surface (face mesh) layer: its own chunk (topology data), fetched on the first try-on or prefetched in CUSTOMIZE.
+const SurfaceLayer = lazy(loadSurfaceLayer);
+
+/** Mounted from the first try-on on and kept mounted, so its materials compile once. */
+function LazySurfaceLayer() {
+  const tryOn = useAppStore((s) => isTryOnMode(s.mode));
+  const [mounted, setMounted] = useState(false);
+  if (tryOn && !mounted) setMounted(true);
+  return mounted ? (
+    <Suspense fallback={null}>
+      <SurfaceLayer />
+    </Suspense>
+  ) : null;
+}
 
 /** Scene component per product renderer (see `Product.renderer` in the registry). */
 const RENDERERS: Record<ProductRenderer, ComponentType<{ productId: string }>> = {
@@ -78,6 +95,7 @@ export default function Scene() {
       <InteractPrompt />
       <CartParticles />
       <CameraRig />
+      <LazySurfaceLayer />
       <PostFx />
       <FrameStats />
       <IdlePrefetch />

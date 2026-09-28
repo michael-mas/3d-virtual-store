@@ -10,7 +10,7 @@
     "postinstall": "node scripts/copy-wasm.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "generate:models": "node scripts/generate-glasses.mjs && node scripts/generate-occluder.mjs && node scripts/generate-showroom.mjs"
+    "generate:models": "node scripts/generate-glasses.mjs && node scripts/generate-occluder.mjs && node scripts/generate-showroom.mjs && node scripts/generate-face-mesh.mjs"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "1.0.1",

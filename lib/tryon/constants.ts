@@ -18,3 +18,6 @@ export const GLASSES_ANCHOR: [number, number, number] = [0, 2.6 * CM, 5.8 * CM];
 
 /** Selfie-style mirroring of the try-on stage (video + 3D). Applied on screen and in captured photos. */
 export const TRY_ON_MIRRORED = true;
+
+/** FaceLandmarker outputs 478 landmarks per face: 468 face mesh vertices + 10 iris points. */
+export const LANDMARK_COUNT = 478;

@@ -47,6 +47,7 @@ Dev dependencies:
 
 Scripts: `dev`, `build` (static export to `out/`), `start` (serve `out/`), `lint`, `test`, `test:watch`,
 `generate:models` (Draco `public/models/glasses.glb`, `head-occluder.glb` from `scripts/data/canonical_face_model.obj`,
-`showroom.glb` with baked vertex-color lighting from `lib/explore/showroom-layout.json`),
+`showroom.glb` with baked vertex-color lighting from `lib/explore/showroom-layout.json`,
+`lib/tryon/faceMeshTopology.json` from MediaPipe's `geometry_pipeline_metadata_landmarks.pbtxt`),
 `postinstall` (`scripts/copy-wasm.mjs` copies Draco → `public/draco/`, MediaPipe WASM → `public/mediapipe/wasm/`).
 Asset paths live in `lib/assets.ts`.

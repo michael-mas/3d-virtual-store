@@ -1,4 +1,5 @@
 import { Matrix4 } from "three";
+import { LANDMARK_COUNT } from "./constants";
 
 /**
  * Per-frame try-on state shared between the DOM session (webcam + FaceLandmarker) and the R3F scene.
@@ -10,4 +11,24 @@ export const tracking = {
   /** Smoothed facial transformation matrix (canonical face cm → camera cm). */
   pose: new Matrix4(),
   hasFace: false,
+  /**
+   * Raw normalized landmarks of the last detection with a face (flat x, y, z; x/y in [0, 1] of the video frame,
+   * z depth, smaller = closer). Written in place. Not smoothed again here: in VIDEO mode with numFaces 1,
+   * FaceLandmarker's own graph already runs a One Euro LandmarksSmoothingCalculator on them (MediaPipe
+   * face_landmarker_graph.cc / face_landmarks_detector_graph.cc); extra filtering would only add lag.
+   */
+  landmarks: new Float32Array(LANDMARK_COUNT * 3),
+  /** Incremented every time `landmarks` is rewritten (lets the scene skip redundant geometry uploads). */
+  landmarksVersion: 0,
 };
+
+/** Copies FaceLandmarker landmarks into a flat, preallocated array (no allocation per frame). */
+export function copyLandmarks(landmarks: readonly { x: number; y: number; z: number }[], out: Float32Array) {
+  const n = Math.min(landmarks.length, out.length / 3);
+  for (let i = 0; i < n; i++) {
+    const l = landmarks[i];
+    out[i * 3] = l.x;
+    out[i * 3 + 1] = l.y;
+    out[i * 3 + 2] = l.z;
+  }
+}
