@@ -9,7 +9,8 @@
     "lint": "eslint",
     "postinstall": "node scripts/copy-wasm.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "generate:models": "node scripts/generate-glasses.mjs"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "1.0.1",
@@ -22,11 +23,15 @@
     "zustand": "5.0.15"
   },
   "devDependencies": {
+    "@gltf-transform/core": "4.5.0",
+    "@gltf-transform/extensions": "4.5.0",
+    "@gltf-transform/functions": "4.5.0",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "22.20.4",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.7",
     "@types/three": "0.186.0",
+    "draco3dgltf": "1.5.7",
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.6",
     "tailwindcss": "4.3.3",

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import SceneCanvas from "@/components/canvas/SceneCanvas";
 import BackendBadge from "@/components/dom/BackendBadge";
+import CustomizerPanel from "@/components/dom/CustomizerPanel";
 import DevPanel from "@/components/dom/DevPanel";
 import "./globals.css";
 
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="h-full overflow-hidden">
         <SceneCanvas />
         <div className="pointer-events-none relative h-full">{children}</div>
+        <CustomizerPanel />
         <BackendBadge />
         <DevPanel />
       </body>
