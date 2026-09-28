@@ -4,6 +4,8 @@ import dynamic from "next/dynamic";
 import { useRef, type CSSProperties } from "react";
 import { useTryOnSession } from "@/hooks/useTryOnSession";
 import { isTryOnMode } from "@/lib/modes";
+import { setCaptureStage } from "@/lib/tryon/capture";
+import { TRY_ON_MIRRORED } from "@/lib/tryon/constants";
 import { useAppStore } from "@/store/useAppStore";
 
 // Client-only: WebGPU/WebGL cannot run during static prerendering.
@@ -30,12 +32,12 @@ export default function SceneCanvas() {
         top: "50%",
         width: `max(100vw, calc(100vh * ${aspect}))`,
         aspectRatio: aspect,
-        transform: "translate(-50%, -50%) scaleX(-1)",
+        transform: `translate(-50%, -50%)${TRY_ON_MIRRORED ? " scaleX(-1)" : ""}`,
       }
     : { position: "fixed", inset: 0 };
 
   return (
-    <div style={style} data-testid="stage">
+    <div ref={setCaptureStage} style={style} data-testid="stage">
       <video
         ref={videoRef}
         muted

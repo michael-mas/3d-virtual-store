@@ -4,6 +4,7 @@ import BackendBadge from "@/components/dom/BackendBadge";
 import CalibrationPanel from "@/components/dom/CalibrationPanel";
 import CustomizerPanel from "@/components/dom/CustomizerPanel";
 import DevPanel from "@/components/dom/DevPanel";
+import PhotoModal from "@/components/dom/PhotoModal";
 import TryOnPanel from "@/components/dom/TryOnPanel";
 import "./globals.css";
 
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="pointer-events-none relative h-full">{children}</div>
         <CustomizerPanel />
         <TryOnPanel />
+        <PhotoModal />
         <CalibrationPanel />
         <BackendBadge />
         <DevPanel />

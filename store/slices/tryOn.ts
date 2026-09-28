@@ -23,7 +23,12 @@ export const createTryOnSlice: Slice<TryOnSlice> = (set) => ({
   videoAspect: null,
   faceDetected: false,
   setTryOnStatus: (tryOnStatus, error) => set({ tryOnStatus, tryOnError: error ?? null }),
-  setPhotoUrl: (photoUrl) => set({ photoUrl }),
+  setPhotoUrl: (photoUrl) =>
+    set((s) => {
+      // Photos are object URLs; release the previous one.
+      if (s.photoUrl && s.photoUrl !== photoUrl) URL.revokeObjectURL(s.photoUrl);
+      return { photoUrl };
+    }),
   setVideoAspect: (videoAspect) => set({ videoAspect }),
   setFaceDetected: (faceDetected) => set({ faceDetected }),
 });

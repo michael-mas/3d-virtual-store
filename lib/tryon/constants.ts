@@ -15,3 +15,6 @@ export const TRY_ON_FAR = 100;
  * Per-product calibration is applied on top.
  */
 export const GLASSES_ANCHOR: [number, number, number] = [0, 2.6 * CM, 5.8 * CM];
+
+/** Selfie-style mirroring of the try-on stage (video + 3D). Applied on screen and in captured photos. */
+export const TRY_ON_MIRRORED = true;
