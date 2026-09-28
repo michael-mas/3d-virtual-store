@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { preload } from "react-dom";
 import SceneCanvas from "@/components/canvas/SceneCanvas";
 import BackendBadge from "@/components/dom/BackendBadge";
@@ -15,10 +15,30 @@ import { DRACO_DECODER_PATH, SHOWROOM_MODEL_PATH } from "@/lib/assets";
 import { PRODUCTS } from "@/lib/products";
 import "./globals.css";
 
+const TITLE = "3D Virtual Store — WebGPU showroom & virtual try-on";
+const DESCRIPTION =
+  "Walk a 3D showroom, customize products and try them on with your webcam. WebGPU + MediaPipe, running 100% in your browser.";
+
+/**
+ * Absolute base for the Open Graph image URL: NEXT_PUBLIC_SITE_URL if set, else the Vercel production domain
+ * (set by Vercel at build time), else localhost for local builds.
+ */
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "http://localhost:3000");
+
+// The OG image comes from app/opengraph-image.jpg (a photo-booth capture) and the favicon from app/icon.svg.
 export const metadata: Metadata = {
-  title: "3D Virtual Store",
-  description: "3D virtual store & virtual try-on proof of concept",
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: { type: "website", title: TITLE, description: DESCRIPTION, siteName: "3D Virtual Store" },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
 };
+
+export const viewport: Viewport = { themeColor: "#0a0a0a" };
 
 /**
  * Assets the first frame needs, fetched in parallel with the JS instead of after it (three's loaders use

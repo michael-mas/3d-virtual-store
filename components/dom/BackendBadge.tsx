@@ -1,9 +1,17 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
+import { isDebugEnabled } from "@/lib/debug";
 import { useAppStore } from "@/store/useAppStore";
 
+const subscribe = () => () => {};
+
+/** Active renderer backend. Dev only (or `?debug` in production). */
 export default function BackendBadge() {
+  const visible = useSyncExternalStore(subscribe, isDebugEnabled, () => false);
   const backend = useAppStore((s) => s.backend);
+
+  if (!visible) return null;
 
   return (
     <div

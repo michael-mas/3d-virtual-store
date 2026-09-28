@@ -4,6 +4,7 @@ import { Canvas, extend, type Catalogue } from "@react-three/fiber";
 import * as THREE from "three/webgpu";
 import { isDebugEnabled } from "@/lib/debug";
 import { PEDESTALS } from "@/lib/explore/layout";
+import { quietThreeConsole } from "@/lib/quietConsole";
 import { getProduct, type ProductRenderer } from "@/lib/products";
 import { useAppStore } from "@/store/useAppStore";
 import { Suspense, type ComponentType } from "react";
@@ -23,6 +24,7 @@ import ThumbnailRenderer from "./ThumbnailRenderer";
 
 // Register three/webgpu classes (node materials etc.) with the R3F reconciler.
 extend(THREE as unknown as Catalogue);
+quietThreeConsole();
 
 /** Scene component per product renderer (see `Product.renderer` in the registry). */
 const RENDERERS: Record<ProductRenderer, ComponentType<{ productId: string }>> = {
