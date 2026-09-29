@@ -2,7 +2,14 @@
 
 import { formatPrice, priceOf } from "@/lib/cart/pricing";
 import { renderThumbnail } from "@/lib/cart/registry";
-import { getProduct, type ChoiceOption, type ColorOption, type OptionSchema } from "@/lib/products";
+import {
+  getProduct,
+  optionValueLabel,
+  type ChoiceOption,
+  type ColorOption,
+  type OptionSchema,
+  type RangeOption,
+} from "@/lib/products";
 import { useAppStore } from "@/store/useAppStore";
 
 const legendClass = "mb-1.5 text-xs font-medium tracking-wide text-neutral-400 uppercase";
@@ -67,12 +74,34 @@ function ColorControl({ option, value, onChange }: { option: ColorOption; value:
   );
 }
 
-function OptionControl(props: { option: OptionSchema; value: string; onChange: (v: string) => void }) {
-  return props.option.kind === "choice" ? (
-    <ChoiceControl option={props.option} value={props.value} onChange={props.onChange} />
-  ) : (
-    <ColorControl option={props.option} value={props.value} onChange={props.onChange} />
+function RangeControl({ option, value, onChange }: { option: RangeOption; value: string; onChange: (v: string) => void }) {
+  const id = `option-${option.id}`;
+  return (
+    <div>
+      <label htmlFor={id} className={`${legendClass} flex justify-between`}>
+        <span>{option.label}</span>
+        <span className="text-neutral-200 normal-case">{optionValueLabel(option, value)}</span>
+      </label>
+      <input
+        id={id}
+        type="range"
+        min={option.min}
+        max={option.max}
+        step={option.step}
+        value={value}
+        aria-valuetext={optionValueLabel(option, value)}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full accent-white"
+      />
+    </div>
   );
+}
+
+function OptionControl(props: { option: OptionSchema; value: string; onChange: (v: string) => void }) {
+  const { option, value, onChange } = props;
+  if (option.kind === "choice") return <ChoiceControl option={option} value={value} onChange={onChange} />;
+  if (option.kind === "range") return <RangeControl option={option} value={value} onChange={onChange} />;
+  return <ColorControl option={option} value={value} onChange={onChange} />;
 }
 
 /** CUSTOMIZE panel, generated from the active product's customization schema. */

@@ -1,4 +1,5 @@
 import { glassesProduct } from "./glasses";
+import { facePaintProduct } from "./facePaint";
 import { lipstickProduct } from "./lipstick";
 import type { Product } from "./types";
 
@@ -32,6 +33,7 @@ export const PRODUCTS: readonly Product[] = [
     defaults: { finish: "glass", frameColor: "#7c3aed", lens: "iridescent" },
   }),
   lipstickProduct({ id: "velvet-lip", name: "Velvet Lip", basePrice: 32 }),
+  facePaintProduct({ id: "glow-paint", name: "Glow Paint", basePrice: 24 }),
 ];
 
 export const DEFAULT_PRODUCT_ID = PRODUCTS[0].id;

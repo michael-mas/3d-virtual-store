@@ -13,6 +13,7 @@ import CartParticles from "./CartParticles";
 import CameraRig from "./CameraRig";
 import FrameStats from "./FrameStats";
 import IdlePrefetch from "./IdlePrefetch";
+import FacePaint from "./FacePaint";
 import Glasses from "./Glasses";
 import Lipstick from "./Lipstick";
 import InteractPrompt from "./InteractPrompt";
@@ -48,6 +49,7 @@ function LazySurfaceLayer() {
 const RENDERERS: Record<ProductRenderer, ComponentType<{ productId: string }>> = {
   glasses: Glasses,
   lipstick: Lipstick,
+  facePaint: FacePaint,
 };
 
 export default function Scene() {

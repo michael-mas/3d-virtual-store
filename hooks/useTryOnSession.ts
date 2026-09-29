@@ -14,7 +14,7 @@ import {
 import { onTryOnAssetsProgress } from "@/lib/tryon/assets";
 import { getFaceLandmarker } from "@/lib/tryon/faceLandmarker";
 import { PoseSmoother } from "@/lib/tryon/poseSmoother";
-import { copyLandmarks, tracking } from "@/lib/tryon/tracking";
+import { blendshapeScore, copyLandmarks, tracking } from "@/lib/tryon/tracking";
 import { useAppStore, type TryOnSource } from "@/store/useAppStore";
 
 const CONSTRAINTS: MediaStreamConstraints = {
@@ -170,6 +170,8 @@ export function useTryOnSession(
               smoother.update(matrix.data, now / 1000, tracking.pose);
               copyLandmarks(landmarks, tracking.landmarks);
               tracking.landmarksVersion++;
+              const shapes = result.faceBlendshapes[0]?.categories;
+              tracking.jawOpen = shapes ? blendshapeScore(shapes, "jawOpen") : 0;
               lastFaceAt = now;
             }
             // Brief dropouts keep the last pose; after the grace period the glasses are hidden.

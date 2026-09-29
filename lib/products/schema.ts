@@ -2,8 +2,16 @@ import type { OptionSchema, Product, ProductConfig } from "./types";
 
 const HEX = /^#[0-9a-f]{6}$/i;
 
+const DECIMAL = /^-?\d+(\.\d+)?$/;
+
 export function isValidValue(option: OptionSchema, value: string): boolean {
   if (option.kind === "choice") return option.values.some((v) => v.value === value);
+  if (option.kind === "range") {
+    if (!DECIMAL.test(value)) return false;
+    const n = Number(value);
+    const steps = (n - option.min) / option.step;
+    return n >= option.min && n <= option.max && Math.abs(steps - Math.round(steps)) < 1e-6;
+  }
   return option.presets.some((v) => v.value === value) || (option.allowCustom && HEX.test(value));
 }
 
@@ -23,6 +31,10 @@ export function sanitizeConfig(product: Product, config: Record<string, string>)
 }
 
 export function optionValueLabel(option: OptionSchema, value: string): string {
+  if (option.kind === "range") {
+    const shown = Number(value) * (option.displayScale ?? 1);
+    return `${Number.isInteger(shown) ? shown : +shown.toFixed(2)}${option.unit ?? ""}`;
+  }
   const list = option.kind === "choice" ? option.values : option.presets;
   return list.find((v) => v.value === value)?.label ?? value;
 }

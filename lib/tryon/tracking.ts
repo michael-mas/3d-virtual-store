@@ -20,7 +20,20 @@ export const tracking = {
   landmarks: new Float32Array(LANDMARK_COUNT * 3),
   /** Incremented every time `landmarks` is rewritten (lets the scene skip redundant geometry uploads). */
   landmarksVersion: 0,
+  /** FaceLandmarker "jawOpen" blendshape score of the last detection (0 closed … 1 wide open). */
+  jawOpen: 0,
 };
+
+/** Reads one blendshape score by name; caches its index (the category order is fixed by the model). */
+const blendshapeIndex = new Map<string, number>();
+export function blendshapeScore(categories: readonly { categoryName: string; score: number }[], name: string): number {
+  let i = blendshapeIndex.get(name);
+  if (i === undefined || categories[i]?.categoryName !== name) {
+    i = categories.findIndex((c) => c.categoryName === name);
+    blendshapeIndex.set(name, i);
+  }
+  return i >= 0 ? categories[i].score : 0;
+}
 
 /** Copies FaceLandmarker landmarks into a flat, preallocated array (no allocation per frame). */
 export function copyLandmarks(landmarks: readonly { x: number; y: number; z: number }[], out: Float32Array) {
