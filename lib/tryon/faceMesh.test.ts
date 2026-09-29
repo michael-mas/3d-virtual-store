@@ -6,6 +6,8 @@ import {
   FACE_MESH_UVS,
   FACE_MESH_VERTEX_COUNT,
   LANDMARK_COUNT,
+  LIP_CONTOURS,
+  MOUTH_TRIANGLES,
   createFaceMeshGeometry,
   updateFaceMeshPositions,
 } from "./faceMesh";
@@ -57,11 +59,11 @@ describe("updateFaceMeshPositions", () => {
   it("maps landmarks to the video layer (y up, z toward the camera) and keeps the winding", () => {
     const geometry = createFaceMeshGeometry();
     const landmarks = frontalLandmarks();
-    updateFaceMeshPositions(geometry, landmarks);
+    updateFaceMeshPositions(geometry, landmarks, 16 / 9);
     const p = geometry.getAttribute("position").array;
-    expect(p[1 * 3]).toBeCloseTo(landmarks[1 * 3]);
+    expect(p[1 * 3]).toBeCloseTo(landmarks[1 * 3] * (16 / 9));
     expect(p[1 * 3 + 1]).toBeCloseTo(1 - landmarks[1 * 3 + 1]);
-    expect(p[1 * 3 + 2]).toBeCloseTo(-landmarks[1 * 3 + 2]);
+    expect(p[1 * 3 + 2]).toBeCloseTo(-landmarks[1 * 3 + 2] * (16 / 9));
     // The most forward canonical vertex (nose tip) is the closest to the camera → largest z in the layer.
     const argmax = (a: number[]) => a.indexOf(Math.max(...a));
     const zs = Array.from({ length: 468 }, (_, i) => p[i * 3 + 2]);
@@ -70,16 +72,43 @@ describe("updateFaceMeshPositions", () => {
     expect(signedArea(p)).toBeGreaterThan(0);
   });
 
+  it("computes outward normals (toward the camera on a frontal face)", () => {
+    const geometry = createFaceMeshGeometry();
+    updateFaceMeshPositions(geometry, frontalLandmarks(), 1);
+    const n = geometry.getAttribute("normal");
+    // Nose tip and forehead center face the camera (+z).
+    for (const i of [4, 10, 151]) expect(n.getZ(i)).toBeGreaterThan(0.7);
+  });
+
   it("rewrites the same buffer in place", () => {
     const geometry = createFaceMeshGeometry();
     const position = geometry.getAttribute("position") as BufferAttribute;
     const before = position.array;
     const version = position.version;
-    updateFaceMeshPositions(geometry, frontalLandmarks());
-    updateFaceMeshPositions(geometry, frontalLandmarks());
+    updateFaceMeshPositions(geometry, frontalLandmarks(), 1);
+    updateFaceMeshPositions(geometry, frontalLandmarks(), 1);
     expect(geometry.getAttribute("position")).toBe(position);
     expect(position.array).toBe(before);
     expect(position.version).toBe(version + 2);
+  });
+});
+
+describe("mouth and lips", () => {
+  it("leaves the mouth opening out of the paintable mesh", () => {
+    expect(MOUTH_TRIANGLES.length).toBe(18);
+    const index = createFaceMeshGeometry().getIndex()!;
+    expect(index.count).toBe((898 - 18) * 3);
+    const inner = new Set(LIP_CONTOURS.inner);
+    for (let t = 0; t < index.count; t += 3) {
+      expect([0, 1, 2].every((k) => inner.has(index.getX(t + k)))).toBe(false);
+    }
+  });
+
+  it("has closed outer and inner lip loops through the mouth corners", () => {
+    expect(LIP_CONTOURS.outer).toHaveLength(20);
+    expect(LIP_CONTOURS.inner).toHaveLength(20);
+    expect(LIP_CONTOURS.outer).toEqual(expect.arrayContaining([61, 291, 0, 17]));
+    expect(LIP_CONTOURS.inner).toEqual(expect.arrayContaining([78, 308, 13, 14]));
   });
 });
 

@@ -10,18 +10,20 @@ fallback) for rendering and MediaPipe for face tracking.
 
 ## Features
 
-- **Explore.** A low-poly showroom with baked lighting and three product pedestals.
+- **Explore.** A low-poly showroom with baked lighting and one pedestal per product (three glasses, one lipstick).
   - Walk with WASD, ZQSD or the arrow keys (physical key positions, Shift to run), or with the mouse wheel.
   - Drag to look around. Click or tap the floor to walk there.
   - Near a pedestal, a "Press E / Click" prompt (or "Tap to view" on touch screens) opens the product.
 - **Customize.**
-  - Frame finish: matte, metal or transmissive glass.
-  - Frame color: presets plus any custom color.
-  - Lens: clear, iridescent, or a holographic TSL shader.
+  - Glasses: frame finish (matte, metal or transmissive glass), frame color (presets plus any custom color),
+    and lens (clear, iridescent, or a holographic TSL shader).
+  - Lipstick: finish (matte, satin, gloss, metallic) and shade (presets plus any custom color).
   - The price updates live. The whole panel is generated from the product's schema.
 - **Try on.**
-  - Real-time face tracking from the webcam, with the 3D model anchored to the head.
-  - A depth-only head occluder hides the temples behind the head.
+  - Real-time face tracking from the webcam. Glasses are anchored to the head pose; a depth-only head occluder
+    hides the temples behind the head.
+  - Lipstick is painted on a face mesh updated from the 468 landmarks on every detection. The lips are masked from
+    MediaPipe's official lip contours, so the mouth interior stays visible when it opens.
   - Selfie mirroring and pose smoothing.
   - A demo video can be used when no camera is available or access is denied.
 - **Photo booth.** Captures the video frame and the 3D render together, exactly as shown on screen, and downloads
@@ -115,9 +117,11 @@ Everything runs locally in your browser:
 
 ## Known limitations
 
-- **Products are all glasses on one placeholder model.** The three products share a procedural glasses model and
-  differ only by default configuration and price. Only the `rigid` attachment has a renderer so far; `surface` and
-  `landmark` exist in the registry types only.
+- **Placeholder products.** The three glasses share a procedural model and differ only by default configuration
+  and price. The lipstick is a procedural tube. `rigid` (glasses) and `surface` (lipstick) are implemented;
+  `landmark` exists in the registry types only.
+- **Lipstick shading is an estimate.** The shade is lit using the video's own luminance, so very dark or blown-out
+  lighting shifts how the color reads, and the lip outline follows the tracked landmarks, not the real lip edge.
 - **Fit is approximate.** Calibration is a per-product offset and scale on a fixed anchor, so glasses can sit a
   little high or low on some faces. With `?debug`, calibration sliders appear in try-on.
 - **Tracking lag on slow devices.** When detection runs slowly, the pose trails fast head movements. A photo

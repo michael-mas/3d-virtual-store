@@ -1,7 +1,6 @@
 "use client";
 
 import { useGLTF } from "@react-three/drei";
-import type { ThreeEvent } from "@react-three/fiber";
 import { useEffect, useMemo } from "react";
 import { Box3, Group, Mesh, Vector3, type Object3D } from "three/webgpu";
 import { DRACO_DECODER_PATH } from "@/lib/assets";
@@ -12,20 +11,15 @@ import {
   setFrameColor,
 } from "@/lib/materials";
 import { setProductModel } from "@/lib/cart/registry";
-import { PEDESTALS, productPosition } from "@/lib/explore/layout";
-import { approachPoint } from "@/lib/explore/movement";
-import { player, walkTo } from "@/lib/explore/player";
 import { getProduct } from "@/lib/products";
 import { readGlassesConfig } from "@/lib/products/glasses";
 import { isTryOnMode } from "@/lib/modes";
 import { useAppStore } from "@/store/useAppStore";
 import FaceAnchor from "./FaceAnchor";
+import PedestalMount, { TINY } from "./PedestalMount";
 
 const isLens = (o: Object3D) =>
   /lens/i.test(o.name) || (o instanceof Mesh && /lens/i.test((o.material as { name?: string }).name ?? ""));
-
-/** Scale used to keep objects drawn (bindings/pipelines kept current) while effectively invisible. */
-const TINY = 1e-4;
 
 /**
  * One configurable product on its pedestal. Each instance owns a clone of the model and its material set.
@@ -35,7 +29,6 @@ export default function Glasses({ productId }: { productId: string }) {
   const config = readGlassesConfig(useAppStore((s) => s.configs[productId]));
   const mode = useAppStore((s) => s.mode);
   const active = useAppStore((s) => s.activeProductId === productId);
-  const interactWith = useAppStore((s) => s.interactWith);
   const product = getProduct(productId)!;
   if (!product.model) throw new Error(`Glasses product "${productId}" has no model`);
 
@@ -105,22 +98,11 @@ export default function Glasses({ productId }: { productId: string }) {
   // Invisible bounding-box hit target: thin frame wires are hard to click.
   const hitBox = useMemo(() => {
     const box = new Box3().setFromObject(scene);
-    return { size: box.getSize(new Vector3()).toArray(), center: box.getCenter(new Vector3()).toArray() };
+    return {
+      size: box.getSize(new Vector3()).toArray() as [number, number, number],
+      center: box.getCenter(new Vector3()).toArray() as [number, number, number],
+    };
   }, [scene]);
-
-  const onClick = (e: ThreeEvent<MouseEvent>) => {
-    if (mode !== "EXPLORE") return;
-    e.stopPropagation();
-    // Near the pedestal: interact. Otherwise walk up to it.
-    if (useAppStore.getState().nearPedestal === productId) interactWith(productId);
-    else {
-      const pedestal = PEDESTALS.find((p) => p.productId === productId);
-      if (pedestal) walkTo(approachPoint(pedestal, player.position, 0.9));
-    }
-  };
-  const setCursor = (cursor: string) => () => {
-    document.body.style.cursor = mode === "EXPLORE" ? cursor : "auto";
-  };
 
   const keepAliveNode = <primitive object={keepAlive} />;
 
@@ -135,20 +117,10 @@ export default function Glasses({ productId }: { productId: string }) {
     );
   }
 
-  // Other products stay mounted and drawn during try-on, shrunk to nothing (not `visible=false`, see keep-alive).
   return (
-    <group position={productPosition(productId)} scale={tryOn ? TINY : 1}>
+    <PedestalMount productId={productId} hitBox={hitBox}>
       <primitive object={scene} />
-      <mesh
-        visible={false}
-        position={hitBox.center}
-        onClick={onClick}
-        onPointerOver={setCursor("pointer")}
-        onPointerOut={setCursor("auto")}
-      >
-        <boxGeometry args={hitBox.size} />
-      </mesh>
       {keepAliveNode}
-    </group>
+    </PedestalMount>
   );
 }

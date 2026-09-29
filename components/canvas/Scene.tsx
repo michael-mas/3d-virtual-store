@@ -14,6 +14,7 @@ import CameraRig from "./CameraRig";
 import FrameStats from "./FrameStats";
 import IdlePrefetch from "./IdlePrefetch";
 import Glasses from "./Glasses";
+import Lipstick from "./Lipstick";
 import InteractPrompt from "./InteractPrompt";
 import Player from "./Player";
 import Showroom from "./Showroom";
@@ -46,6 +47,7 @@ function LazySurfaceLayer() {
 /** Scene component per product renderer (see `Product.renderer` in the registry). */
 const RENDERERS: Record<ProductRenderer, ComponentType<{ productId: string }>> = {
   glasses: Glasses,
+  lipstick: Lipstick,
 };
 
 export default function Scene() {

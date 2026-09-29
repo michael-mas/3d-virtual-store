@@ -1,4 +1,5 @@
 import { glassesProduct } from "./glasses";
+import { lipstickProduct } from "./lipstick";
 import type { Product } from "./types";
 
 export type * from "./types";
@@ -30,6 +31,7 @@ export const PRODUCTS: readonly Product[] = [
     model: "/models/glasses.glb",
     defaults: { finish: "glass", frameColor: "#7c3aed", lens: "iridescent" },
   }),
+  lipstickProduct({ id: "velvet-lip", name: "Velvet Lip", basePrice: 32 }),
 ];
 
 export const DEFAULT_PRODUCT_ID = PRODUCTS[0].id;
