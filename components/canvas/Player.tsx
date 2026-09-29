@@ -6,12 +6,11 @@ import { color } from "three/tsl";
 import { MeshBasicNodeMaterial, Vector3, type Mesh } from "three/webgpu";
 import { isDebugEnabled } from "@/lib/debug";
 import { bindKeyboard, isRunning, moveAxes } from "@/lib/explore/input";
-import { FLOOR_Y, INTERACT_RADIUS, PEDESTAL, PEDESTALS, PLAYER_RADIUS, ROOM, type Vec2 } from "@/lib/explore/layout";
+import { FLOOR_Y, INTERACT_RADIUS, OBSTACLES, PEDESTALS, PLAYER_RADIUS, ROOM, type Vec2 } from "@/lib/explore/layout";
 import { cameraRelative, nearestPedestal, resolveCollisions, stepMotion, WALK } from "@/lib/explore/movement";
 import { player } from "@/lib/explore/player";
 import { useAppStore } from "@/store/useAppStore";
 
-const OBSTACLES = PEDESTALS.map((p) => ({ position: p.position, radius: PEDESTAL.collisionRadius }));
 const RUN_MULTIPLIER = 1.8;
 /** Metres walked per pixel of wheel scroll, and the max step per wheel event. */
 const WHEEL_METRES_PER_PX = 0.004;

@@ -127,15 +127,17 @@ for (const p of pedestals) {
 }
 
 // ---------------------------------------------------------------- decor: benches, plants
-for (const [x, z, ry] of [[-3.2, 2.2, Math.PI / 2], [3.2, 2.2, Math.PI / 2]]) {
-  parts.push(bake(at(new THREE.BoxGeometry(1.4, 0.42, 0.45), x, floorY + 0.21, z, ry), new THREE.Color(0.45, 0.33, 0.24)));
+for (const { position: [x, z], rotationY } of layout.decor.benches) {
+  const { length, height, depth } = layout.decor.bench;
+  parts.push(bake(at(new THREE.BoxGeometry(length, height, depth), x, floorY + height / 2, z, rotationY), new THREE.Color(0.45, 0.33, 0.24)));
   shadowCasters.push({ x, z, r: 0.25, strength: 0.4, falloff: 0.3 });
 }
-for (const [x, z] of [[-4.3, -3.8], [4.3, -3.8], [-4.3, 3.8], [4.3, 3.8]]) {
+for (const [x, z] of layout.decor.plants) {
   parts.push(bake(at(new THREE.CylinderGeometry(0.22, 0.17, 0.45, 8), x, floorY + 0.225, z), new THREE.Color(0.6, 0.35, 0.25)));
   parts.push(bake(at(new THREE.IcosahedronGeometry(0.42, 0), x, floorY + 0.85, z), new THREE.Color(0.2, 0.42, 0.22)));
   shadowCasters.push({ x, z, r: 0.2, strength: 0.45, falloff: 0.3 });
 }
+
 // Re-bake the floor now that decor shadow casters are known.
 parts[0] = bake(new THREE.PlaneGeometry(HW * 2, HD * 2, 48, 44).rotateX(-Math.PI / 2).translate(0, floorY, 0), new THREE.Color(0.34, 0.31, 0.29));
 

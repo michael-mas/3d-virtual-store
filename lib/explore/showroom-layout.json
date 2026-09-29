@@ -1,5 +1,5 @@
 {
-  "$comment": "Shared by scripts/generate-showroom.mjs (baked GLB) and the runtime (movement, proximity, product placement). Meters; floor at floorY; a product origin sits productOffsetY above the pedestal top. Products from the registry (lib/products) are placed on slots in registry order; add a slot (and regenerate the showroom) for each new displayed product.",
+  "$comment": "Shared by scripts/generate-showroom.mjs (baked GLB) and the runtime (movement, proximity, product placement). Meters; floor at floorY; a product origin sits productOffsetY above the pedestal top. Products from the registry (lib/products) are placed on slots in registry order; add a slot (and regenerate the showroom) for each new displayed product. Decor (benches, plants) is baked into the showroom and blocks the player.",
   "floorY": -1.05,
   "room": {
     "halfWidth": 5,
@@ -20,6 +20,15 @@
     { "position": [-3.4, -0.2], "accent": [1.0, 0.55, 0.7] },
     { "position": [3.4, -0.2], "accent": [0.45, 0.9, 1.0] }
   ],
+  "decor": {
+    "benches": [
+      { "position": [-3.2, 2.2], "rotationY": 1.5708 },
+      { "position": [3.2, 2.2], "rotationY": 1.5708 }
+    ],
+    "bench": { "length": 1.4, "height": 0.42, "depth": 0.45 },
+    "plants": [[-4.3, -3.8], [4.3, -3.8], [-4.3, 3.8], [4.3, 3.8]],
+    "plantCollisionRadius": 0.35
+  },
   "spawn": [0, 3],
   "playerRadius": 0.3,
   "interactRadius": 1.3

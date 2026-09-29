@@ -15,6 +15,32 @@ export const PEDESTALS: readonly Pedestal[] = PRODUCTS.map((product, i) => {
   return { productId: product.id, position: [slot.position[0], slot.position[1]] as Vec2 };
 });
 export const SPAWN: Vec2 = [layout.spawn[0], layout.spawn[1]];
+
+export type Obstacle = { position: Vec2; radius: number };
+
+/** Benches as a row of circles along their length, plants as one circle (collisions are circle push-outs). */
+function decorObstacles(): Obstacle[] {
+  const { benches, bench, plants, plantCollisionRadius } = layout.decor;
+  const out: Obstacle[] = [];
+  const radius = bench.depth / 2 + 0.025;
+  const count = Math.ceil(bench.length / (radius * 2));
+  for (const { position: [x, z], rotationY } of benches) {
+    // Local x (length axis) rotated by rotationY about +y: (cos, -sin) in (x, z).
+    const [ax, az] = [Math.cos(rotationY), -Math.sin(rotationY)];
+    for (let i = 0; i < count; i++) {
+      const t = (i / (count - 1) - 0.5) * (bench.length - radius * 2);
+      out.push({ position: [x + ax * t, z + az * t], radius });
+    }
+  }
+  for (const [x, z] of plants) out.push({ position: [x, z], radius: plantCollisionRadius });
+  return out;
+}
+
+/** Everything the player walks around: pedestals and decor. */
+export const OBSTACLES: readonly Obstacle[] = [
+  ...PEDESTALS.map((p) => ({ position: p.position, radius: layout.pedestal.collisionRadius })),
+  ...decorObstacles(),
+];
 export const PLAYER_RADIUS = layout.playerRadius;
 export const INTERACT_RADIUS = layout.interactRadius;
 
