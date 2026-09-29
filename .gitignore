@@ -44,3 +44,7 @@ next-env.d.ts
 /public/draco/
 /public/mediapipe/wasm/
 /public/mediapipe/manifest.json
+
+# playwright
+/test-results/
+/playwright-report/

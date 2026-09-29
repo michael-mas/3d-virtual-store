@@ -19,3 +19,16 @@ ffmpeg -i input.mov -an -vf "scale=-2:720,fps=30" -c:v libvpx-vp9 -b:v 0 -crf 38
 ```
 
 Only use footage you have the rights to publish.
+
+## README demo GIF
+
+A short screen recording sells the project faster than any text. Record ~10 s of the app (e.g. glasses, then
+lipstick, then face paint in try-on) with any screen recorder, then convert it to a small looping GIF:
+
+```bash
+ffmpeg -i recording.mov -vf "fps=12,scale=720:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer" \
+  -loop 0 docs/demo.gif
+```
+
+Keep it under ~5 MB (lower `fps` or the width if needed), then uncomment the `docs/demo.gif` line at the top of the
+README.

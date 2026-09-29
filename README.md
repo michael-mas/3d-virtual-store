@@ -1,5 +1,7 @@
 # 3D Virtual Store & Try-On
 
+[![CI](https://github.com/michael-mas/3d-virtual-store/actions/workflows/ci.yml/badge.svg)](https://github.com/michael-mas/3d-virtual-store/actions/workflows/ci.yml)
+
 A portfolio proof of concept: walk through a small 3D showroom, pick a product off a pedestal, customize it, try it
 on with your webcam and take a photo. It runs entirely in the browser, with WebGPU (plus an automatic WebGL 2
 fallback) for rendering and MediaPipe for face tracking.
@@ -7,6 +9,10 @@ fallback) for rendering and MediaPipe for face tracking.
 **Live demo:** _coming soon — `https://<your-deployment>.vercel.app`_
 
 ![Photo-booth capture: gold glasses tried on with the demo video](app/opengraph-image.jpg)
+
+<!-- Demo GIF: record ~10 s of try-on (see docs/demo-video.md), save it as docs/demo.gif, then uncomment:
+![Try-on demo: glasses, lipstick and face paint](docs/demo.gif)
+-->
 
 ## Features
 
@@ -158,8 +164,9 @@ Everything runs locally in your browser:
 - **First try-on download** is about 16 MB uncompressed (about 6.8 MB gzipped): the MediaPipe WASM plus the
   float16 model. It is cached by the browser afterwards.
 - **No checkout, no persistence.** The cart is a demo and is lost on reload.
-- **Testing coverage.** Automated browser tests ran on the WebGL 2 backend (headless Chromium with SwiftShader, no
-  GPU), where frame rates are far below real hardware. The WebGPU path is exercised only on real hardware.
+- **Testing coverage.** The end-to-end tests (`e2e/`, run in CI) drive headless Chromium on the WebGL 2 backend
+  (SwiftShader, no GPU) with the demo video instead of a camera, where frame rates are far below real hardware. The
+  WebGPU path and real webcams are exercised only on real devices.
 - **Browser-level console messages.** In production the app itself logs nothing. On machines without WebGPU,
   Chromium itself may still print "WebGPU is experimental on this platform" or driver messages, which the page
   cannot suppress.
@@ -174,6 +181,7 @@ npm run dev          # http://localhost:3000 (debug tools on)
 npm run build        # static export to ./out
 npm start            # serve ./out
 npm test             # vitest unit tests
+npm run test:e2e     # Playwright end-to-end tests against ./out (run `npm run build` first)
 npm run lint
 ```
 
