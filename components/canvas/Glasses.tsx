@@ -4,6 +4,7 @@ import { useGLTF } from "@react-three/drei";
 import { useEffect, useMemo } from "react";
 import { Box3, Group, Mesh, Vector3, type Object3D } from "three/webgpu";
 import { DRACO_DECODER_PATH } from "@/lib/assets";
+import { PEDESTAL } from "@/lib/explore/layout";
 import {
   createFrameMaterials,
   createLensMaterials,
@@ -17,6 +18,9 @@ import { isTryOnMode } from "@/lib/modes";
 import { useAppStore } from "@/store/useAppStore";
 import FaceAnchor from "./FaceAnchor";
 import PedestalMount, { TINY } from "./PedestalMount";
+
+/** Pedestal top relative to the product origin (meters). */
+const PEDESTAL_TOP = -PEDESTAL.productOffsetY;
 
 const isLens = (o: Object3D) =>
   /lens/i.test(o.name) || (o instanceof Mesh && /lens/i.test((o.material as { name?: string }).name ?? ""));
@@ -95,12 +99,19 @@ export default function Glasses({ productId }: { productId: string }) {
     return group;
   }, [frames, lenses, frameMats, lensMats]);
 
-  // Invisible bounding-box hit target: thin frame wires are hard to click.
-  const hitBox = useMemo(() => {
+  // On the pedestal the model is lifted so its lowest point (rim or temple tip) rests on the pedestal top,
+  // which sits PEDESTAL_TOP below the product origin. Invisible bounding-box hit target: thin wires are hard to click.
+  const { lift, hitBox } = useMemo(() => {
     const box = new Box3().setFromObject(scene);
+    const lift = Math.max(0, PEDESTAL_TOP - box.min.y);
+    const center = box.getCenter(new Vector3());
+    center.y += lift;
     return {
-      size: box.getSize(new Vector3()).toArray() as [number, number, number],
-      center: box.getCenter(new Vector3()).toArray() as [number, number, number],
+      lift,
+      hitBox: {
+        size: box.getSize(new Vector3()).toArray() as [number, number, number],
+        center: center.toArray() as [number, number, number],
+      },
     };
   }, [scene]);
 
@@ -119,7 +130,9 @@ export default function Glasses({ productId }: { productId: string }) {
 
   return (
     <PedestalMount productId={productId} hitBox={hitBox}>
-      <primitive object={scene} />
+      <group position-y={lift}>
+        <primitive object={scene} />
+      </group>
       {keepAliveNode}
     </PedestalMount>
   );
