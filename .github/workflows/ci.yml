@@ -27,8 +27,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # next typegen writes the route/layout types (LayoutProps…) that tsc needs before any build exists
       - name: Typecheck
-        run: npx tsc --noEmit
+        run: npm run typecheck
 
       - name: Unit tests
         run: npm test
