@@ -52,7 +52,7 @@ export type TryOnCalibration = {
 };
 
 /** Which scene component renders the product (store display, CUSTOMIZE preview and try-on). */
-export type ProductRenderer = "glasses";
+export type ProductRenderer = "glasses" | "lipstick";
 
 export type Product = {
   id: string;

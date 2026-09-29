@@ -26,6 +26,8 @@ export default function CalibrationPanel() {
   const setSurfaceDebug = useAppStore((s) => s.setSurfaceDebug);
 
   if (!visible || !tryOn) return null;
+  // Offset/scale only apply to rigid products; surface products follow the face mesh directly.
+  const rigid = getProduct(productId)?.attachment === "rigid";
 
   const setOffset = (axis: 0 | 1 | 2, mm: number) => {
     const offset: [number, number, number] = [...calibration.offset];
@@ -39,46 +41,50 @@ export default function CalibrationPanel() {
 
   return (
     <div className="fixed top-20 right-3 z-50 w-64 space-y-2 rounded-lg bg-neutral-900/90 p-3 font-mono text-xs text-neutral-200 ring-1 ring-white/10">
-      <div className="flex justify-between text-neutral-400">
-        <span>calibration · {productId}</span>
-        <button type="button" onClick={reset} className="hover:text-white">
-          reset
-        </button>
-      </div>
-      {AXES.map(({ key, label }) => {
-        const mm = calibration.offset[key] / MM;
-        return (
-          <label key={key} className="block">
+      {rigid && (
+        <>
+          <div className="flex justify-between text-neutral-400">
+            <span>calibration · {productId}</span>
+            <button type="button" onClick={reset} className="hover:text-white">
+              reset
+            </button>
+          </div>
+          {AXES.map(({ key, label }) => {
+            const mm = calibration.offset[key] / MM;
+            return (
+              <label key={key} className="block">
+                <span className="flex justify-between">
+                  {label} <span>{mm.toFixed(1)} mm</span>
+                </span>
+                <input
+                  type="range"
+                  min={-20}
+                  max={20}
+                  step={0.5}
+                  value={mm}
+                  onChange={(e) => setOffset(key, Number(e.target.value))}
+                  className="w-full"
+                />
+              </label>
+            );
+          })}
+          <label className="block">
             <span className="flex justify-between">
-              {label} <span>{mm.toFixed(1)} mm</span>
+              scale <span>{calibration.scale.toFixed(3)}</span>
             </span>
             <input
               type="range"
-              min={-20}
-              max={20}
-              step={0.5}
-              value={mm}
-              onChange={(e) => setOffset(key, Number(e.target.value))}
+              min={0.8}
+              max={1.25}
+              step={0.005}
+              value={calibration.scale}
+              onChange={(e) => setCalibration(productId, { scale: Number(e.target.value) })}
               className="w-full"
             />
           </label>
-        );
-      })}
-      <label className="block">
-        <span className="flex justify-between">
-          scale <span>{calibration.scale.toFixed(3)}</span>
-        </span>
-        <input
-          type="range"
-          min={0.8}
-          max={1.25}
-          step={0.005}
-          value={calibration.scale}
-          onChange={(e) => setCalibration(productId, { scale: Number(e.target.value) })}
-          className="w-full"
-        />
-      </label>
-      <div className="flex items-center justify-between gap-2 border-t border-white/10 pt-2">
+        </>
+      )}
+      <div className="flex items-center justify-between gap-2 border-white/10 [&:not(:first-child)]:border-t [&:not(:first-child)]:pt-2">
         <span className="text-neutral-400">surface</span>
         <div className="flex gap-1">
           {(["off", "uv", "luma"] as const).map((m) => (
@@ -94,9 +100,11 @@ export default function CalibrationPanel() {
           ))}
         </div>
       </div>
-      <pre className="overflow-x-auto text-[10px] text-neutral-400">
-        {`calibration: { offset: [${calibration.offset.map((v) => +v.toFixed(4)).join(", ")}], scale: ${+calibration.scale.toFixed(3)} }`}
-      </pre>
+      {rigid && (
+        <pre className="overflow-x-auto text-[10px] text-neutral-400">
+          {`calibration: { offset: [${calibration.offset.map((v) => +v.toFixed(4)).join(", ")}], scale: ${+calibration.scale.toFixed(3)} }`}
+        </pre>
+      )}
     </div>
   );
 }

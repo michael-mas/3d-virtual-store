@@ -23,6 +23,12 @@ describe("pricing", () => {
     expect(priceOf("crystal", { finish: "glass", frameColor: "#7c3aed", lens: "iridescent" })).toBe(239);
   });
 
+  it("prices surface products from their own schema (lipstick finish)", () => {
+    expect(priceOf("velvet-lip", { finish: "matte", color: "#b3123a" })).toBe(32);
+    expect(priceOf("velvet-lip", { finish: "gloss", color: "#123456" })).toBe(38);
+    expect(priceOf("velvet-lip", { finish: "metallic", color: "#b3123a" })).toBe(41);
+  });
+
   it("does not depend on frame color", () => {
     const a = priceOf(DEFAULT_PRODUCT_ID, { finish: "metal", frameColor: "#000000", lens: "clear" });
     const b = priceOf(DEFAULT_PRODUCT_ID, { finish: "metal", frameColor: "#ff0000", lens: "clear" });

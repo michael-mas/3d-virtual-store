@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { isDebugEnabled } from "@/lib/debug";
 import { MODE_EVENTS, nextMode } from "@/lib/modes";
 import { useAppStore } from "@/store/useAppStore";
@@ -17,6 +17,11 @@ export default function DevPanel() {
   const postFx = useAppStore((s) => s.postFx);
   const setPostFx = useAppStore((s) => s.setPostFx);
   const stats = useAppStore((s) => s.frameStats);
+
+  // Debug-only handle for driving the app from the console / e2e checks.
+  useEffect(() => {
+    if (visible) Object.assign(window, { __store: useAppStore });
+  }, [visible]);
 
   if (!visible) return null;
 

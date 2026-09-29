@@ -13,7 +13,8 @@ function ChoiceControl({ option, value, onChange }: { option: ChoiceOption; valu
       <legend className={legendClass}>{option.label}</legend>
       <div
         className="grid gap-1 rounded-lg bg-neutral-800 p-1"
-        style={{ gridTemplateColumns: `repeat(${Math.min(option.values.length, 3)}, minmax(0, 1fr))` }}
+        // Up to 3 in a row; longer lists wrap into balanced rows (4 → 2×2).
+        style={{ gridTemplateColumns: `repeat(${option.values.length <= 3 ? option.values.length : Math.ceil(option.values.length / 2)}, minmax(0, 1fr))` }}
       >
         {option.values.map((v) => (
           <button
