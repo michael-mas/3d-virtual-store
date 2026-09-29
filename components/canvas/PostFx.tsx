@@ -5,6 +5,7 @@ import { useEffect, useMemo } from "react";
 import { max, oneMinus, pass, screenUV, smoothstep, uniform, vec4 } from "three/tsl";
 import { ACESFilmicToneMapping, NoToneMapping, RenderPipeline, Vector3, type WebGPURenderer } from "three/webgpu";
 import { productPosition } from "@/lib/explore/layout";
+import { previewFraming } from "@/lib/preview";
 import { isTryOnMode } from "@/lib/modes";
 import { setCaptureRenderer } from "@/lib/tryon/capture";
 import { useAppStore } from "@/store/useAppStore";
@@ -68,7 +69,9 @@ export default function PostFx() {
     // Frame-rate independent ease toward target.
     dim.value += (target - dim.value) * (1 - Math.exp(-delta * 6));
     // Focus distance = camera distance to the active product.
-    focus.value = state.camera.position.distanceTo(productPos.set(...productPosition(activeProductId)));
+    productPos.set(...productPosition(activeProductId));
+    productPos.y += previewFraming(activeProductId).liftY;
+    focus.value = state.camera.position.distanceTo(productPos);
     renderFrame();
   }, 1);
 

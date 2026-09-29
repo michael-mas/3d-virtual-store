@@ -12,3 +12,10 @@ export type SurfaceProduct = {
   update?(landmarks: ArrayLike<number>, aspect: number): void;
   dispose(): void;
 };
+
+/** A surface product on the mannequin head (no webcam): a scene-lit material for its face, driven by the config. */
+export type SurfacePreview = {
+  material: Material;
+  apply(config: ProductConfig): void;
+  dispose(): void;
+};

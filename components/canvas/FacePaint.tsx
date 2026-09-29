@@ -13,9 +13,9 @@ import {
   Vector2,
   Vector3,
 } from "three/webgpu";
-import { setProductModel } from "@/lib/cart/registry";
 import { readFacePaintConfig, type FacePaintStyle } from "@/lib/products/facePaint";
 import { useAppStore } from "@/store/useAppStore";
+import SurfaceProductDisplay from "./SurfaceProductDisplay";
 import PedestalMount from "./PedestalMount";
 
 /** Jar dimensions (meters). */
@@ -51,7 +51,8 @@ function jarGeometry() {
 /**
  * Face paint product on its pedestal: an open jar whose paint surface shows the configured color and style
  * (plain paint, emissive neon, or a view-dependent holographic rainbow — one node material, uniforms only),
- * with its lid leaning beside it. In try-on the design is drawn on the face by the surface layer
+ * with its lid leaning beside it (EXPLORE). In CUSTOMIZE and cart thumbnails the design is shown on the mannequin
+ * head (SurfaceProductDisplay). In try-on the design is drawn on the face by the surface layer
  * (SurfaceLayer + lib/tryon/surface/facePaint.ts).
  */
 export default function FacePaint({ productId }: { productId: string }) {
@@ -107,11 +108,6 @@ export default function FacePaint({ productId }: { productId: string }) {
   );
 
   useEffect(() => {
-    setProductModel(productId, parts.model);
-    return () => setProductModel(productId, null);
-  }, [productId, parts]);
-
-  useEffect(() => {
     parts.color.value.set(config.color);
     parts.weights.value.set(...STYLE_WEIGHTS[config.style]);
   }, [parts, config.color, config.style]);
@@ -126,7 +122,7 @@ export default function FacePaint({ productId }: { productId: string }) {
 
   return (
     <PedestalMount productId={productId} hitBox={hitBox}>
-      <primitive object={parts.model} />
+      <SurfaceProductDisplay productId={productId} packaging={<primitive object={parts.model} />} />
     </PedestalMount>
   );
 }

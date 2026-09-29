@@ -57,15 +57,20 @@ app/layout.tsx          Root layout: the persistent <SceneCanvas/> + DOM overlay
 components/canvas/      Everything inside the single R3F <Canvas> (client-only, loaded with next/dynamic ssr:false)
   Scene.tsx               WebGPURenderer factory, product renderers from the registry, Suspense boundaries
   Showroom / Player / CameraRig / InteractPrompt   EXPLORE (walking, collisions, proximity prompt, camera)
-  Glasses.tsx             Product renderer: materials per option, store/CUSTOMIZE/try-on placement
-  FaceAnchor / HeadOccluder                         TRY_ON: pose-driven group + depth-only occluder
+  Glasses.tsx             Rigid product renderer: materials per option, store/CUSTOMIZE/try-on placement
+  Lipstick / FacePaint    Surface product renderers: packaging on the pedestal, mannequin in CUSTOMIZE
+  MannequinPreview        Mannequin head wearing a surface product (CUSTOMIZE preview, cart thumbnail)
+  FaceAnchor / HeadOccluder                         TRY_ON rigid layer: pose-driven group + depth-only occluder
+  SurfaceLayer            TRY_ON surface layer: live face mesh, orthographic camera, render target
   PostFx.tsx              TSL post-processing (CUSTOMIZE background dim + vignette), owns the render loop
   ThumbnailRenderer / CartParticles                 Cart thumbnails (offscreen render target) and feedback
 components/dom/         HTML overlays: customizer, try-on panel, photo modal, cart drawer, status/loading screens
 hooks/useTryOnSession   Camera or demo video → FaceLandmarker → smoothed pose, errors, watchdogs
 store/                  zustand store in slices: world (mode + transitions), product, tryOn, cart
 lib/products/           Product registry + schema helpers (validation, defaults, price deltas)
-lib/tryon/              MediaPipe loading, One Euro smoothing, capture, error classification, constants
+lib/tryon/              MediaPipe loading, One Euro smoothing, capture, error classification, constants,
+                        face mesh topology (from MediaPipe's official metadata) and the video layer
+lib/tryon/surface/      Surface products: UV masks, lipstick and face paint TSL materials, mannequin geometry
 lib/explore/            Showroom layout (shared with the model generator), movement and collisions
 scripts/                Model generators (glTF-Transform + Draco) and the postinstall asset copier
 ```
@@ -85,6 +90,24 @@ mode. Modes change what the one persistent `<Canvas>` draws; the Canvas is never
 
 The customizer UI, config validation and cart pricing are all derived from the schema. Products are placed on the
 pedestal slots of `lib/explore/showroom-layout.json` in registry order.
+
+## Attachment types
+
+How a product follows the face in TRY_ON is set by its `attachment` in the registry:
+
+| Type | Products | How it works |
+| --- | --- | --- |
+| `rigid` | Glasses | A 3D model in the main scene, driven by FaceLandmarker's facial transformation matrix (smoothed with One Euro filters) under a camera matching MediaPipe's (63° vertical FOV). A depth-only head occluder hides what is behind the head. |
+| `surface` | Lipstick, face paint | A face mesh rebuilt in place from the 468 landmarks on every detection, with MediaPipe's canonical tessellation and UVs (`scripts/data/geometry_pipeline_metadata_landmarks.pbtxt`). It is drawn by an orthographic camera covering the video frame into a render target, which the scene background composites over the video and under the rigid layer, so glasses sit on top of makeup. Products are masks in canonical-UV space (lips from the official lip contours; face paint designs authored in centimeters on the canonical face) with TSL materials that reuse the video's luminance. |
+| `landmark` | — | Reserved for objects pinned to individual landmarks (earrings, piercings); not implemented yet. |
+
+There is no webcam in CUSTOMIZE, so surface products are previewed on a neutral mannequin head built from the same
+canonical mesh (same UVs, so the same masks), lit by the scene; cart thumbnails render that mannequin.
+
+**Adding a product** = a registry entry in `lib/products` (id, name, category, attachment, schema, calibration,
+renderer), a pedestal slot in `lib/explore/showroom-layout.json` (then `npm run generate:models`), and for a new
+renderer its scene component (`RENDERERS` in `components/canvas/Scene.tsx`) and, for surface products, its try-on
+and preview materials (`SURFACES` in `SurfaceLayer.tsx`, `PREVIEWS` in `MannequinPreview.tsx`).
 
 ## Key technical choices (and why)
 

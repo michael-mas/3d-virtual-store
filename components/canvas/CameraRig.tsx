@@ -6,6 +6,7 @@ import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import { FLOOR_Y, PEDESTALS, productPosition } from "@/lib/explore/layout";
 import { player } from "@/lib/explore/player";
+import { previewFraming } from "@/lib/preview";
 import { isTryOnMode } from "@/lib/modes";
 import { MEDIAPIPE_VERTICAL_FOV_DEG, TRY_ON_FAR, TRY_ON_NEAR } from "@/lib/tryon/constants";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -36,7 +37,10 @@ function explorePose(): Pose {
   };
 }
 
-/** Customizer panel sits on the right (md+) or bottom (mobile); offset the target so the product stays visible. */
+/**
+ * Customizer panel sits on the right (md+) or bottom (mobile); offset the target so the product stays visible.
+ * Surface products are previewed on the mannequin head: look higher and stand farther back.
+ */
 function customizePose(productId: string): Pose {
   const [x, y, z] = productPosition(productId);
   const wide = window.innerWidth >= 768;
@@ -49,7 +53,11 @@ function customizePose(productId: string): Pose {
         [0.1, 0.02, 0.42],
         [0, -0.055, -0.03],
       ];
-  return { position: [x + p[0], y + p[1], z + p[2]], target: [x + t[0], y + t[1], z + t[2]] };
+  const { liftY, distanceScale: k } = previewFraming(productId);
+  return {
+    position: [x + p[0] * k, y + liftY + p[1] * k, z + p[2] * k],
+    target: [x + t[0] * k, y + liftY + t[1] * k, z + t[2] * k],
+  };
 }
 
 export default function CameraRig() {
