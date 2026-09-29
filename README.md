@@ -10,7 +10,7 @@ fallback) for rendering and MediaPipe for face tracking.
 
 ## Features
 
-- **Explore.** A low-poly showroom with baked lighting and one pedestal per product (three glasses, one lipstick).
+- **Explore.** A low-poly showroom with baked lighting and one pedestal per product (three glasses, a lipstick, a face paint).
   - Walk with WASD, ZQSD or the arrow keys (physical key positions, Shift to run), or with the mouse wheel.
   - Drag to look around. Click or tap the floor to walk there.
   - Near a pedestal, a "Press E / Click" prompt (or "Tap to view" on touch screens) opens the product.
@@ -18,12 +18,17 @@ fallback) for rendering and MediaPipe for face tracking.
   - Glasses: frame finish (matte, metal or transmissive glass), frame color (presets plus any custom color),
     and lens (clear, iridescent, or a holographic TSL shader).
   - Lipstick: finish (matte, satin, gloss, metallic) and shade (presets plus any custom color).
+  - Face paint: design (tiger stripes, masquerade, constellation), style (paint, neon, holographic), color and an
+    opacity slider.
   - The price updates live. The whole panel is generated from the product's schema.
 - **Try on.**
   - Real-time face tracking from the webcam. Glasses are anchored to the head pose; a depth-only head occluder
     hides the temples behind the head.
   - Lipstick is painted on a face mesh updated from the 468 landmarks on every detection. The lips are masked from
     MediaPipe's official lip contours, so the mouth interior stays visible when it opens.
+  - Face paint designs are drawn in canonical-UV space on the same mesh, so they deform with expressions; the
+    eyes and lips are always left bare. Neon and holographic glow brighten as the mouth opens (FaceLandmarker's
+    `jawOpen` blendshape).
   - Selfie mirroring and pose smoothing.
   - A demo video can be used when no camera is available or access is denied.
 - **Photo booth.** Captures the video frame and the 3D render together, exactly as shown on screen, and downloads
@@ -73,8 +78,8 @@ mode. Modes change what the one persistent `<Canvas>` draws; the Canvas is never
 - id, name, category and base price;
 - an attachment type: `rigid` (driven by the facial transformation matrix), `surface` (on the deforming face
   mesh) or `landmark` (pinned to landmarks);
-- a customization schema: `choice` options with price deltas, and `color` options with presets and optional custom
-  colors;
+- a customization schema: `choice` options with price deltas, `color` options with presets and optional custom
+  colors, and `range` options (sliders, e.g. opacity);
 - try-on calibration;
 - the scene renderer that draws it.
 
@@ -118,8 +123,8 @@ Everything runs locally in your browser:
 ## Known limitations
 
 - **Placeholder products.** The three glasses share a procedural model and differ only by default configuration
-  and price. The lipstick is a procedural tube. `rigid` (glasses) and `surface` (lipstick) are implemented;
-  `landmark` exists in the registry types only.
+  and price. The lipstick and face paint are shown as procedural packaging. `rigid` (glasses) and `surface`
+  (lipstick, face paint) are implemented; `landmark` exists in the registry types only.
 - **Lipstick shading is an estimate.** The shade is lit using the video's own luminance, so very dark or blown-out
   lighting shifts how the color reads, and the lip outline follows the tracked landmarks, not the real lip edge.
 - **Fit is approximate.** Calibration is a per-product offset and scale on a fixed anchor, so glasses can sit a

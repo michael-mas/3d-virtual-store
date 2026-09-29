@@ -19,6 +19,7 @@ import { isTryOnMode } from "@/lib/modes";
 import { getProduct, type ProductRenderer } from "@/lib/products";
 import { createFaceMeshGeometry, updateFaceMeshPositions } from "@/lib/tryon/faceMesh";
 import { tracking } from "@/lib/tryon/tracking";
+import { createFacePaintSurface } from "@/lib/tryon/surface/facePaint";
 import { createLipstickSurface } from "@/lib/tryon/surface/lipstick";
 import type { SurfaceProduct } from "@/lib/tryon/surface/types";
 import { surfaceLayer, videoColor } from "@/lib/tryon/videoLayer";
@@ -44,6 +45,7 @@ function createDebugMaterials(): Record<Exclude<SurfaceDebug, "off">, MeshBasicN
 /** Surface try-on implementation per product renderer (only renderers of `surface` products appear here). */
 const SURFACES: Partial<Record<ProductRenderer, () => SurfaceProduct>> = {
   lipstick: createLipstickSurface,
+  facePaint: createFacePaintSurface,
 };
 
 /**

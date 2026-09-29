@@ -9,6 +9,8 @@
 // - positions: canonical face positions in centimeters (x right of the image, y up, z toward the camera)
 // - lips.outer / lips.inner: closed landmark loops of the lip contours, from tasks-vision's
 //   FaceLandmarker.FACE_LANDMARKS_LIPS (the official connection list shipped with @mediapipe/tasks-vision)
+// - eyes.left / eyes.right / faceOval: closed landmark loops from FACE_LANDMARKS_LEFT_EYE, _RIGHT_EYE and
+//   _FACE_OVAL (MediaPipe's "left" is the subject's left, i.e. the right side of an unmirrored image)
 // - mouthTriangles: indices (into the triangle list) of the triangles spanning the mouth opening — all three
 //   vertices on the inner lip contour. They stretch over the teeth when the mouth opens.
 //
@@ -76,6 +78,9 @@ const inner = loopFromEdges(lipEdges.filter(isInner));
 const outer = loopFromEdges(lipEdges.filter((e) => !isInner(e)));
 if (!outer.includes(61) || !inner.includes(78)) throw new Error("Unexpected lip contours");
 
+const eyes = { left: loopFromEdges(FaceLandmarker.FACE_LANDMARKS_LEFT_EYE), right: loopFromEdges(FaceLandmarker.FACE_LANDMARKS_RIGHT_EYE) };
+const faceOval = loopFromEdges(FaceLandmarker.FACE_LANDMARKS_FACE_OVAL);
+
 const mouthTriangles = [];
 for (let t = 0; t < triangles.length / 3; t++) {
   if ([0, 1, 2].every((k) => innerVertices.has(triangles[t * 3 + k]))) mouthTriangles.push(t);
@@ -90,10 +95,12 @@ await writeFile(
     uvs,
     positions,
     lips: { outer, inner },
+    eyes,
+    faceOval,
     mouthTriangles,
   }) + "\n",
 );
 console.log(
   `faceMeshTopology.json: ${VERTEX_COUNT} vertices, ${triangles.length / 3} triangles, lips ${outer.length}+${inner.length}, ` +
-    `${mouthTriangles.length} mouth triangles`,
+    `eyes ${eyes.left.length}+${eyes.right.length}, oval ${faceOval.length}, ${mouthTriangles.length} mouth triangles`,
 );

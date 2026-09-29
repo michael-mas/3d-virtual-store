@@ -10,6 +10,9 @@ export const FACE_MESH_UVS: readonly number[] = topology.uvs;
 export const CANONICAL_FACE_POSITIONS: readonly number[] = topology.positions;
 /** Closed landmark loops of the outer and inner lip contours (FaceLandmarker.FACE_LANDMARKS_LIPS). */
 export const LIP_CONTOURS: { readonly outer: readonly number[]; readonly inner: readonly number[] } = topology.lips;
+/** Closed landmark loops of the eyes (MediaPipe left = subject's left) and the face outline. */
+export const EYE_CONTOURS: { readonly left: readonly number[]; readonly right: readonly number[] } = topology.eyes;
+export const FACE_OVAL: readonly number[] = topology.faceOval;
 /** Triangles (indices into the triangle list) closing the mouth opening; never painted. */
 export const MOUTH_TRIANGLES: readonly number[] = topology.mouthTriangles;
 

@@ -9,7 +9,8 @@ const options = (delegate: "GPU" | "CPU", model: Uint8Array): FaceLandmarkerOpti
   baseOptions: { modelAssetBuffer: model, delegate },
   runningMode: "VIDEO",
   numFaces: 1,
-  outputFaceBlendshapes: false,
+  // Blendshape scores (e.g. jawOpen) drive expression-reactive surface effects (face paint glow).
+  outputFaceBlendshapes: true,
   outputFacialTransformationMatrixes: true,
 });
 

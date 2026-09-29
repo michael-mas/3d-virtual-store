@@ -39,7 +39,21 @@ export type ColorOption = {
   default: string;
 };
 
-export type OptionSchema = ChoiceOption | ColorOption;
+/** A number on a slider (stored as a decimal string, like every config value). Never changes the price. */
+export type RangeOption = {
+  kind: "range";
+  id: string;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  /** Displayed value = value × displayScale, followed by unit (e.g. 0.8 → "80%"). */
+  displayScale?: number;
+  unit?: string;
+  default: string;
+};
+
+export type OptionSchema = ChoiceOption | ColorOption | RangeOption;
 
 /** Selected value per option id. Always validated against the product's schema. */
 export type ProductConfig = Readonly<Record<string, string>>;
@@ -52,7 +66,7 @@ export type TryOnCalibration = {
 };
 
 /** Which scene component renders the product (store display, CUSTOMIZE preview and try-on). */
-export type ProductRenderer = "glasses" | "lipstick";
+export type ProductRenderer = "glasses" | "lipstick" | "facePaint";
 
 export type Product = {
   id: string;
