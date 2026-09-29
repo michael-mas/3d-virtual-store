@@ -17,8 +17,8 @@
     { "position": [0, 0], "accent": [1.0, 0.78, 0.45] },
     { "position": [-2, -1.2], "accent": [0.55, 0.62, 1.0] },
     { "position": [2, -1.2], "accent": [0.6, 1.0, 0.85] },
-    { "position": [-3.2, 1.4], "accent": [1.0, 0.55, 0.7] },
-    { "position": [3.2, 1.4], "accent": [0.45, 0.9, 1.0] }
+    { "position": [-3.4, -0.2], "accent": [1.0, 0.55, 0.7] },
+    { "position": [3.4, -0.2], "accent": [0.45, 0.9, 1.0] }
   ],
   "spawn": [0, 3],
   "playerRadius": 0.3,
