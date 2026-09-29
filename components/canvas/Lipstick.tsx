@@ -10,9 +10,9 @@ import {
   Vector2,
   type BufferGeometry,
 } from "three/webgpu";
-import { setProductModel } from "@/lib/cart/registry";
 import { LIP_FINISHES, readLipstickConfig, type LipFinish } from "@/lib/products/lipstick";
 import { useAppStore } from "@/store/useAppStore";
+import SurfaceProductDisplay from "./SurfaceProductDisplay";
 import PedestalMount, { TINY } from "./PedestalMount";
 
 /** Tube dimensions (meters): a classic bullet lipstick with its cap lying beside it. */
@@ -68,9 +68,10 @@ function bulletMaterials(): Record<LipFinish, MeshPhysicalNodeMaterial> {
 }
 
 /**
- * Lipstick product on its pedestal (EXPLORE / CUSTOMIZE / cart thumbnail): a procedural tube whose bullet shows the
- * configured shade and finish. In try-on the product is drawn on the lips by the surface layer (SurfaceLayer +
- * lib/tryon/surface/lipstick.ts); the tube is shrunk away like every other displayed product.
+ * Lipstick product on its pedestal: a procedural tube whose bullet shows the configured shade and finish (EXPLORE);
+ * in CUSTOMIZE and in cart thumbnails the lipstick is shown on the mannequin head (SurfaceProductDisplay).
+ * In try-on the product is drawn on the lips by the surface layer (SurfaceLayer + lib/tryon/surface/lipstick.ts);
+ * the tube is shrunk away like every other displayed product.
  */
 export default function Lipstick({ productId }: { productId: string }) {
   const config = readLipstickConfig(useAppStore((s) => s.configs[productId]));
@@ -117,11 +118,6 @@ export default function Lipstick({ productId }: { productId: string }) {
     [parts],
   );
 
-  useEffect(() => {
-    setProductModel(productId, parts.model);
-    return () => setProductModel(productId, null);
-  }, [productId, parts]);
-
   // Live config → materials: swap the bullet material, set the shade on every variant.
   useEffect(() => {
     parts.bullet.material = parts.bullets[config.finish];
@@ -140,7 +136,7 @@ export default function Lipstick({ productId }: { productId: string }) {
 
   return (
     <PedestalMount productId={productId} hitBox={hitBox}>
-      <primitive object={parts.model} />
+      <SurfaceProductDisplay productId={productId} packaging={<primitive object={parts.model} />} />
       <primitive object={parts.keepAlive} />
     </PedestalMount>
   );

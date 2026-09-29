@@ -21,13 +21,21 @@ import {
   vec2,
   vec3,
 } from "three/tsl";
-import { Color, DataTexture, FrontSide, LinearFilter, MeshBasicNodeMaterial, RGBAFormat } from "three/webgpu";
+import {
+  Color,
+  DataTexture,
+  FrontSide,
+  LinearFilter,
+  MeshBasicNodeMaterial,
+  MeshPhysicalNodeMaterial,
+  RGBAFormat,
+} from "three/webgpu";
 import { readLipstickConfig, type LipFinish } from "@/lib/products/lipstick";
 import type { ProductConfig } from "@/lib/products";
 import { FACE_MESH_TRIANGLES, FACE_MESH_UVS, LIP_CONTOURS } from "../faceMesh";
 import { videoColor } from "../videoLayer";
 import { mouthClosedAmount, mouthOpenness } from "./mouth";
-import type { SurfaceProduct } from "./types";
+import type { SurfacePreview, SurfaceProduct } from "./types";
 import { blurMask, contourUv, rasterizeLoops } from "./uvMask";
 
 const MASK_SIZE = 512;
@@ -63,6 +71,14 @@ const LIP_REFERENCE_LUMINANCE = 0.2;
  * UV mask channels: R = lips (outer contour, soft edge), G = mouth opening (inner contour, 1-texel edge),
  * B = proximity to the inner contour (a wide blur of it), used to darken the lip line.
  */
+let lipMask: DataTexture | null = null;
+
+/** Shared by the try-on layer and the mannequin preview; built once, kept for the session. */
+function lipMaskTexture(): DataTexture {
+  lipMask ??= createLipMaskTexture();
+  return lipMask;
+}
+
 function createLipMaskTexture(): DataTexture {
   const rasterize = (loop: readonly number[], blur: number) =>
     blurMask(rasterizeLoops([contourUv(loop, FACE_MESH_UVS)], MASK_SIZE), MASK_SIZE, blur);
@@ -137,8 +153,7 @@ export function createLipstickSurface(): SurfaceProduct {
     glitter: uniform(0),
     lift: uniform(1),
   };
-  const maskTexture = createLipMaskTexture();
-  const maskSample = texture(maskTexture, uv());
+  const maskSample = texture(lipMaskTexture(), uv());
   /** 1 while the lips touch, 0 once they part (from the landmarks, every frame). */
   const mouthClosed = uniform(1);
   const opening = maskSample.g;
@@ -192,8 +207,54 @@ export function createLipstickSurface(): SurfaceProduct {
     },
     dispose() {
       material.dispose();
-      maskTexture.dispose();
     },
   };
 }
 
+
+/** Physical-material look of each finish on the mannequin (lit by the scene instead of the webcam). */
+const PREVIEW_FINISH: Record<LipFinish, { roughness: number; clearcoat: number; metal: number; glitter: number }> = {
+  matte: { roughness: 0.9, clearcoat: 0, metal: 0, glitter: 0 },
+  satin: { roughness: 0.45, clearcoat: 0, metal: 0, glitter: 0 },
+  gloss: { roughness: 0.3, clearcoat: 1, metal: 0, glitter: 0 },
+  metallic: { roughness: 0.3, clearcoat: 0, metal: 0.8, glitter: 1 },
+};
+
+/**
+ * The lipstick on the mannequin face (CUSTOMIZE preview, cart thumbnail): same UV lip mask as try-on, applied to
+ * a physical material over the mannequin's skin, so shade and finish react to the scene lights.
+ */
+export function createLipstickPreview(skin: Color): SurfacePreview {
+  const color = uniform(new Color("#b3123a"));
+  const finish = { roughness: uniform(0.45), clearcoat: uniform(0), metal: uniform(0), glitter: uniform(0) };
+  const maskSample = texture(lipMaskTexture(), uv());
+  const lips = maskSample.r;
+  const lipLine = float(1).sub(smoothstep(0.05, 0.5, maskSample.b).mul(0.35));
+  const cell = floor(uv().mul(700));
+  const seed = hash(cell.x.add(cell.y.mul(997)));
+  const sparkle = step(0.965, seed).mul(sin(time.mul(3).add(seed.mul(60))).mul(0.5).add(0.5));
+
+  const material = new MeshPhysicalNodeMaterial({ name: "mannequin-lipstick" });
+  material.colorNode = mix(vec3(skin.r, skin.g, skin.b), color.mul(lipLine), lips);
+  material.roughnessNode = mix(float(0.65), finish.roughness, lips);
+  material.metalnessNode = lips.mul(finish.metal);
+  material.clearcoatNode = lips.mul(finish.clearcoat);
+  material.clearcoatRoughnessNode = float(0.04);
+  material.emissiveNode = color.mul(2).mul(sparkle).mul(finish.glitter).mul(lips);
+
+  let lastConfig: ProductConfig | null = null;
+  return {
+    material,
+    apply(config) {
+      if (config === lastConfig) return;
+      lastConfig = config;
+      const c = readLipstickConfig(config);
+      color.value.set(c.color);
+      const f = PREVIEW_FINISH[c.finish];
+      for (const key of Object.keys(finish) as (keyof typeof finish)[]) finish[key].value = f[key];
+    },
+    dispose() {
+      material.dispose();
+    },
+  };
+}

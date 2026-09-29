@@ -30,6 +30,7 @@ import {
   FrontSide,
   LinearFilter,
   MeshBasicNodeMaterial,
+  MeshPhysicalNodeMaterial,
   OneFactor,
   OneMinusSrcAlphaFactor,
   RGBAFormat,
@@ -40,7 +41,7 @@ import type { ProductConfig } from "@/lib/products";
 import { tracking } from "../tracking";
 import { videoColor } from "../videoLayer";
 import { bareMask, FACE_PAINT_DESIGNS, rasterizeDesign } from "./facePaintDesigns";
-import type { SurfaceProduct } from "./types";
+import type { SurfacePreview, SurfaceProduct } from "./types";
 import { blurMask } from "./uvMask";
 
 const MASK_SIZE = 1024;
@@ -78,6 +79,14 @@ function downsample(mask: Uint8Array, size: number, factor: number): Uint8Array 
   return out;
 }
 
+let designs: { designs: DataTexture; halos: DataTexture } | null = null;
+
+/** Shared by the try-on layer and the mannequin preview; built once (a few hundred ms), kept for the session. */
+function designTextures() {
+  designs ??= createDesignTextures();
+  return designs;
+}
+
 /** The designs (sharp) and their blurred copies (neon halo), rasterized once in canonical-UV space. */
 function createDesignTextures() {
   const bare = bareMask(MASK_SIZE);
@@ -101,7 +110,7 @@ const STYLE_WEIGHTS: Record<FacePaintStyle, [number, number, number]> = {
  * Output is premultiplied (custom blending One / OneMinusSrcAlpha) so halos can add light with zero coverage.
  */
 export function createFacePaintSurface(): SurfaceProduct {
-  const textures = createDesignTextures();
+  const textures = designTextures();
   const select = uniform(new Vector3(1, 0, 0));
   const styleWeights = uniform(new Vector3(0, 1, 0));
   const color = uniform(new Color("#22d3ee"));
@@ -183,8 +192,61 @@ export function createFacePaintSurface(): SurfaceProduct {
     },
     dispose() {
       material.dispose();
-      textures.designs.dispose();
-      textures.halos.dispose();
+    },
+  };
+}
+
+/**
+ * The face paint on the mannequin face (CUSTOMIZE preview, cart thumbnail): same UV designs as try-on on a
+ * physical material over the mannequin's skin; neon and holographic glow through the emissive channel.
+ */
+export function createFacePaintPreview(skin: Color): SurfacePreview {
+  const textures = designTextures();
+  const select = uniform(new Vector3(1, 0, 0));
+  const styleWeights = uniform(new Vector3(0, 1, 0));
+  const color = uniform(new Color("#22d3ee"));
+  const opacity = uniform(0.85);
+  const design = dot(texture(textures.designs, uv()).rgb, select);
+  const halo = dot(texture(textures.halos, uv()).rgb, select);
+  const coverage = design.mul(opacity);
+  const [wPaint, wNeon, wHolo] = [styleWeights.x, styleWeights.y, styleWeights.z];
+
+  const facing = abs(normalize(normalView).z);
+  const rainbow = hue(vec3(1, 0.2, 0.2), facing.mul(5).add(uv().x.mul(14)).add(uv().y.mul(9)).add(time.mul(0.5)));
+  const cell = floor(uv().mul(900));
+  const seed = hash(cell.x.add(cell.y.mul(1013)));
+  const sparkle = step(0.97, seed).mul(sin(time.mul(4).add(seed.mul(80))).mul(0.5).add(0.5));
+
+  // On the pale mannequin a silver base would vanish: the holographic pigment carries the rainbow itself.
+  const pigment = color.mul(wPaint.add(wNeon)).add(mix(vec3(0.78, 0.8, 0.85), rainbow, 0.7).mul(wHolo));
+  const material = new MeshPhysicalNodeMaterial({ name: "mannequin-face-paint" });
+  material.colorNode = mix(vec3(skin.r, skin.g, skin.b), pigment, coverage);
+  material.roughnessNode = mix(float(0.65), float(0.4), coverage);
+  material.metalnessNode = coverage.mul(wHolo).mul(0.5);
+  // Saturated core (no white-hot center): on the pale mannequin a whitened neon reads as washed out.
+  material.emissiveNode = color
+    .mul(design)
+    .add(color.mul(halo).mul(oneMinus(design)).mul(0.8))
+    .mul(wNeon)
+    .mul(1.2)
+    .add(rainbow.mul(0.45).add(vec3(sparkle)).mul(design).mul(wHolo))
+    .mul(opacity);
+
+  let lastConfig: ProductConfig | null = null;
+  return {
+    material,
+    apply(config) {
+      if (config === lastConfig) return;
+      lastConfig = config;
+      const c = readFacePaintConfig(config);
+      const d = FACE_PAINT_DESIGNS.indexOf(c.design);
+      select.value.set(d === 0 ? 1 : 0, d === 1 ? 1 : 0, d === 2 ? 1 : 0);
+      styleWeights.value.set(...STYLE_WEIGHTS[c.style]);
+      color.value.set(c.color);
+      opacity.value = c.opacity;
+    },
+    dispose() {
+      material.dispose();
     },
   };
 }
