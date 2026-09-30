@@ -4,7 +4,6 @@ import type { Page } from "@playwright/test";
 type DebugWindow = Window & {
   __store: { getState(): Record<string, unknown> & { mode: string; activeProductId: string; nearPedestal: string | null; items: { productId: string; thumbnailUrl: string | null }[] } };
   __player: { position: [number, number] };
-  __tracking?: { hasFace: boolean };
 };
 
 export const state = (page: Page) =>
@@ -13,7 +12,7 @@ export const state = (page: Page) =>
     return { mode: s.mode, activeProductId: s.activeProductId, items: s.items.map((i) => ({ ...i })) };
   });
 
-/** The camera is refused, so try-on offers the bundled demo video (deterministic input for CI). */
+/** Makes getUserMedia fail as if the user refused camera access. */
 export async function denyCamera(page: Page) {
   await page.addInitScript(() => {
     navigator.mediaDevices.getUserMedia = async () => {
@@ -38,12 +37,6 @@ export async function openProduct(page: Page, productId: string, spot: [number, 
     { timeout: 60_000 },
   );
   await page.keyboard.press("KeyE");
-}
-
-export async function waitForFace(page: Page) {
-  await page.waitForFunction(() => (window as unknown as DebugWindow).__tracking?.hasFace === true, null, {
-    timeout: 180_000,
-  });
 }
 
 /** Collects uncaught errors, Content Security Policy violations and requests leaving the site's origin. */

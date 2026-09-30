@@ -8,8 +8,6 @@ fallback) for rendering and MediaPipe for face tracking.
 
 **Live demo: [3d-virtual-store-two.vercel.app](https://3d-virtual-store-two.vercel.app)** (desktop Chrome or Edge for WebGPU; any WebGL 2 browser works, including phones)
 
-![Photo-booth capture: gold glasses tried on with the demo video](app/opengraph-image.jpg)
-
 ![Demo: walking the showroom, customizing the glasses, then lipstick and face paint on the mannequin head](docs/demo.gif)
 
 ## Features
@@ -35,7 +33,8 @@ fallback) for rendering and MediaPipe for face tracking.
     eyes and lips are always left bare. Neon and holographic glow brighten as the mouth opens (FaceLandmarker's
     `jawOpen` blendshape).
   - Selfie mirroring and pose smoothing.
-  - A demo video can be used when no camera is available or access is denied.
+  - Optional demo mode: a looping face clip through the same pipeline, for visitors without a webcam (no clip is
+    bundled, see `docs/demo-video.md`).
 - **Photo booth.** Captures the video frame and the 3D render together, exactly as shown on screen, and downloads
   the result as a PNG.
 - **Cart.**
@@ -70,7 +69,7 @@ components/canvas/      Everything inside the single R3F <Canvas> (client-only, 
   PostFx.tsx              TSL post-processing (CUSTOMIZE background dim + vignette), owns the render loop
   ThumbnailRenderer / CartParticles                 Cart thumbnails (offscreen render target) and feedback
 components/dom/         HTML overlays: customizer, try-on panel, photo modal, cart drawer, status/loading screens
-hooks/useTryOnSession   Camera or demo video → FaceLandmarker → smoothed pose, errors, watchdogs
+hooks/useTryOnSession   Camera (or demo clip) → FaceLandmarker → smoothed pose, errors, watchdogs
 store/                  zustand store in slices: world (mode + transitions), product, tryOn, cart
 lib/products/           Product registry + schema helpers (validation, defaults, price deltas)
 lib/tryon/              MediaPipe loading, One Euro smoothing, capture, error classification, constants,
@@ -142,7 +141,7 @@ Everything runs locally in your browser:
   frame, landmark or photo is uploaded anywhere. The camera is stopped as soon as you leave try-on.
 - **Photos** are encoded to PNG in the page and saved with a normal download link.
 - **Nothing is sent to external servers.** The app has no analytics, and all assets (models, Draco decoder,
-  MediaPipe WASM and model, demo video) are served from the same origin. MediaPipe's built-in usage logging would
+  MediaPipe WASM and model) are served from the same origin. MediaPipe's built-in usage logging would
   normally `fetch()` a Google endpoint; `lib/networkGuard.ts` answers any cross-origin `fetch` or `sendBeacon` locally
   instead, so it never leaves the device. In automated runs of the full loop, no request left the site's origin.
 - **Storage:** the only thing stored is a `sessionStorage` flag recording that you dismissed the low-frame-rate
@@ -188,8 +187,9 @@ Everything runs locally in your browser:
   float16 model. It is cached by the browser afterwards.
 - **No checkout, no persistence.** The cart is a demo and is lost on reload.
 - **Testing coverage.** The end-to-end tests (`e2e/`, run in CI) drive headless Chromium on the WebGL 2 backend
-  (SwiftShader, no GPU) with the demo video instead of a camera, where frame rates are far below real hardware. The
-  WebGPU path and real webcams are exercised only on real devices.
+  (SwiftShader, no GPU) with Chromium's synthetic camera stream, where frame rates are far below real hardware.
+  That stream has no face, so the tests stop at live tracking ("Face the camera"): pose, makeup rendering and photo
+  capture on a real face, the WebGPU path and real webcams are exercised only on real devices.
 - **Browser-level console messages.** In production the app itself logs nothing. On machines without WebGPU,
   Chromium itself may still print "WebGPU is experimental on this platform" or driver messages, which the page
   cannot suppress.
@@ -228,7 +228,6 @@ npm run lint
 | `public/models/glasses-{aviator,studio,crystal}.glb` | procedural frames (`scripts/generate-glasses.mjs`) | `npm run generate:models` (committed) |
 | `public/models/showroom.glb` | low-poly showroom, lighting baked into vertex colors | `npm run generate:models` (committed) |
 | `public/models/head-occluder.glb` | MediaPipe canonical face + back-of-head ellipsoid | `npm run generate:models` (committed) |
-| `public/demo/try-on-demo.{mp4,webm}` | demo clip (see `docs/demo-video.md`) | committed |
 
 Paths are exported from `lib/assets.ts`. To re-download the face model:
 

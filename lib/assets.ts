@@ -7,11 +7,8 @@ export const MEDIAPIPE_MANIFEST_PATH = "/mediapipe/manifest.json";
 export const HEAD_OCCLUDER_MODEL_PATH = "/models/head-occluder.glb";
 export const SHOWROOM_MODEL_PATH = "/models/showroom.glb";
 /**
- * Short looping face clip for demo mode (no webcam): runs through the same try-on pipeline.
- * H.264 MP4 first (plays everywhere incl. iOS Safari), VP9 WebM for browsers built without H.264.
- * See docs/demo-video.md. Unplayable/missing file → "Demo video unavailable" error state.
+ * Optional demo mode (try-on without a webcam): a short looping face clip run through the same pipeline.
+ * No clip is bundled. List one here (and add the files to public/demo/, see docs/demo-video.md) to offer
+ * "Use demo video" on camera errors; with an empty list the option is not shown.
  */
-export const DEMO_VIDEO_SOURCES = [
-  { src: "/demo/try-on-demo.mp4", type: 'video/mp4; codecs="avc1.4D401F"' },
-  { src: "/demo/try-on-demo.webm", type: 'video/webm; codecs="vp9"' },
-] as const;
+export const DEMO_VIDEO_SOURCES: readonly { src: string; type: string }[] = [];

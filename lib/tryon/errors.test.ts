@@ -28,10 +28,15 @@ describe("tryOnError", () => {
     expect(e.message).toBeTruthy();
   });
 
-  it("offers the demo video for camera problems only", () => {
-    expect(canUseDemo("denied")).toBe(true);
-    expect(canUseDemo("no-camera")).toBe(true);
-    expect(canUseDemo("model")).toBe(false);
-    expect(canUseDemo("demo")).toBe(false);
+  it("offers the demo video for camera problems only, when one is configured", () => {
+    expect(canUseDemo("denied", true)).toBe(true);
+    expect(canUseDemo("no-camera", true)).toBe(true);
+    expect(canUseDemo("model", true)).toBe(false);
+    expect(canUseDemo("demo", true)).toBe(false);
+    expect(canUseDemo("denied", false)).toBe(false);
+  });
+
+  it("only mentions the demo video when it can be used", () => {
+    expect(tryOnError("denied").message.includes("demo video")).toBe(canUseDemo("denied"));
   });
 });

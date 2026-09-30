@@ -40,7 +40,7 @@ class SessionError extends Error {
 }
 
 /**
- * Runs a try-on session while `active`: opens the source (webcam via getUserMedia, or the bundled demo video),
+ * Runs a try-on session while `active`: opens the source (webcam via getUserMedia, or the optional demo video),
  * loads FaceLandmarker, and runs detection on every new video frame (requestVideoFrameCallback). The smoothed
  * pose goes to `tracking`. Every failure ends in an explicit error state (never a blank or frozen stage):
  * permission, missing/busy camera, insecure context, camera unplugged, frozen video, model load failure.

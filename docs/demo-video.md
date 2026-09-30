@@ -1,24 +1,29 @@
-# Demo-mode video
+# Demo-mode video (optional)
 
-Demo mode (try-on without a webcam) plays a short looping clip through the same FaceLandmarker pipeline as
-the camera. Files (served from `public/demo/`, picked with `canPlayType`, see `DEMO_VIDEO_SOURCES` in
-`lib/assets.ts`):
+Demo mode lets visitors without a webcam try products on a looping face clip, run through the same FaceLandmarker
+pipeline as the camera. No clip is bundled, so the option is hidden. To enable it:
 
-- `try-on-demo.mp4` — H.264 Main, 720p, 30 fps, no audio (plays everywhere, including iOS Safari)
-- `try-on-demo.webm` — VP9 fallback for browsers built without H.264 (e.g. some Chromium builds)
+1. Add a 5–10 s clip of one face looking at the camera and turning slightly, in even lighting, as
+   `public/demo/try-on-demo.mp4` (H.264, plays everywhere including iOS Safari) and `public/demo/try-on-demo.webm`
+   (VP9, for Chromium builds without H.264):
 
-If neither can be played, choosing "Use demo video" shows a "Demo video unavailable" message.
+   ```bash
+   ffmpeg -i input.mov -an -vf "scale=-2:720,fps=30" -c:v libx264 -profile:v main -pix_fmt yuv420p \
+     -crf 27 -preset slow -movflags +faststart public/demo/try-on-demo.mp4
+   ffmpeg -i input.mov -an -vf "scale=-2:720,fps=30" -c:v libvpx-vp9 -b:v 0 -crf 38 -row-mt 1 \
+     public/demo/try-on-demo.webm
+   ```
 
-To replace the clip (5–10 s, one face looking at the camera and turning slightly, even lighting):
+2. List them in `DEMO_VIDEO_SOURCES` (`lib/assets.ts`):
 
-```bash
-ffmpeg -i input.mov -an -vf "scale=-2:720,fps=30" -c:v libx264 -profile:v main -pix_fmt yuv420p \
-  -crf 27 -preset slow -movflags +faststart public/demo/try-on-demo.mp4
-ffmpeg -i input.mov -an -vf "scale=-2:720,fps=30" -c:v libvpx-vp9 -b:v 0 -crf 38 -row-mt 1 \
-  public/demo/try-on-demo.webm
-```
+   ```ts
+   export const DEMO_VIDEO_SOURCES = [
+     { src: "/demo/try-on-demo.mp4", type: 'video/mp4; codecs="avc1.4D401F"' },
+     { src: "/demo/try-on-demo.webm", type: 'video/webm; codecs="vp9"' },
+   ];
+   ```
 
-Only use footage you have the rights to publish.
+Camera errors then offer "Use demo video". Only use footage you have the rights to publish.
 
 ## README demo GIF
 
@@ -30,5 +35,5 @@ ffmpeg -i recording.mov -vf "fps=12,scale=720:-1:flags=lanczos,split[a][b];[a]pa
   -loop 0 docs/demo.gif
 ```
 
-Keep it under ~5 MB (lower `fps` or the width if needed), then uncomment the `docs/demo.gif` line at the top of the
-README.
+Keep it under ~5 MB (lower `fps` or the width if needed) and save it as `docs/demo.gif`. The current GIF shows no
+real face: makeup is previewed on the procedural mannequin head.

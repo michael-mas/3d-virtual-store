@@ -15,7 +15,7 @@ export default function Home() {
         <ul>
           <li>Explore: walk a 3D showroom with three pairs of glasses, a lipstick and a face paint on pedestals.</li>
           <li>Customize: change frame finish and color, lens effect, lipstick finish and shade, face paint design and style; the price updates live.</li>
-          <li>Try on: see the product on your face through your webcam, or with a bundled demo video. Nothing leaves your device.</li>
+          <li>Try on: see the product on your face through your webcam. Face tracking runs in the page; no image leaves your device.</li>
           <li>Photo: capture and download a photo-booth picture.</li>
         </ul>
         <h2>How it is built</h2>
