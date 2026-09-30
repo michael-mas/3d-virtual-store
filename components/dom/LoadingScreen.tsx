@@ -40,7 +40,7 @@ export default function LoadingScreen() {
       <div className="h-1 w-56 overflow-hidden rounded-full bg-neutral-800">
         <div className="h-full rounded-full bg-indigo-500 transition-[width] duration-300" style={{ width: `${Math.max(pct, 4)}%` }} />
       </div>
-      <p className="text-xs text-neutral-500">{label}</p>
+      <p className="text-xs text-neutral-400">{label}</p>
     </div>
   );
 }

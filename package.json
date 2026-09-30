@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "npx serve@latest out",
+    "build": "next build && node scripts/csp.mjs",
+    "start": "node scripts/serve-static.mjs out 3000",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "postinstall": "node scripts/copy-wasm.mjs",

@@ -46,11 +46,14 @@ export async function waitForFace(page: Page) {
   });
 }
 
-/** Collects uncaught errors and requests leaving the site's origin. */
+/** Collects uncaught errors, Content Security Policy violations and requests leaving the site's origin. */
 export function watchPage(page: Page) {
   const errors: string[] = [];
   const external: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  page.on("console", (m) => {
+    if (m.type() === "error" && /Content Security Policy/.test(m.text())) errors.push(m.text());
+  });
   page.on("request", (r) => {
     const url = new URL(r.url());
     // The e2e server is local; anything else would break the "zero external requests" rule.
