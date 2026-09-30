@@ -6,7 +6,7 @@ A portfolio proof of concept: walk through a small 3D showroom, pick a product o
 on with your webcam and take a photo. It runs entirely in the browser, with WebGPU (plus an automatic WebGL 2
 fallback) for rendering and MediaPipe for face tracking.
 
-**Live demo:** _coming soon — `https://<your-deployment>.vercel.app`_
+**Live demo: [3d-virtual-store-two.vercel.app](https://3d-virtual-store-two.vercel.app)** (desktop Chrome or Edge for WebGPU; any WebGL 2 browser works, including phones)
 
 ![Photo-booth capture: gold glasses tried on with the demo video](app/opengraph-image.jpg)
 
