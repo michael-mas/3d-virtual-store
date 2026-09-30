@@ -10,9 +10,7 @@ fallback) for rendering and MediaPipe for face tracking.
 
 ![Photo-booth capture: gold glasses tried on with the demo video](app/opengraph-image.jpg)
 
-<!-- Demo GIF: record ~10 s of try-on (see docs/demo-video.md), save it as docs/demo.gif, then uncomment:
-![Try-on demo: glasses, lipstick and face paint](docs/demo.gif)
--->
+![Demo: walking the showroom, customizing the glasses, then lipstick and face paint on the mannequin head](docs/demo.gif)
 
 ## Features
 
