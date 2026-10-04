@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { canUseDemo } from "@/lib/tryon/errors";
 import { useAppStore } from "@/store/useAppStore";
+import LookSwitcher from "./LookSwitcher";
 
 const STATUS_TEXT = {
   idle: "Starting…",
@@ -10,7 +11,7 @@ const STATUS_TEXT = {
   model: "Loading face tracking…",
 } as const;
 
-/** TRY_ON overlay: progress, "face the camera" hint, error card with a way out, capture/exit controls. */
+/** TRY_ON overlay: progress, "face the camera" hint, error card with a way out, look switcher, capture/exit controls. */
 export default function TryOnPanel() {
   const mode = useAppStore((s) => s.mode);
   const status = useAppStore((s) => s.tryOnStatus);
@@ -101,6 +102,7 @@ export default function TryOnPanel() {
           {message}
         </p>
       )}
+      <LookSwitcher />
       <div className="fixed inset-x-0 bottom-6 z-40 flex justify-center gap-3">
         <button
           type="button"

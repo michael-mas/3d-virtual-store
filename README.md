@@ -39,7 +39,9 @@ fallback) for rendering and MediaPipe for face tracking.
   the result as a PNG.
 - **Cart.**
   - A drawer with a 256 px rendered thumbnail of each configured item, per-option price lines and a total.
-  - "Try on" from any cart item.
+  - "Try on" from any cart item, or **the whole look**: every zone at once (face paint, lipstick, glasses), one item
+    per zone, with a switcher in try-on to swap items within a zone or leave it bare. Zones come from the registry
+    (`TRY_ON_ZONES`), so a new zone (hats, lenses…) needs no UI change.
   - Instanced particles fly to the cart icon when an item is added.
 - **Hardening.**
   - Every try-on failure has an explanation and a way out: camera blocked, missing, busy or unplugged, insecure
@@ -108,8 +110,8 @@ How a product follows the face in TRY_ON is set by its `attachment` in the regis
 There is no webcam in CUSTOMIZE, so surface products are previewed on a neutral mannequin head built from the same
 canonical mesh (same UVs, so the same masks), lit by the scene; cart thumbnails render that mannequin.
 
-**Adding a product** = a registry entry in `lib/products` (id, name, category, attachment, schema, calibration,
-renderer), a pedestal slot in `lib/explore/showroom-layout.json` (then `npm run generate:models`), and for a new
+**Adding a product** = a registry entry in `lib/products` (id, name, category, attachment, try-on zone, schema,
+calibration, renderer), a pedestal slot in `lib/explore/showroom-layout.json` (then `npm run generate:models`), and for a new
 renderer its scene component (`RENDERERS` in `components/canvas/Scene.tsx`) and, for surface products, its try-on
 and preview materials (`SURFACES` in `SurfaceLayer.tsx`, `PREVIEWS` in `MannequinPreview.tsx`).
 

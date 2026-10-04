@@ -15,11 +15,12 @@ const HIDDEN = new Matrix4().makeScale(1e-6, 1e-6, 1e-6).setPosition(0, 0, -1);
 
 /**
  * Group driven by the smoothed MediaPipe facial transformation matrix. Children live in canonical face
- * space, in meters: matrix = cm→m · pose(cm) · m→cm. Holds the head occluder and the calibrated product.
+ * space, in meters: matrix = cm→m · pose(cm) · m→cm. Holds the head occluder and the product, with that product's
+ * calibration.
  */
-export default function FaceAnchor({ children }: { children: ReactNode }) {
+export default function FaceAnchor({ productId, children }: { productId: string; children: ReactNode }) {
   const anchor = useRef<Group>(null);
-  const calibration = useAppStore((s) => s.calibrations[s.activeProductId]);
+  const calibration = useAppStore((s) => s.calibrations[productId]);
 
   useFrame(() => {
     const g = anchor.current;

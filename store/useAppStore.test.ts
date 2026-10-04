@@ -144,6 +144,65 @@ describe("cart", () => {
   });
 });
 
+describe("looks (whole cart, one product per zone)", () => {
+  beforeEach(() => useAppStore.setState(initial, true));
+
+  /** Adds `productId` to the cart with `options`, then resets those options so restoring is observable. */
+  const add = (productId: string, options: Record<string, string>) => {
+    const s = useAppStore.getState();
+    s.selectProduct(productId);
+    for (const [k, v] of Object.entries(options)) s.setOption(k, v);
+    const id = s.addToCart();
+    s.applyConfig(productId, {});
+    return id;
+  };
+
+  it("wears the latest item of each zone at once and restores their configurations", () => {
+    add("aviator", { frameColor: "#ff0000" });
+    const studio = add("studio", { lens: "iridescent" });
+    const lip = add("velvet-lip", { finish: "gloss" });
+    useAppStore.getState().tryOnLook();
+    const s = useAppStore.getState();
+    expect(s.mode).toBe("TRY_ON");
+    expect(s.look).toEqual({ eyewear: studio, lips: lip });
+    expect(s.activeProductId).toBe("studio");
+    expect(s.configs.studio.lens).toBe("iridescent");
+    expect(s.configs["velvet-lip"].finish).toBe("gloss");
+  });
+
+  it("swaps within a zone, clears a zone, and forgets removed items", () => {
+    const aviator = add("aviator", { frameColor: "#ff0000" });
+    add("studio", {});
+    const lip = add("velvet-lip", {});
+    const s = useAppStore.getState();
+    s.tryOnLook();
+    s.wearLookItem(aviator);
+    expect(useAppStore.getState().look?.eyewear).toBe(aviator);
+    expect(useAppStore.getState().configs.aviator.frameColor).toBe("#ff0000");
+    s.clearLookZone("eyewear");
+    expect(useAppStore.getState().look).toEqual({ lips: lip });
+    s.removeFromCart(lip);
+    expect(useAppStore.getState().look).toEqual({});
+  });
+
+  it("ends with the try-on session, and a single-item try-on is not a look", () => {
+    const lip = add("velvet-lip", {});
+    const s = useAppStore.getState();
+    s.tryOnLook();
+    s.transition("EXIT");
+    expect(useAppStore.getState().look).toBeNull();
+    s.tryOnLook();
+    s.tryOnCartItem(lip);
+    expect(useAppStore.getState().look).toBeNull();
+  });
+
+  it("does nothing with an empty cart", () => {
+    useAppStore.getState().tryOnLook();
+    expect(useAppStore.getState().mode).toBe("EXPLORE");
+    expect(useAppStore.getState().look).toBeNull();
+  });
+});
+
 describe("late thumbnails", () => {
   beforeEach(() => useAppStore.setState(initial, true));
   afterEach(() => vi.restoreAllMocks());

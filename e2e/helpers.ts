@@ -2,14 +2,14 @@ import type { Page } from "@playwright/test";
 
 /** Debug-only handles exposed with `?debug` (see DevPanel, Player, useTryOnSession). */
 type DebugWindow = Window & {
-  __store: { getState(): Record<string, unknown> & { mode: string; activeProductId: string; nearPedestal: string | null; items: { productId: string; thumbnailUrl: string | null }[] } };
+  __store: { getState(): Record<string, unknown> & { mode: string; activeProductId: string; nearPedestal: string | null; items: { productId: string; thumbnailUrl: string | null }[]; look: Record<string, string> | null } };
   __player: { position: [number, number] };
 };
 
 export const state = (page: Page) =>
   page.evaluate(() => {
     const s = (window as unknown as DebugWindow).__store.getState();
-    return { mode: s.mode, activeProductId: s.activeProductId, items: s.items.map((i) => ({ ...i })) };
+    return { mode: s.mode, activeProductId: s.activeProductId, items: s.items.map((i) => ({ ...i })), look: s.look };
   });
 
 /** Makes getUserMedia fail as if the user refused camera access. */

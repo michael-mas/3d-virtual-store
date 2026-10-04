@@ -1,5 +1,6 @@
-import type { ProductConfig } from "@/lib/products";
-import type { Slice } from "./types";
+import { clearZone, defaultLook, lookItems, wearItem, withoutItem, type Look } from "@/lib/cart/look";
+import type { ProductConfig, TryOnZone } from "@/lib/products";
+import type { AppState, Slice } from "./types";
 
 export type CartItem = {
   id: string;
@@ -28,9 +29,36 @@ export type CartSlice = {
   clearCart: () => void;
   /** Restores the item's configuration and navigates to TRY_ON through the transition table. */
   tryOnCartItem: (itemId: string) => void;
+  /** Products worn together in try-on, one cart item per zone; null when trying on a single product. */
+  look: Look | null;
+  /** Tries on the whole cart: the latest item of each zone, all at once. */
+  tryOnLook: () => void;
+  /** Wears a cart item in its zone of the current look (replacing the item there). */
+  wearLookItem: (itemId: string) => void;
+  /** Leaves a zone of the current look bare. */
+  clearLookZone: (zone: TryOnZone) => void;
 };
 
 const revoke = (item: CartItem) => item.thumbnailUrl && URL.revokeObjectURL(item.thumbnailUrl);
+
+/** EXPLORE / CUSTOMIZE / PHOTO → TRY_ON through the transition table (TRY_ON stays). */
+function goToTryOn(get: () => AppState) {
+  const { transition } = get();
+  switch (get().mode) {
+    case "EXPLORE":
+      transition("INTERACT");
+      transition("TRY_ON");
+      break;
+    case "CUSTOMIZE":
+      transition("TRY_ON");
+      break;
+    case "PHOTO":
+      transition("RETAKE");
+      break;
+    case "TRY_ON":
+      break;
+  }
+}
 
 export const createCartSlice: Slice<CartSlice> = (set, get) => ({
   cartOpen: false,
@@ -61,32 +89,43 @@ export const createCartSlice: Slice<CartSlice> = (set, get) => ({
   removeFromCart: (itemId) =>
     set((s) => {
       s.items.filter((i) => i.id === itemId).forEach(revoke);
-      return { items: s.items.filter((i) => i.id !== itemId) };
+      return { items: s.items.filter((i) => i.id !== itemId), look: s.look && withoutItem(s.look, itemId) };
     }),
   clearCart: () =>
     set((s) => {
       s.items.forEach(revoke);
-      return { items: [] };
+      return { items: [], look: s.look && {} };
     }),
   tryOnCartItem: (itemId) => {
     const item = get().items.find((i) => i.id === itemId);
     if (!item) return;
     get().applyConfig(item.productId, item.config);
-    set({ cartOpen: false });
-    const { transition } = get();
-    switch (get().mode) {
-      case "EXPLORE":
-        transition("INTERACT");
-        transition("TRY_ON");
-        break;
-      case "CUSTOMIZE":
-        transition("TRY_ON");
-        break;
-      case "PHOTO":
-        transition("RETAKE");
-        break;
-      case "TRY_ON":
-        break;
-    }
+    set({ cartOpen: false, look: null });
+    goToTryOn(get);
+  },
+  look: null,
+  tryOnLook: () => {
+    const { items } = get();
+    const look = defaultLook(items);
+    const worn = lookItems(look, items);
+    if (worn.length === 0) return;
+    for (const item of worn) get().setConfig(item.productId, item.config);
+    // The last worn item (eyewear first, when present) becomes the active product: calibration, and where EXIT
+    // returns to.
+    set({ activeProductId: worn[worn.length - 1].productId, cartOpen: false });
+    goToTryOn(get);
+    // After navigating: leaving the try-on modes clears the look, and INTERACT passes through CUSTOMIZE.
+    set({ look });
+  },
+  wearLookItem: (itemId) => {
+    const item = get().items.find((i) => i.id === itemId);
+    const look = get().look;
+    if (!item || !look) return;
+    get().setConfig(item.productId, item.config);
+    set({ look: wearItem(look, item) });
+  },
+  clearLookZone: (zone) => {
+    const look = get().look;
+    if (look) set({ look: clearZone(look, zone) });
   },
 });

@@ -22,6 +22,8 @@ export type ProductSlice = {
   setCalibration: (id: string, calibration: Partial<TryOnCalibration>) => void;
   /** Selects `id` and replaces its configuration (e.g. restoring a cart item). */
   applyConfig: (id: string, config: ProductConfig) => void;
+  /** Replaces `id`'s configuration without selecting it (e.g. wearing a cart item in a look). */
+  setConfig: (id: string, config: ProductConfig) => void;
 };
 
 export const createProductSlice: Slice<ProductSlice> = (set, get) => ({
@@ -41,9 +43,14 @@ export const createProductSlice: Slice<ProductSlice> = (set, get) => ({
     set((s) => ({ configs: { ...s.configs, [id]: { ...s.configs[id], [optionId]: value } } }));
   },
   applyConfig: (id, config) => {
+    if (!getProduct(id)) return;
+    get().setConfig(id, config);
+    set({ activeProductId: id });
+  },
+  setConfig: (id, config) => {
     const product = getProduct(id);
     if (!product) return;
-    set((s) => ({ activeProductId: id, configs: { ...s.configs, [id]: sanitizeConfig(product, config) } }));
+    set((s) => ({ configs: { ...s.configs, [id]: sanitizeConfig(product, config) } }));
   },
   setCalibration: (id, calibration) =>
     set((s) =>

@@ -53,6 +53,7 @@ export function lipstickProduct(p: {
     name: p.name,
     category: "lips",
     attachment: "surface",
+    zone: "lips",
     renderer: "lipstick",
     basePrice: p.basePrice,
     options: LIPSTICK_OPTIONS.map((o) => {

@@ -11,6 +11,7 @@ import {
   disposeMaterials,
   setFrameColor,
 } from "@/lib/materials";
+import { wornProductIds } from "@/lib/cart/look";
 import { setProductModel } from "@/lib/cart/registry";
 import { getProduct } from "@/lib/products";
 import { readGlassesConfig } from "@/lib/products/glasses";
@@ -27,12 +28,12 @@ const isLens = (o: Object3D) =>
 
 /**
  * One configurable product on its pedestal. Each instance owns a clone of the model and its material set.
- * During try-on the active product's model is re-parented into the FaceAnchor (same objects, no reload).
+ * During try-on a worn product's model (the active one, or the look's eyewear) is re-parented into the FaceAnchor (same objects, no reload).
  */
 export default function Glasses({ productId }: { productId: string }) {
   const config = readGlassesConfig(useAppStore((s) => s.configs[productId]));
   const mode = useAppStore((s) => s.mode);
-  const active = useAppStore((s) => s.activeProductId === productId);
+  const worn = useAppStore((s) => wornProductIds(s).includes(productId));
   const product = getProduct(productId)!;
   if (!product.model) throw new Error(`Glasses product "${productId}" has no model`);
 
@@ -119,9 +120,9 @@ export default function Glasses({ productId }: { productId: string }) {
 
   // Same model instance and materials in both placements; only its parent changes.
   const tryOn = isTryOnMode(mode);
-  if (tryOn && active) {
+  if (tryOn && worn) {
     return (
-      <FaceAnchor>
+      <FaceAnchor productId={productId}>
         <primitive object={scene} />
         {keepAliveNode}
       </FaceAnchor>

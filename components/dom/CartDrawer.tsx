@@ -3,13 +3,15 @@
 import { useRef } from "react";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
 import { formatPrice, priceBreakdown } from "@/lib/cart/pricing";
-import { getProduct } from "@/lib/products";
+import { getProduct, TRY_ON_ZONES } from "@/lib/products";
 import { useAppStore } from "@/store/useAppStore";
+
+const ZONE_LIST = TRY_ON_ZONES.map((z) => z.label.toLowerCase()).join(", ");
 
 export default function CartDrawer() {
   const open = useAppStore((s) => s.cartOpen);
   const items = useAppStore((s) => s.items);
-  const { setCartOpen, removeFromCart, tryOnCartItem } = useAppStore.getState();
+  const { setCartOpen, removeFromCart, tryOnCartItem, tryOnLook } = useAppStore.getState();
   const drawer = useRef<HTMLElement>(null);
   useDialogFocus(drawer, open, () => setCartOpen(false));
 
@@ -115,11 +117,23 @@ export default function CartDrawer() {
           })}
         </ul>
 
-        <footer className="flex items-center justify-between border-t border-white/10 p-4">
-          <span className="text-sm text-neutral-400">Total</span>
-          <span className="text-lg font-semibold" data-testid="cart-total">
-            {formatPrice(total)}
-          </span>
+        <footer className="space-y-3 border-t border-white/10 p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-neutral-400">Total</span>
+            <span className="text-lg font-semibold" data-testid="cart-total">
+              {formatPrice(total)}
+            </span>
+          </div>
+          {items.length > 1 && (
+            <button
+              type="button"
+              onClick={tryOnLook}
+              className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium hover:bg-indigo-500"
+            >
+              Try on the whole look
+              <span className="block text-xs font-normal text-indigo-200">One item per zone: {ZONE_LIST}</span>
+            </button>
+          )}
         </footer>
       </aside>
     </>

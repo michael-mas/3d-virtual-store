@@ -5,6 +5,7 @@ import type { Product } from "./types";
 
 export type * from "./types";
 export * from "./schema";
+export { TRY_ON_ZONES } from "./types";
 
 /**
  * The product registry. Adding a product = one entry here (plus its assets). The customizer, cart pricing,

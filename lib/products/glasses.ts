@@ -70,6 +70,7 @@ export function glassesProduct(p: {
     name: p.name,
     category: "eyewear",
     attachment: "rigid",
+    zone: "eyewear",
     renderer: "glasses",
     basePrice: p.basePrice,
     model: p.model,

@@ -62,6 +62,7 @@ export function facePaintProduct(p: { id: string; name: string; basePrice: numbe
     name: p.name,
     category: "face-paint",
     attachment: "surface",
+    zone: "skin",
     renderer: "facePaint",
     basePrice: p.basePrice,
     options: FACE_PAINT_OPTIONS,

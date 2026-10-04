@@ -13,6 +13,17 @@ export type ProductCategory = "eyewear" | "lips" | "face-paint";
  */
 export type AttachmentType = "rigid" | "surface" | "landmark";
 
+/**
+ * The part of the face a product occupies in try-on. A look (several products worn together) holds at most one
+ * product per zone. Listed in drawing order: the surface layer paints skin first, then lips on top.
+ */
+export const TRY_ON_ZONES = [
+  { id: "skin", label: "Face" },
+  { id: "lips", label: "Lips" },
+  { id: "eyewear", label: "Eyewear" },
+] as const;
+export type TryOnZone = (typeof TRY_ON_ZONES)[number]["id"];
+
 export type OptionValue = {
   value: string;
   label: string;
@@ -73,6 +84,8 @@ export type Product = {
   name: string;
   category: ProductCategory;
   attachment: AttachmentType;
+  /** Where it is worn; one product per zone in a look. */
+  zone: TryOnZone;
   basePrice: number;
   renderer: ProductRenderer;
   /** Model under /public/models (rigid products). */

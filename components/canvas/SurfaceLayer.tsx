@@ -16,7 +16,8 @@ import {
   type WebGPURenderer,
 } from "three/webgpu";
 import { isTryOnMode } from "@/lib/modes";
-import { getProduct, type ProductRenderer } from "@/lib/products";
+import { wornProductIds } from "@/lib/cart/look";
+import { getProduct, TRY_ON_ZONES, type Product, type ProductRenderer } from "@/lib/products";
 import { createFaceMeshGeometry, updateFaceMeshPositions } from "@/lib/tryon/faceMesh";
 import { tracking } from "@/lib/tryon/tracking";
 import { createFacePaintSurface } from "@/lib/tryon/surface/facePaint";
@@ -52,8 +53,9 @@ const SURFACES: Partial<Record<ProductRenderer, () => SurfaceProduct>> = {
  * Surface attachment layer: the face mesh built from the 468 tessellated landmarks, drawn by an orthographic
  * camera covering the video frame ([0, aspect] × [0, 1], see lib/tryon/faceMesh.ts) into `surfaceLayer.target`,
  * which the scene background composites under the rigid layer (lib/tryon/videoLayer.ts). Runs before PostFx.
- * Draws the active `surface` product (or a debug view). Positions and normals are rewritten in place only when a
- * new detection arrived; each product's geometry shares those attributes with its own triangle subset.
+ * Draws every worn `surface` product (one per zone, see lib/cart/look.ts) in zone order, skin before lips, or a
+ * debug view. Positions and normals are rewritten in place only when a new detection arrived; each product's mesh
+ * shares those attributes with its own triangle subset.
  */
 export default function SurfaceLayer() {
   const gl = useThree((s) => s.gl) as unknown as WebGPURenderer;
@@ -62,11 +64,11 @@ export default function SurfaceLayer() {
     const scene = new Scene();
     const camera = new OrthographicCamera(0, 1, 1, 0, -10, 10);
     const geometry = createFaceMeshGeometry();
-    const mesh = new Mesh(geometry);
-    mesh.frustumCulled = false;
-    scene.add(mesh);
-    const products = new Map<ProductRenderer, { surface: SurfaceProduct; geometry: BufferGeometry }>();
-    return { scene, camera, geometry, mesh, products, debug: createDebugMaterials(), version: -1, aspect: 0 };
+    const debugMesh = new Mesh(geometry);
+    debugMesh.frustumCulled = false;
+    scene.add(debugMesh);
+    const products = new Map<ProductRenderer, { surface: SurfaceProduct; geometry: BufferGeometry; mesh: Mesh }>();
+    return { scene, camera, geometry, debugMesh, products, debug: createDebugMaterials(), version: -1, aspect: 0 };
   }, []);
 
   useEffect(
@@ -82,17 +84,21 @@ export default function SurfaceLayer() {
     [layer],
   );
 
-  /** The active surface product's material + geometry, created on first use. */
-  const productLayer = (renderer: ProductRenderer) => {
-    let entry = layer.products.get(renderer);
-    const create = SURFACES[renderer];
+  /** A surface product's material, geometry and mesh (in the layer scene, drawn in zone order), created on first use. */
+  const productLayer = (product: Product) => {
+    let entry = layer.products.get(product.renderer);
+    const create = SURFACES[product.renderer];
     if (!entry && create) {
       const surface = create();
       const geometry = new BufferGeometry();
       for (const name of ["position", "normal", "uv"]) geometry.setAttribute(name, layer.geometry.getAttribute(name));
       geometry.setIndex(surface.triangles ?? layer.geometry.getIndex());
-      entry = { surface, geometry };
-      layer.products.set(renderer, entry);
+      const mesh = new Mesh(geometry, surface.material);
+      mesh.frustumCulled = false;
+      mesh.renderOrder = 1 + TRY_ON_ZONES.findIndex((z) => z.id === product.zone);
+      layer.scene.add(mesh);
+      entry = { surface, geometry, mesh };
+      layer.products.set(product.renderer, entry);
     }
     return entry;
   };
@@ -101,24 +107,25 @@ export default function SurfaceLayer() {
   const clearColor = useMemo(() => new Color(), []);
 
   useFrame(() => {
-    const { mode, tryOnStatus, surfaceDebug, activeProductId, configs } = useAppStore.getState();
+    const state = useAppStore.getState();
+    const { mode, tryOnStatus, surfaceDebug, configs } = state;
     const running = isTryOnMode(mode) && tryOnStatus === "running" && tracking.hasFace && tracking.video !== null;
-    let draw: { material: Material; geometry: BufferGeometry; surface?: SurfaceProduct } | null = null;
-    if (running && surfaceDebug !== "off") {
-      draw = { material: layer.debug[surfaceDebug], geometry: layer.geometry };
-    } else if (running) {
-      const product = getProduct(activeProductId);
-      const entry = product?.attachment === "surface" ? productLayer(product.renderer) : undefined;
-      if (entry) {
-        entry.surface.apply(configs[activeProductId]);
-        draw = { material: entry.surface.material, geometry: entry.geometry, surface: entry.surface };
+    const debug: Material | null = running && surfaceDebug !== "off" ? layer.debug[surfaceDebug] : null;
+    const worn = new Set<SurfaceProduct>();
+    if (running && !debug) {
+      for (const id of wornProductIds(state)) {
+        const product = getProduct(id);
+        const entry = product?.attachment === "surface" ? productLayer(product) : undefined;
+        if (!entry) continue;
+        entry.surface.apply(configs[id]);
+        worn.add(entry.surface);
       }
     }
-    surfaceLayer.enabled.value = draw ? 1 : 0;
-    if (!draw) return;
-
-    layer.mesh.material = draw.material;
-    layer.mesh.geometry = draw.geometry;
+    layer.debugMesh.visible = debug !== null;
+    if (debug) layer.debugMesh.material = debug;
+    for (const entry of layer.products.values()) entry.mesh.visible = worn.has(entry.surface);
+    surfaceLayer.enabled.value = debug || worn.size > 0 ? 1 : 0;
+    if (!debug && worn.size === 0) return;
 
     // Video layer units: the frame height is 1, its width the video aspect (isotropic, for real normals).
     const video = tracking.video!;
@@ -133,7 +140,7 @@ export default function SurfaceLayer() {
       layer.version = tracking.landmarksVersion;
       updateFaceMeshPositions(layer.geometry, tracking.landmarks, aspect);
     }
-    draw.surface?.update?.(tracking.landmarks, aspect);
+    for (const surface of worn) surface.update?.(tracking.landmarks, aspect);
 
     const target = surfaceLayer.target;
     gl.getDrawingBufferSize(size);

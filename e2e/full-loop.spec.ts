@@ -36,6 +36,17 @@ test("full loop for every attachment type without reloading the Canvas", async (
     .poll(async () => (await state(page)).items.map((i) => [i.productId, Boolean(i.thumbnailUrl)]))
     .toEqual(PRODUCTS.map(([id]) => [id, true]));
 
+  // The whole cart at once: one item per zone, switchable in try-on.
+  await page.getByRole("button", { name: /^Cart,/ }).click();
+  await page.getByRole("button", { name: /Try on the whole look/ }).click();
+  const look = page.getByTestId("look-switcher");
+  await expect(look.getByRole("group")).toHaveCount(3);
+  await expect.poll(async () => Object.keys((await state(page)).look ?? {}).sort()).toEqual(["eyewear", "lips", "skin"]);
+  await look.getByRole("button", { name: "No lips" }).click();
+  await expect.poll(async () => Object.keys((await state(page)).look ?? {}).sort()).toEqual(["eyewear", "skin"]);
+  await page.getByRole("button", { name: "Exit", exact: true }).click();
+  await expect.poll(async () => (await state(page)).look).toBeNull();
+
   // Same Canvas element from start to finish, and nothing else.
   expect(await canvas!.evaluate((c) => c.isConnected && document.querySelectorAll("canvas").length === 1)).toBe(true);
   expect(errors).toEqual([]);
