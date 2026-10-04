@@ -1,8 +1,9 @@
 import { Matrix4 } from "three";
 import { LANDMARK_COUNT } from "./constants";
+import { HAND_LANDMARK_COUNT, type Handedness } from "./handPose";
 
 /**
- * Per-frame try-on state shared between the DOM session (webcam + FaceLandmarker) and the R3F scene.
+ * Per-frame try-on state shared between the DOM session (webcam + Face/HandLandmarker) and the R3F scene.
  * Kept outside React/zustand: it changes at video frame rate.
  */
 export const tracking = {
@@ -22,6 +23,14 @@ export const tracking = {
   landmarksVersion: 0,
   /** FaceLandmarker "jawOpen" blendshape score of the last detection (0 closed … 1 wide open). */
   jawOpen: 0,
+  /** The tracked hand (HandLandmarker, one hand), when a hand product is worn. */
+  hand: {
+    present: false,
+    /** Smoothed camera-space landmarks (21 × xyz, meters), see lib/tryon/handPose.ts. */
+    points: new Float32Array(HAND_LANDMARK_COUNT * 3),
+    /** MediaPipe's label, with hysteresis (a one-frame flip would turn the watch over). */
+    handedness: "Right" as Handedness,
+  },
 };
 
 /** Reads one blendshape score by name; caches its index (the category order is fixed by the model). */

@@ -1,11 +1,15 @@
 import { expect, test } from "@playwright/test";
 import { openApp, openProduct, state, watchPage } from "./helpers";
 
-/** One product per attachment type, with a standing spot in front of its pedestal (showroom-layout.json). */
-const PRODUCTS: [id: string, spot: [number, number]][] = [
-  ["aviator", [0, 0.9]], // rigid (glasses)
-  ["velvet-lip", [-3.4, 0.7]], // surface (lipstick)
-  ["glow-paint", [3.4, 0.7]], // surface (face paint)
+/**
+ * One product per attachment type, with a standing spot in front of its pedestal (showroom-layout.json) and the
+ * try-on hint its tracker shows while nothing is in view.
+ */
+const PRODUCTS: [id: string, spot: [number, number], hint: string][] = [
+  ["aviator", [0, 0.9], "Face the camera"], // rigid (glasses, face tracking)
+  ["velvet-lip", [-3.4, 0.7], "Face the camera"], // surface (lipstick)
+  ["glow-paint", [3.4, 0.7], "Face the camera"], // surface (face paint)
+  ["chrono", [-1.1, -2.3], "Show the back of your hand"], // landmark (watch, hand tracking)
 ];
 
 test("full loop for every attachment type without reloading the Canvas", async ({ page }) => {
@@ -13,7 +17,7 @@ test("full loop for every attachment type without reloading the Canvas", async (
   await openApp(page);
   const canvas = await page.locator("canvas").elementHandle();
 
-  for (const [id, spot] of PRODUCTS) {
+  for (const [id, spot, hint] of PRODUCTS) {
     await test.step(id, async () => {
       await openProduct(page, id, spot);
       await expect.poll(async () => (await state(page)).mode).toBe("CUSTOMIZE");
@@ -21,8 +25,8 @@ test("full loop for every attachment type without reloading the Canvas", async (
 
       await page.getByRole("button", { name: /Add to cart/ }).click();
       await page.getByRole("button", { name: "Try on", exact: true }).click();
-      // The synthetic camera stream has no face: tracking runs live and asks for one, capture stays disabled.
-      await expect(page.getByTestId("tryon-status")).toHaveText("Face the camera", { timeout: 180_000 });
+      // The synthetic camera stream has no face or hand: tracking runs live and asks for one, capture stays disabled.
+      await expect(page.getByTestId("tryon-status")).toHaveText(hint, { timeout: 180_000 });
       await expect(page.getByRole("button", { name: "Capture", exact: true })).toBeDisabled();
       await page.getByRole("button", { name: "Exit", exact: true }).click();
       await expect.poll(async () => (await state(page)).mode).toBe("CUSTOMIZE");
@@ -40,10 +44,14 @@ test("full loop for every attachment type without reloading the Canvas", async (
   await page.getByRole("button", { name: /^Cart,/ }).click();
   await page.getByRole("button", { name: /Try on the whole look/ }).click();
   const look = page.getByTestId("look-switcher");
-  await expect(look.getByRole("group")).toHaveCount(3);
-  await expect.poll(async () => Object.keys((await state(page)).look ?? {}).sort()).toEqual(["eyewear", "lips", "skin"]);
+  await expect(look.getByRole("group")).toHaveCount(4);
+  await expect
+    .poll(async () => Object.keys((await state(page)).look ?? {}).sort())
+    .toEqual(["eyewear", "lips", "skin", "wrist"]);
+  // Face and hand products together: both trackers run, and the hint asks for both.
+  await expect(page.getByTestId("tryon-status")).toHaveText("Face the camera and show your hand", { timeout: 180_000 });
   await look.getByRole("button", { name: "No lips" }).click();
-  await expect.poll(async () => Object.keys((await state(page)).look ?? {}).sort()).toEqual(["eyewear", "skin"]);
+  await expect.poll(async () => Object.keys((await state(page)).look ?? {}).sort()).toEqual(["eyewear", "skin", "wrist"]);
   await page.getByRole("button", { name: "Exit", exact: true }).click();
   await expect.poll(async () => (await state(page)).look).toBeNull();
 

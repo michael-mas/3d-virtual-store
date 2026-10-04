@@ -1,7 +1,9 @@
 import { glassesProduct } from "./glasses";
 import { facePaintProduct } from "./facePaint";
 import { lipstickProduct } from "./lipstick";
-import type { Product } from "./types";
+import { ringProduct } from "./ring";
+import { watchProduct } from "./watch";
+import { TRY_ON_ZONES, type Product, type Tracker } from "./types";
 
 export type * from "./types";
 export * from "./schema";
@@ -35,10 +37,18 @@ export const PRODUCTS: readonly Product[] = [
   }),
   lipstickProduct({ id: "velvet-lip", name: "Velvet Lip", basePrice: 32 }),
   facePaintProduct({ id: "glow-paint", name: "Glow Paint", basePrice: 24 }),
+  watchProduct({ id: "chrono", name: "Chrono", basePrice: 249 }),
+  ringProduct({ id: "solitaire", name: "Solitaire", basePrice: 189 }),
 ];
 
 export const DEFAULT_PRODUCT_ID = PRODUCTS[0].id;
 
 export function getProduct(id: string): Product | undefined {
   return PRODUCTS.find((p) => p.id === id);
+}
+
+/** The MediaPipe tracker that follows a product in try-on (from its zone). */
+export function productTracker(id: string): Tracker | undefined {
+  const zone = getProduct(id)?.zone;
+  return TRY_ON_ZONES.find((z) => z.id === zone)?.tracker;
 }

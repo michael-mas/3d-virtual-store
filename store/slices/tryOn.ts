@@ -22,6 +22,8 @@ export type TryOnSlice = {
   videoAspect: number | null;
   /** A face was tracked recently (within the grace period). */
   faceDetected: boolean;
+  /** A hand was tracked recently (within the grace period); only tracked when a hand product is worn. */
+  handDetected: boolean;
   /** Face-tracking download progress (0..1) while status is "model"; null otherwise. */
   tryOnProgress: number | null;
   surfaceDebug: SurfaceDebug;
@@ -33,6 +35,7 @@ export type TryOnSlice = {
   setPhotoUrl: (url: string | null) => void;
   setVideoAspect: (aspect: number) => void;
   setFaceDetected: (detected: boolean) => void;
+  setHandDetected: (detected: boolean) => void;
 };
 
 export const createTryOnSlice: Slice<TryOnSlice> = (set) => ({
@@ -43,6 +46,7 @@ export const createTryOnSlice: Slice<TryOnSlice> = (set) => ({
   photoUrl: null,
   videoAspect: null,
   faceDetected: false,
+  handDetected: false,
   tryOnProgress: null,
   surfaceDebug: "off",
   setSurfaceDebug: (surfaceDebug) => set({ surfaceDebug }),
@@ -59,5 +63,8 @@ export const createTryOnSlice: Slice<TryOnSlice> = (set) => ({
   setVideoAspect: (videoAspect) => set({ videoAspect }),
   setFaceDetected: (faceDetected) => {
     set((s) => (s.faceDetected === faceDetected ? s : { faceDetected }));
+  },
+  setHandDetected: (handDetected) => {
+    set((s) => (s.handDetected === handDetected ? s : { handDetected }));
   },
 });

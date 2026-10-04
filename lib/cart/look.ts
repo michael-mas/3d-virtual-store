@@ -1,4 +1,4 @@
-import { getProduct, TRY_ON_ZONES, type TryOnZone } from "@/lib/products";
+import { getProduct, productTracker, TRY_ON_ZONES, type Tracker, type TryOnZone } from "@/lib/products";
 
 /** A look: the cart item worn in each zone (at most one per zone, a zone may be empty). */
 export type Look = Partial<Record<TryOnZone, string>>;
@@ -53,4 +53,9 @@ export function itemsByZone<T extends Item>(items: readonly T[]) {
  */
 export function wornProductIds(state: { look: Look | null; items: readonly Item[]; activeProductId: string }): string[] {
   return state.look ? lookItems(state.look, state.items).map((i) => i.productId) : [state.activeProductId];
+}
+
+/** The trackers the worn products need (face, hand): only those run during try-on. */
+export function wornTrackers(state: Parameters<typeof wornProductIds>[0]): Set<Tracker> {
+  return new Set(wornProductIds(state).flatMap((id) => productTracker(id) ?? []));
 }

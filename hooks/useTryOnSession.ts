@@ -1,8 +1,10 @@
 "use client";
 
-import type { FaceLandmarker } from "@mediapipe/tasks-vision";
+import type { FaceLandmarker, HandLandmarker } from "@mediapipe/tasks-vision";
 import { useEffect, type RefObject } from "react";
 import { DEMO_VIDEO_SOURCES } from "@/lib/assets";
+import { wornTrackers } from "@/lib/cart/look";
+import type { Tracker } from "@/lib/products";
 import { isDebugEnabled } from "@/lib/debug";
 import {
   classifyCameraError,
@@ -12,7 +14,10 @@ import {
   type TryOnErrorKind,
 } from "@/lib/tryon/errors";
 import { onTryOnAssetsProgress } from "@/lib/tryon/assets";
-import { getFaceLandmarker } from "@/lib/tryon/faceLandmarker";
+import { MEDIAPIPE_VERTICAL_FOV_DEG } from "@/lib/tryon/constants";
+import { HAND_LANDMARK_COUNT, handToCamera, type Handedness } from "@/lib/tryon/handPose";
+import { getLandmarker } from "@/lib/tryon/landmarkers";
+import { OneEuroVector, type OneEuroParams } from "@/lib/tryon/oneEuro";
 import { PoseSmoother } from "@/lib/tryon/poseSmoother";
 import { blendshapeScore, copyLandmarks, tracking } from "@/lib/tryon/tracking";
 import { useAppStore, type TryOnSource } from "@/store/useAppStore";
@@ -21,6 +26,13 @@ const CONSTRAINTS: MediaStreamConstraints = {
   audio: false,
   video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
 };
+
+/** Hand landmarks in camera space (meters): smooth when still, follows quick moves. */
+const HAND_SMOOTHING: OneEuroParams = { minCutoff: 1.5, beta: 8, dCutoff: 1.0 };
+/** Consecutive detections with the other label before the handedness flips. */
+const HANDEDNESS_HYSTERESIS = 4;
+
+type Landmarkers = { face?: FaceLandmarker; hand?: HandLandmarker };
 
 let warnedLayout = false;
 /** MediaPipe matrices are column-major; the last row must be [0 0 0 1]. */
@@ -41,8 +53,9 @@ class SessionError extends Error {
 
 /**
  * Runs a try-on session while `active`: opens the source (webcam via getUserMedia, or the optional demo video),
- * loads FaceLandmarker, and runs detection on every new video frame (requestVideoFrameCallback). The smoothed
- * pose goes to `tracking`. Every failure ends in an explicit error state (never a blank or frozen stage):
+ * loads the trackers the worn products need (FaceLandmarker, HandLandmarker), and runs them on every new video
+ * frame (requestVideoFrameCallback). Smoothed poses go to `tracking`. A tracker needed later (a look switching
+ * to a hand product) is loaded in the background. Every failure ends in an explicit error state (never a blank or frozen stage):
  * permission, missing/busy camera, insecure context, camera unplugged, frozen video, model load failure.
  * Stops all tracks on deactivate/unmount/retry.
  */
@@ -56,8 +69,25 @@ export function useTryOnSession(
     const video = videoRef.current;
     if (!active || !video) return;
 
-    const { setTryOnStatus, setVideoAspect, setFaceDetected } = useAppStore.getState();
+    const { setTryOnStatus, setVideoAspect, setFaceDetected, setHandDetected } = useAppStore.getState();
     const smoother = new PoseSmoother();
+    const handSmoother = new OneEuroVector(HAND_LANDMARK_COUNT * 3, HAND_SMOOTHING);
+    const handImage = new Float32Array(HAND_LANDMARK_COUNT * 3);
+    const handRaw = new Float32Array(HAND_LANDMARK_COUNT * 3);
+    const handOut: number[] = [];
+    let otherHandedness = 0;
+    const landmarkers: Landmarkers = {};
+    const loading = new Set<Tracker>();
+    /** Loads a tracker's landmarker once; the promise rejects on failure. */
+    const load = async (kind: Tracker) => {
+      loading.add(kind);
+      try {
+        if (kind === "face") landmarkers.face = await getLandmarker.face();
+        else landmarkers.hand = await getLandmarker.hand();
+      } finally {
+        loading.delete(kind);
+      }
+    };
     let stopped = false;
     let stream: MediaStream | null = null;
     let frameHandle = 0;
@@ -65,6 +95,7 @@ export function useTryOnSession(
     let lastTimestamp = -1;
     let lastFrameAt = performance.now();
     let lastFaceAt = -Infinity;
+    let lastHandAt = -Infinity;
     let detectMs = 0;
     /**
      * Minimum time between detections. Every video frame when the app runs smoothly; capped at 15 Hz / 10 Hz when
@@ -89,7 +120,9 @@ export function useTryOnSession(
       stream?.getTracks().forEach((t) => t.stop());
       stream = null;
       tracking.hasFace = false;
+      tracking.hand.present = false;
       setFaceDetected(false);
+      setHandDetected(false);
     };
 
     const fail = (kind: TryOnErrorKind, detail?: string) => {
@@ -140,11 +173,10 @@ export function useTryOnSession(
 
         setTryOnStatus("model");
         const unsubscribe = onTryOnAssetsProgress((f) => useAppStore.getState().setTryOnProgress(f));
-        let landmarker: FaceLandmarker;
         try {
-          landmarker = await getFaceLandmarker();
+          await Promise.all([...wornTrackers(useAppStore.getState())].map(load));
         } catch (error) {
-          console.error("[tryOn] face landmarker failed to load", error);
+          console.error("[tryOn] landmarker failed to load", error);
           throw new SessionError("model");
         } finally {
           unsubscribe();
@@ -155,30 +187,63 @@ export function useTryOnSession(
         // Debug-only handle for inspecting the live pose from the console / e2e checks.
         if (isDebugEnabled()) Object.assign(window, { __tracking: tracking });
 
+        const detectFace = (landmarker: FaceLandmarker, now: number) => {
+          const result = landmarker.detectForVideo(video, now);
+          const matrix = result.facialTransformationMatrixes[0];
+          const landmarks = result.faceLandmarks[0];
+          if (!matrix || !landmarks) return;
+          checkLayout(matrix.data);
+          smoother.update(matrix.data, now / 1000, tracking.pose);
+          copyLandmarks(landmarks, tracking.landmarks);
+          tracking.landmarksVersion++;
+          const shapes = result.faceBlendshapes[0]?.categories;
+          tracking.jawOpen = shapes ? blendshapeScore(shapes, "jawOpen") : 0;
+          lastFaceAt = now;
+        };
+
+        const detectHand = (landmarker: HandLandmarker, now: number) => {
+          const result = landmarker.detectForVideo(video, now);
+          const landmarks = result.landmarks[0];
+          if (!landmarks) return;
+          copyLandmarks(landmarks, handImage);
+          const aspect = video.videoWidth / video.videoHeight;
+          if (!handToCamera(handImage, aspect, MEDIAPIPE_VERTICAL_FOV_DEG, handRaw)) return;
+          handSmoother.filter(handRaw, now / 1000, handOut);
+          tracking.hand.points.set(handOut);
+          const label = result.handedness[0]?.[0]?.categoryName as Handedness | undefined;
+          if (label && label !== tracking.hand.handedness) {
+            // A newly appearing hand takes its label at once; a tracked one needs it confirmed.
+            if (!tracking.hand.present || ++otherHandedness >= HANDEDNESS_HYSTERESIS) {
+              tracking.hand.handedness = label;
+              otherHandedness = 0;
+            }
+          } else otherHandedness = 0;
+          lastHandAt = now;
+        };
+
         const onFrame: VideoFrameRequestCallback = (now) => {
           if (stopped) return;
           lastFrameAt = performance.now();
           if (now > lastTimestamp && now - lastTimestamp >= detectionInterval()) {
             lastTimestamp = now;
-            const t0 = performance.now();
-            const result = landmarker.detectForVideo(video, now);
-            detectMs = detectMs * 0.8 + (performance.now() - t0) * 0.2;
-            const matrix = result.facialTransformationMatrixes[0];
-            const landmarks = result.faceLandmarks[0];
-            if (matrix && landmarks) {
-              checkLayout(matrix.data);
-              smoother.update(matrix.data, now / 1000, tracking.pose);
-              copyLandmarks(landmarks, tracking.landmarks);
-              tracking.landmarksVersion++;
-              const shapes = result.faceBlendshapes[0]?.categories;
-              tracking.jawOpen = shapes ? blendshapeScore(shapes, "jawOpen") : 0;
-              lastFaceAt = now;
+            const needed = wornTrackers(useAppStore.getState());
+            for (const kind of needed) {
+              if (!landmarkers[kind] && !loading.has(kind)) load(kind).catch(() => fail("model"));
             }
-            // Brief dropouts keep the last pose; after the grace period the glasses are hidden.
-            const present = now - lastFaceAt <= FACE_LOST_GRACE_MS;
-            if (!present && tracking.hasFace) smoother.reset();
-            tracking.hasFace = present;
-            setFaceDetected(present);
+            const t0 = performance.now();
+            if (needed.has("face") && landmarkers.face) detectFace(landmarkers.face, now);
+            if (needed.has("hand") && landmarkers.hand) detectHand(landmarkers.hand, now);
+            detectMs = detectMs * 0.8 + (performance.now() - t0) * 0.2;
+
+            // Brief dropouts keep the last pose; after the grace period the product is hidden.
+            const face = needed.has("face") && now - lastFaceAt <= FACE_LOST_GRACE_MS;
+            if (!face && tracking.hasFace) smoother.reset();
+            tracking.hasFace = face;
+            setFaceDetected(face);
+            const hand = needed.has("hand") && now - lastHandAt <= FACE_LOST_GRACE_MS;
+            if (!hand && tracking.hand.present) handSmoother.reset();
+            tracking.hand.present = hand;
+            setHandDetected(hand);
           }
           frameHandle = video.requestVideoFrameCallback(onFrame);
         };

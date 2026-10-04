@@ -31,9 +31,11 @@ for (const { from, to } of targets) {
   console.log(`[copy-wasm] ${from} -> ${to}`);
 }
 
-const MODEL = "public/mediapipe/face_landmarker.task";
-if (!existsSync(join(root, MODEL))) {
-  console.warn("[copy-wasm] public/mediapipe/face_landmarker.task not found — see README.md (Try-on model).");
+const MODELS = { face: "mediapipe/face_landmarker.task", hand: "mediapipe/hand_landmarker.task" };
+for (const model of Object.values(MODELS)) {
+  if (!existsSync(join(root, "public", model))) {
+    console.warn(`[copy-wasm] public/${model} not found — see README.md (Runtime assets).`);
+  }
 }
 
 // Byte sizes of the try-on downloads, so the loader can show real progress even when the server compresses
@@ -48,7 +50,9 @@ const wasm = (name) => ({
 const manifest = {
   simd: wasm("vision_wasm_internal"),
   nosimd: wasm("vision_wasm_nosimd_internal"),
-  model: { path: "/mediapipe/face_landmarker.task", size: size(MODEL) },
+  models: Object.fromEntries(
+    Object.entries(MODELS).map(([kind, model]) => [kind, { path: `/${model}`, size: size(`public/${model}`) }]),
+  ),
 };
 writeFileSync(join(root, "public/mediapipe/manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
 console.log("[copy-wasm] wrote public/mediapipe/manifest.json");

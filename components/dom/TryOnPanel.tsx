@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { wornTrackers } from "@/lib/cart/look";
 import { canUseDemo } from "@/lib/tryon/errors";
 import { useAppStore } from "@/store/useAppStore";
 import LookSwitcher from "./LookSwitcher";
@@ -18,6 +19,8 @@ export default function TryOnPanel() {
   const error = useAppStore((s) => s.tryOnError);
   const source = useAppStore((s) => s.tryOnSource);
   const faceDetected = useAppStore((s) => s.faceDetected);
+  const handDetected = useAppStore((s) => s.handDetected);
+  const needs = useAppStore((s) => [...wornTrackers(s)].sort().join("+"));
   const progress = useAppStore((s) => s.tryOnProgress);
   const { transition, retryTryOn, setTryOnSource } = useAppStore.getState();
   const primaryAction = useRef<HTMLButtonElement>(null);
@@ -81,7 +84,19 @@ export default function TryOnPanel() {
     status === "model" && progress !== null && progress < 1
       ? `Downloading face tracking… ${Math.round(progress * 100)}%`
       : STATUS_TEXT[status === "error" || status === "running" ? "idle" : status];
-  const message = status !== "running" ? loadingText : !faceDetected ? "Face the camera" : null;
+  // What the worn products need in view; the photo is possible as soon as one of them is tracked.
+  const missingFace = needs.includes("face") && !faceDetected;
+  const missingHand = needs.includes("hand") && !handDetected;
+  const tracked = (needs.includes("face") && faceDetected) || (needs.includes("hand") && handDetected);
+  const hint =
+    missingFace && missingHand
+      ? "Face the camera and show your hand"
+      : missingFace
+        ? "Face the camera"
+        : missingHand
+          ? "Show the back of your hand"
+          : null;
+  const message = status !== "running" ? loadingText : hint;
 
   return (
     <>
@@ -113,7 +128,7 @@ export default function TryOnPanel() {
         </button>
         <button
           type="button"
-          disabled={!faceDetected}
+          disabled={!tracked}
           onClick={() => transition("CAPTURE")}
           className="rounded-full bg-white px-5 py-2.5 text-sm font-medium text-neutral-900 disabled:opacity-40"
         >

@@ -16,6 +16,8 @@ import IdlePrefetch from "./IdlePrefetch";
 import FacePaint from "./FacePaint";
 import Glasses from "./Glasses";
 import Lipstick from "./Lipstick";
+import Ring from "./Ring";
+import Watch from "./Watch";
 import InteractPrompt from "./InteractPrompt";
 import Player from "./Player";
 import Showroom from "./Showroom";
@@ -50,6 +52,8 @@ const RENDERERS: Record<ProductRenderer, ComponentType<{ productId: string }>> =
   glasses: Glasses,
   lipstick: Lipstick,
   facePaint: FacePaint,
+  watch: Watch,
+  ring: Ring,
 };
 
 export default function Scene() {

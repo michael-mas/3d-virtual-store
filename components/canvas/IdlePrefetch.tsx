@@ -3,7 +3,8 @@
 import { useGLTF } from "@react-three/drei";
 import { useEffect } from "react";
 import { DRACO_DECODER_PATH, HEAD_OCCLUDER_MODEL_PATH } from "@/lib/assets";
-import { canPrefetchTryOn, loadTryOnAssets } from "@/lib/tryon/assets";
+import { productTracker } from "@/lib/products";
+import { canPrefetchTryOn, prefetchTryOnAssets } from "@/lib/tryon/assets";
 import { useAppStore } from "@/store/useAppStore";
 import { loadMannequinPreview } from "./SurfaceProductDisplay";
 
@@ -22,8 +23,9 @@ const whenIdle = (fn: () => void, delay: number) => {
  * Preloads the next likely assets while the user is idle:
  * - EXPLORE: the head occluder GLB (needed by try-on, tiny) and the mannequin preview chunk (CUSTOMIZE of
  *   surface products);
- * - CUSTOMIZE: the surface layer chunk, and the try-on stack — MediaPipe JS, WASM and model (~16 MB) — unless
- *   Data Saver or a slow connection. Nothing is initialized here; entering TRY_ON reuses the same in-flight download.
+ * - CUSTOMIZE: the surface layer chunk, and the try-on stack for the product's tracker — MediaPipe JS, WASM and
+ *   the face (~16 MB in all) or hand model — unless Data Saver or a slow connection. Nothing is initialized here;
+ *   entering TRY_ON reuses the same in-flight download.
  */
 export default function IdlePrefetch() {
   const mode = useAppStore((s) => s.mode);
@@ -42,7 +44,8 @@ export default function IdlePrefetch() {
         void loadSurfaceLayer();
         if (!canPrefetchTryOn()) return;
         useGLTF.preload(HEAD_OCCLUDER_MODEL_PATH, DRACO_DECODER_PATH);
-        loadTryOnAssets().catch(() => {
+        const tracker = productTracker(useAppStore.getState().activeProductId) ?? "face";
+        prefetchTryOnAssets([tracker]).catch(() => {
           // A failed prefetch is retried (with error handling) when entering TRY_ON.
         });
       }, 2500);

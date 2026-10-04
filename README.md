@@ -12,7 +12,7 @@ fallback) for rendering and MediaPipe for face tracking.
 
 ## Features
 
-- **Explore.** A low-poly showroom with baked lighting and one pedestal per product (three glasses, a lipstick, a face paint).
+- **Explore.** A low-poly showroom with baked lighting and one pedestal per product (three glasses, a lipstick, a face paint, a watch, a ring).
   - Walk with WASD, ZQSD or the arrow keys (physical key positions, Shift to run), or with the mouse wheel.
   - Drag to look around. Click or tap the floor to walk there.
   - Near a pedestal, a "Press E / Click" prompt (or "Tap to view" on touch screens) opens the product.
@@ -23,6 +23,9 @@ fallback) for rendering and MediaPipe for face tracking.
   - Lipstick: finish (matte, satin, gloss, metallic) and shade (presets plus any custom color).
   - Face paint: design (tiger stripes, masquerade, constellation), style (paint, neon, holographic), color and an
     opacity slider.
+  - Watch: case (steel, gold, black), dial color and strap (leather, metal bracelet, rubber); its hands show the
+    current time.
+  - Ring: metal, stone (diamond, ruby, emerald, sapphire or none) and the finger it is worn on.
   - The price updates live. The whole panel is generated from the product's schema.
 - **Try on.**
   - Real-time face tracking from the webcam. Glasses are anchored to the head pose; a depth-only head occluder
@@ -32,6 +35,9 @@ fallback) for rendering and MediaPipe for face tracking.
   - Face paint designs are drawn in canonical-UV space on the same mesh, so they deform with expressions; the
     eyes and lips are always left bare. Neon and holographic glow brighten as the mouth opens (FaceLandmarker's
     `jawOpen` blendshape).
+  - Watches and rings follow the hand (MediaPipe HandLandmarker, loaded only when a hand product is worn): the
+    watch sits on the wrist with its dial on the back of the wrist, the ring on the base of the chosen finger, and
+    depth-only wrist and finger occluders hide what passes behind them.
   - Selfie mirroring and pose smoothing.
   - Optional demo mode: a looping face clip through the same pipeline, for visitors without a webcam (no clip is
     bundled, see `docs/demo-video.md`).
@@ -39,7 +45,8 @@ fallback) for rendering and MediaPipe for face tracking.
   the result as a PNG.
 - **Cart.**
   - A drawer with a 256 px rendered thumbnail of each configured item, per-option price lines and a total.
-  - "Try on" from any cart item, or **the whole look**: every zone at once (face paint, lipstick, glasses), one item
+  - "Try on" from any cart item, or **the whole look**: every zone at once (face paint, lipstick, glasses, watch,
+    ring), one item
     per zone, with a switcher in try-on to swap items within a zone or leave it bare. Zones come from the registry
     (`TRY_ON_ZONES`), so a new zone (hats, lenses…) needs no UI change.
   - Instanced particles fly to the cart icon when an item is added.
@@ -65,17 +72,19 @@ components/canvas/      Everything inside the single R3F <Canvas> (client-only, 
   Showroom / Player / CameraRig / InteractPrompt   EXPLORE (walking, collisions, proximity prompt, camera)
   Glasses.tsx             Rigid product renderer: materials per option, store/CUSTOMIZE/try-on placement
   Lipstick / FacePaint    Surface product renderers: packaging on the pedestal, mannequin in CUSTOMIZE
+  Watch / Ring / HandAnchor                         Landmark products: on display, then pinned to the tracked hand
   MannequinPreview        Mannequin head wearing a surface product (CUSTOMIZE preview, cart thumbnail)
   FaceAnchor / HeadOccluder                         TRY_ON rigid layer: pose-driven group + depth-only occluder
   SurfaceLayer            TRY_ON surface layer: live face mesh, orthographic camera, render target
   PostFx.tsx              TSL post-processing (CUSTOMIZE background dim + vignette), owns the render loop
   ThumbnailRenderer / CartParticles                 Cart thumbnails (offscreen render target) and feedback
 components/dom/         HTML overlays: customizer, try-on panel, photo modal, cart drawer, status/loading screens
-hooks/useTryOnSession   Camera (or demo clip) → FaceLandmarker → smoothed pose, errors, watchdogs
+hooks/useTryOnSession   Camera (or demo clip) → the trackers the worn products need (Face/HandLandmarker) →
+                        smoothed poses, errors, watchdogs
 store/                  zustand store in slices: world (mode + transitions), product, tryOn, cart
 lib/products/           Product registry + schema helpers (validation, defaults, price deltas)
 lib/tryon/              MediaPipe loading, One Euro smoothing, capture, error classification, constants,
-                        face mesh topology (from MediaPipe's official metadata) and the video layer
+                        face mesh topology (from MediaPipe's official metadata), hand pose and the video layer
 lib/tryon/surface/      Surface products: UV masks, lipstick and face paint TSL materials, mannequin geometry
 lib/explore/            Showroom layout (shared with the model generator), movement and collisions
 scripts/                Model generators (glTF-Transform + Draco) and the postinstall asset copier
@@ -88,7 +97,8 @@ mode. Modes change what the one persistent `<Canvas>` draws; the Canvas is never
 **Products are data** (`lib/products`). Each entry defines:
 - id, name, category and base price;
 - an attachment type: `rigid` (driven by the facial transformation matrix), `surface` (on the deforming face
-  mesh) or `landmark` (pinned to landmarks);
+  mesh) or `landmark` (pinned to hand landmarks);
+- a try-on zone (skin, lips, eyewear, wrist, finger), which also picks the tracker (face or hand);
 - a customization schema: `choice` options with price deltas, `color` options with presets and optional custom
   colors, and `range` options (sliders, e.g. opacity);
 - try-on calibration;
@@ -99,13 +109,13 @@ pedestal slots of `lib/explore/showroom-layout.json` in registry order.
 
 ## Attachment types
 
-How a product follows the face in TRY_ON is set by its `attachment` in the registry:
+How a product follows the body in TRY_ON is set by its `attachment` in the registry:
 
 | Type | Products | How it works |
 | --- | --- | --- |
 | `rigid` | Glasses | A 3D model in the main scene, driven by FaceLandmarker's facial transformation matrix (smoothed with One Euro filters) under a camera matching MediaPipe's (63° vertical FOV). A depth-only head occluder hides what is behind the head. |
 | `surface` | Lipstick, face paint | A face mesh rebuilt in place from the 468 landmarks on every detection, with MediaPipe's canonical tessellation and UVs (`scripts/data/geometry_pipeline_metadata_landmarks.pbtxt`). It is drawn by an orthographic camera covering the video frame into a render target, which the scene background composites over the video and under the rigid layer, so glasses sit on top of makeup. Products are masks in canonical-UV space (lips from the official lip contours; face paint designs authored in centimeters on the canonical face) with TSL materials that reuse the video's luminance. |
-| `landmark` | — | Reserved for objects pinned to individual landmarks (earrings, piercings); not implemented yet. |
+| `landmark` | Watch, ring | Pinned to HandLandmarker's 21 hand landmarks (`lib/tryon/handPose.ts`). The hand's shape comes from the normalized image landmarks (with their relative depth), which stay consistent where the world landmarks can degenerate; a typical palm size gives the metric scale and therefore the distance, and each point is back-projected under the same camera as the face. The palm side comes from MediaPipe's handedness label, checked on MediaPipe's own test images (palm or back toward the camera, and a mirrored pair, kept as a test fixture). The watch is placed up the forearm from the wrist with its dial out of the back of the hand; the ring on the base segment of the chosen finger. Points are smoothed with One Euro filters, and depth-only wrist and finger occluders hide the back of the strap and band. |
 
 There is no webcam in CUSTOMIZE, so surface products are previewed on a neutral mannequin head built from the same
 canonical mesh (same UVs, so the same masks), lit by the scene; cart thumbnails render that mannequin.
@@ -113,7 +123,8 @@ canonical mesh (same UVs, so the same masks), lit by the scene; cart thumbnails 
 **Adding a product** = a registry entry in `lib/products` (id, name, category, attachment, try-on zone, schema,
 calibration, renderer), a pedestal slot in `lib/explore/showroom-layout.json` (then `npm run generate:models`), and for a new
 renderer its scene component (`RENDERERS` in `components/canvas/Scene.tsx`) and, for surface products, its try-on
-and preview materials (`SURFACES` in `SurfaceLayer.tsx`, `PREVIEWS` in `MannequinPreview.tsx`).
+and preview materials (`SURFACES` in `SurfaceLayer.tsx`, `PREVIEWS` in `MannequinPreview.tsx`). A product in a new
+zone only needs the zone in `TRY_ON_ZONES`: the look switcher and the trackers follow.
 
 ## Key technical choices (and why)
 
@@ -184,9 +195,12 @@ Everything runs locally in your browser:
   little high or low on some faces. With `?debug`, calibration sliders appear in try-on.
 - **Tracking lag on slow devices.** When detection runs slowly, the pose trails fast head movements. A photo
   taken mid-movement pairs the current video frame with the last detected pose, so it can show that offset.
-- **One face** is tracked (`numFaces: 1`). The view is always mirrored.
+- **One face and one hand** are tracked (`numFaces: 1`, `numHands: 1`). The view is always mirrored.
+- **Hand distance is estimated** from a typical adult palm size, so a much smaller or larger hand reads as farther
+  or closer: the watch and ring stay on the hand but are scaled within bounds. The fingers do not hide the watch.
 - **First try-on download** is about 16 MB uncompressed (about 6.8 MB gzipped): the MediaPipe WASM plus the
-  float16 model. It is cached by the browser afterwards.
+  float16 face model. The hand model (7.8 MB) is fetched only when a watch or ring is tried on. Both are cached
+  by the browser afterwards.
 - **No checkout, no persistence.** The cart is a demo and is lost on reload.
 - **Testing coverage.** The end-to-end tests (`e2e/`, run in CI) drive headless Chromium on the WebGL 2 backend
   (SwiftShader, no GPU) with Chromium's synthetic camera stream, where frame rates are far below real hardware.
@@ -227,15 +241,19 @@ npm run lint
 | `public/draco/` | `three/examples/jsm/libs/draco/gltf` | `postinstall` (gitignored) |
 | `public/mediapipe/wasm/`, `manifest.json` | `@mediapipe/tasks-vision/wasm` (+ byte sizes for progress) | `postinstall` (gitignored) |
 | `public/mediapipe/face_landmarker.task` | Google MediaPipe Face Landmarker model (float16) | manual download (committed) |
+| `public/mediapipe/hand_landmarker.task` | Google MediaPipe Hand Landmarker model (float16) | manual download (committed) |
 | `public/models/glasses-{aviator,studio,crystal}.glb` | procedural frames (`scripts/generate-glasses.mjs`) | `npm run generate:models` (committed) |
 | `public/models/showroom.glb` | low-poly showroom, lighting baked into vertex colors | `npm run generate:models` (committed) |
 | `public/models/head-occluder.glb` | MediaPipe canonical face + back-of-head ellipsoid | `npm run generate:models` (committed) |
 
-Paths are exported from `lib/assets.ts`. To re-download the face model:
+Paths are exported from `lib/assets.ts`. To re-download the models (then `npm install` or
+`node scripts/copy-wasm.mjs` updates the manifest of download sizes):
 
 ```bash
 curl -L -o public/mediapipe/face_landmarker.task \
   https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task
+curl -L -o public/mediapipe/hand_landmarker.task \
+  https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task
 ```
 
 ### Using a real glasses model

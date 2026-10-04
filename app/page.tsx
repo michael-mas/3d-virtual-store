@@ -13,15 +13,15 @@ export default function Home() {
         <p>{SITE_DESCRIPTION}</p>
         <h2>What you can do</h2>
         <ul>
-          <li>Explore: walk a 3D showroom with three pairs of glasses, a lipstick and a face paint on pedestals.</li>
-          <li>Customize: change frame finish and color, lens effect, lipstick finish and shade, face paint design and style; the price updates live.</li>
-          <li>Try on: see the product on your face through your webcam. Face tracking runs in the page; no image leaves your device.</li>
+          <li>Explore: walk a 3D showroom with three pairs of glasses, a lipstick, a face paint, a watch and a ring on pedestals.</li>
+          <li>Customize: change frame finish and color, lens effect, lipstick finish and shade, face paint design and style, watch case, dial and strap, ring metal, stone and finger; the price updates live.</li>
+          <li>Try on: see the product on your face or hand through your webcam, or the whole cart at once. Tracking runs in the page; no image leaves your device.</li>
           <li>Photo: capture and download a photo-booth picture.</li>
         </ul>
         <h2>How it is built</h2>
         <p>
           Next.js static export, React Three Fiber, three.js WebGPURenderer with a WebGL2 fallback, materials and
-          post-processing written in TSL, MediaPipe Face Landmarker running locally in WebAssembly, Zustand. No
+          post-processing written in TSL, MediaPipe Face and Hand Landmarkers running locally in WebAssembly, Zustand. No
           server, no tracking, no third-party requests.
         </p>
         <p>
