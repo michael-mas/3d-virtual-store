@@ -14,6 +14,11 @@ const AXES = [
   { key: 1, label: "offset y" },
   { key: 2, label: "offset z" },
 ] as const;
+/** Hand products' model axes (lib/tryon/handPose.ts): the watch's Z runs along the forearm, the ring's Y along the finger. */
+const HAND_AXES: Record<string, readonly string[]> = {
+  watch: ["across wrist", "out of wrist", "toward fingers"],
+  ring: ["across finger", "toward tip", "out of finger"],
+};
 
 /** Dev-only sliders for the active product's try-on calibration. */
 export default function CalibrationPanel() {
@@ -26,8 +31,12 @@ export default function CalibrationPanel() {
   const setSurfaceDebug = useAppStore((s) => s.setSurfaceDebug);
 
   if (!visible || !tryOn) return null;
-  // Offset/scale only apply to rigid products; surface products follow the face mesh directly.
-  const rigid = getProduct(productId)?.attachment === "rigid";
+  // Offset/scale apply to rigid (face anchor) and landmark (hand anchor, in model axes) products; surface products
+  // follow the face mesh directly.
+  const product = getProduct(productId);
+  const rigid = product?.attachment === "rigid" || product?.attachment === "landmark";
+  const axisLabels = product ? HAND_AXES[product.renderer] : undefined;
+  const range = product?.attachment === "landmark" ? 30 : 20;
 
   const setOffset = (axis: 0 | 1 | 2, mm: number) => {
     const offset: [number, number, number] = [...calibration.offset];
@@ -54,12 +63,12 @@ export default function CalibrationPanel() {
             return (
               <label key={key} className="block">
                 <span className="flex justify-between">
-                  {label} <span>{mm.toFixed(1)} mm</span>
+                  {axisLabels?.[key] ?? label} <span>{mm.toFixed(1)} mm</span>
                 </span>
                 <input
                   type="range"
-                  min={-20}
-                  max={20}
+                  min={-range}
+                  max={range}
                   step={0.5}
                   value={mm}
                   onChange={(e) => setOffset(key, Number(e.target.value))}
@@ -74,8 +83,8 @@ export default function CalibrationPanel() {
             </span>
             <input
               type="range"
-              min={0.8}
-              max={1.25}
+              min={0.7}
+              max={1.3}
               step={0.005}
               value={calibration.scale}
               onChange={(e) => setCalibration(productId, { scale: Number(e.target.value) })}

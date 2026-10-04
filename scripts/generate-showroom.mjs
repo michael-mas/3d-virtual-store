@@ -122,9 +122,20 @@ for (const p of pedestals) {
     bake(at(new THREE.CylinderGeometry(pedestal.radiusTop, pedestal.radiusBottom, height, 10), x, floorY + height / 2, z), new THREE.Color(0.78, 0.75, 0.71)),
   );
   parts.push(bake(at(new THREE.CylinderGeometry(0.62, 0.66, 0.04, 16), x, floorY + 0.02, z), accent.clone().multiplyScalar(0.28)));
-  // Lit panel on the wall behind (or the back wall for the centre pedestal).
-  parts.push(bake(at(new THREE.BoxGeometry(1.1, 1.8, 0.05), x, floorY + 1.6, -HD + 0.03), null, { emissive: accent.clone().multiplyScalar(0.35) }));
 }
+
+// Lit accent panels on the back wall, one per pedestal in left-to-right order, evenly spaced so they never overlap
+// (pedestals can share an x: overlapping coplanar panels would z-fight).
+const PANEL_MARGIN = 0.6;
+const panelSpacing = (HW * 2 - PANEL_MARGIN * 2) / pedestals.length;
+const panelWidth = Math.min(1.1, panelSpacing - 0.2);
+[...pedestals]
+  .sort((a, b) => a.position[0] - b.position[0])
+  .forEach((p, i) => {
+    const x = -HW + PANEL_MARGIN + panelSpacing * (i + 0.5);
+    const emissive = new THREE.Color(...p.accent).multiplyScalar(0.35);
+    parts.push(bake(at(new THREE.BoxGeometry(panelWidth, 1.8, 0.05), x, floorY + 1.6, -HD + 0.03), null, { emissive }));
+  });
 
 // ---------------------------------------------------------------- decor: benches, plants
 for (const { position: [x, z], rotationY } of layout.decor.benches) {

@@ -221,7 +221,7 @@ export default function Watch({ productId }: { productId: string }) {
 
   if (isTryOnMode(mode) && worn) {
     return (
-      <HandAnchor site="wrist">
+      <HandAnchor productId={productId} site="wrist">
         <primitive object={parts.model} />
         <primitive object={parts.occluder} />
       </HandAnchor>

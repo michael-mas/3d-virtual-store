@@ -171,7 +171,7 @@ export default function Ring({ productId }: { productId: string }) {
 
   if (isTryOnMode(mode) && worn) {
     return (
-      <HandAnchor site={config.finger}>
+      <HandAnchor productId={productId} site={config.finger}>
         <primitive object={parts.model} />
         <primitive object={parts.occluder} />
       </HandAnchor>
