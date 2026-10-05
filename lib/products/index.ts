@@ -4,7 +4,6 @@ import { hairDyeProduct } from "./hairDye";
 import { headwearProduct } from "./headwear";
 import { lipstickProduct } from "./lipstick";
 import { ringProduct } from "./ring";
-import { wigProduct } from "./wig";
 import { watchProduct } from "./watch";
 import { TRY_ON_ZONES, type Product, type Tracker } from "./types";
 
@@ -44,7 +43,6 @@ export const PRODUCTS: readonly Product[] = [
   ringProduct({ id: "solitaire", name: "Solitaire", basePrice: 189 }),
   hairDyeProduct({ id: "prism-dye", name: "Prism Dye", basePrice: 29 }),
   headwearProduct({ id: "topper", name: "Topper", basePrice: 39 }),
-  wigProduct({ id: "mane", name: "Mane", basePrice: 59 }),
 ];
 
 export const DEFAULT_PRODUCT_ID = PRODUCTS[0].id;

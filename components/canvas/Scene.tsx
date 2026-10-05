@@ -20,7 +20,6 @@ import Headwear from "./Headwear";
 import Lipstick from "./Lipstick";
 import Ring from "./Ring";
 import Watch from "./Watch";
-import Wig from "./Wig";
 import InteractPrompt from "./InteractPrompt";
 import Player from "./Player";
 import Showroom from "./Showroom";
@@ -59,7 +58,6 @@ const RENDERERS: Record<ProductRenderer, ComponentType<{ productId: string }>> =
   ring: Ring,
   hairDye: HairDye,
   headwear: Headwear,
-  wig: Wig,
 };
 
 export default function Scene() {
