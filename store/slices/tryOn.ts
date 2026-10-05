@@ -24,6 +24,8 @@ export type TryOnSlice = {
   faceDetected: boolean;
   /** A hand was tracked recently (within the grace period); only tracked when a hand product is worn. */
   handDetected: boolean;
+  /** Hair was segmented recently; only when a hair color is worn. */
+  hairDetected: boolean;
   /** Face-tracking download progress (0..1) while status is "model"; null otherwise. */
   tryOnProgress: number | null;
   surfaceDebug: SurfaceDebug;
@@ -36,6 +38,7 @@ export type TryOnSlice = {
   setVideoAspect: (aspect: number) => void;
   setFaceDetected: (detected: boolean) => void;
   setHandDetected: (detected: boolean) => void;
+  setHairDetected: (detected: boolean) => void;
 };
 
 export const createTryOnSlice: Slice<TryOnSlice> = (set) => ({
@@ -47,6 +50,7 @@ export const createTryOnSlice: Slice<TryOnSlice> = (set) => ({
   videoAspect: null,
   faceDetected: false,
   handDetected: false,
+  hairDetected: false,
   tryOnProgress: null,
   surfaceDebug: "off",
   setSurfaceDebug: (surfaceDebug) => set({ surfaceDebug }),
@@ -66,5 +70,8 @@ export const createTryOnSlice: Slice<TryOnSlice> = (set) => ({
   },
   setHandDetected: (handDetected) => {
     set((s) => (s.handDetected === handDetected ? s : { handDetected }));
+  },
+  setHairDetected: (hairDetected) => {
+    set((s) => (s.hairDetected === hairDetected ? s : { hairDetected }));
   },
 });

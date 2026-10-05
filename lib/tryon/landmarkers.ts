@@ -1,4 +1,4 @@
-import type { FaceLandmarker, HandLandmarker } from "@mediapipe/tasks-vision";
+import type { FaceLandmarker, HandLandmarker, ImageSegmenter } from "@mediapipe/tasks-vision";
 import { isDebugEnabled } from "../debug";
 import { silenceMediaPipeModule } from "../quietConsole";
 import { loadModel, loadWasmFileset, releaseModel, type TrackerKind, type WasmFileset } from "./assets";
@@ -61,4 +61,17 @@ export const getHandLandmarker = lazy(async (): Promise<HandLandmarker> => {
   );
 });
 
-export const getLandmarker = { face: getFaceLandmarker, hand: getHandLandmarker } as const;
+/** Hair segmenter (ImageSegmenter with MediaPipe's hair model): a per-pixel hair confidence mask. */
+export const getHairSegmenter = lazy(async (): Promise<ImageSegmenter> => {
+  const { ImageSegmenter } = await import("@mediapipe/tasks-vision");
+  return withFallback("hair", (fileset, model, delegate) =>
+    ImageSegmenter.createFromOptions(fileset, {
+      baseOptions: { modelAssetBuffer: model, delegate },
+      runningMode: "VIDEO",
+      outputConfidenceMasks: true,
+      outputCategoryMask: false,
+    }),
+  );
+});
+
+export const getLandmarker = { face: getFaceLandmarker, hand: getHandLandmarker, hair: getHairSegmenter } as const;

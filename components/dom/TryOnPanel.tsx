@@ -20,6 +20,7 @@ export default function TryOnPanel() {
   const source = useAppStore((s) => s.tryOnSource);
   const faceDetected = useAppStore((s) => s.faceDetected);
   const handDetected = useAppStore((s) => s.handDetected);
+  const hairDetected = useAppStore((s) => s.hairDetected);
   const needs = useAppStore((s) => [...wornTrackers(s)].sort().join("+"));
   const progress = useAppStore((s) => s.tryOnProgress);
   const { transition, retryTryOn, setTryOnSource } = useAppStore.getState();
@@ -85,9 +86,13 @@ export default function TryOnPanel() {
       ? `Downloading face tracking… ${Math.round(progress * 100)}%`
       : STATUS_TEXT[status === "error" || status === "running" ? "idle" : status];
   // What the worn products need in view; the photo is possible as soon as one of them is tracked.
-  const missingFace = needs.includes("face") && !faceDetected;
+  // Hair color needs the head in view too: it asks for the face like face products.
+  const missingFace = (needs.includes("face") && !faceDetected) || (needs.includes("hair") && !hairDetected);
   const missingHand = needs.includes("hand") && !handDetected;
-  const tracked = (needs.includes("face") && faceDetected) || (needs.includes("hand") && handDetected);
+  const tracked =
+    (needs.includes("face") && faceDetected) ||
+    (needs.includes("hand") && handDetected) ||
+    (needs.includes("hair") && hairDetected);
   const hint =
     missingFace && missingHand
       ? "Face the camera and show your hand"

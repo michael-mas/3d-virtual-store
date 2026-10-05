@@ -1,6 +1,6 @@
 "use client";
 
-import type { FaceLandmarker, HandLandmarker } from "@mediapipe/tasks-vision";
+import type { FaceLandmarker, HandLandmarker, ImageSegmenter } from "@mediapipe/tasks-vision";
 import { useEffect, type RefObject } from "react";
 import { DEMO_VIDEO_SOURCES } from "@/lib/assets";
 import { wornTrackers } from "@/lib/cart/look";
@@ -15,11 +15,13 @@ import {
 } from "@/lib/tryon/errors";
 import { onTryOnAssetsProgress } from "@/lib/tryon/assets";
 import { MEDIAPIPE_VERTICAL_FOV_DEG } from "@/lib/tryon/constants";
+import { resampleMask } from "@/lib/tryon/hairMask";
 import { HAND_LANDMARK_COUNT, handToCamera, type Handedness } from "@/lib/tryon/handPose";
 import { getLandmarker } from "@/lib/tryon/landmarkers";
 import { OneEuroVector, type OneEuroParams } from "@/lib/tryon/oneEuro";
 import { PoseSmoother } from "@/lib/tryon/poseSmoother";
 import { blendshapeScore, copyLandmarks, tracking } from "@/lib/tryon/tracking";
+import { hairMaskData, hairMaskUpdated } from "@/lib/tryon/videoLayer";
 import { useAppStore, type TryOnSource } from "@/store/useAppStore";
 
 const CONSTRAINTS: MediaStreamConstraints = {
@@ -31,8 +33,10 @@ const CONSTRAINTS: MediaStreamConstraints = {
 const HAND_SMOOTHING: OneEuroParams = { minCutoff: 1.5, beta: 8, dCutoff: 1.0 };
 /** Consecutive detections with the other label before the handedness flips. */
 const HANDEDNESS_HYSTERESIS = 4;
+/** Hair is "in view" when at least this fraction of the frame is segmented as hair. */
+const MIN_HAIR_COVERAGE = 0.003;
 
-type Landmarkers = { face?: FaceLandmarker; hand?: HandLandmarker };
+type Landmarkers = { face?: FaceLandmarker; hand?: HandLandmarker; hair?: ImageSegmenter };
 
 let warnedLayout = false;
 /** MediaPipe matrices are column-major; the last row must be [0 0 0 1]. */
@@ -69,7 +73,7 @@ export function useTryOnSession(
     const video = videoRef.current;
     if (!active || !video) return;
 
-    const { setTryOnStatus, setVideoAspect, setFaceDetected, setHandDetected } = useAppStore.getState();
+    const { setTryOnStatus, setVideoAspect, setFaceDetected, setHandDetected, setHairDetected } = useAppStore.getState();
     const smoother = new PoseSmoother();
     const handSmoother = new OneEuroVector(HAND_LANDMARK_COUNT * 3, HAND_SMOOTHING);
     const handImage = new Float32Array(HAND_LANDMARK_COUNT * 3);
@@ -83,7 +87,8 @@ export function useTryOnSession(
       loading.add(kind);
       try {
         if (kind === "face") landmarkers.face = await getLandmarker.face();
-        else landmarkers.hand = await getLandmarker.hand();
+        else if (kind === "hand") landmarkers.hand = await getLandmarker.hand();
+        else landmarkers.hair = await getLandmarker.hair();
       } finally {
         loading.delete(kind);
       }
@@ -96,6 +101,7 @@ export function useTryOnSession(
     let lastFrameAt = performance.now();
     let lastFaceAt = -Infinity;
     let lastHandAt = -Infinity;
+    let lastHairAt = -Infinity;
     let detectMs = 0;
     /**
      * Minimum time between detections. Every video frame when the app runs smoothly; capped at 15 Hz / 10 Hz when
@@ -121,8 +127,10 @@ export function useTryOnSession(
       stream = null;
       tracking.hasFace = false;
       tracking.hand.present = false;
+      tracking.hair.present = false;
       setFaceDetected(false);
       setHandDetected(false);
+      setHairDetected(false);
     };
 
     const fail = (kind: TryOnErrorKind, detail?: string) => {
@@ -221,6 +229,20 @@ export function useTryOnSession(
           lastHandAt = now;
         };
 
+        const segmentHair = (segmenter: ImageSegmenter, now: number) => {
+          const result = segmenter.segmentForVideo(video, now);
+          try {
+            // Hair model categories: [background, hair].
+            const mask = result.confidenceMasks?.[1];
+            if (!mask) return;
+            const coverage = resampleMask(mask.getAsFloat32Array(), mask.width, mask.height, hairMaskData);
+            hairMaskUpdated();
+            if (coverage >= MIN_HAIR_COVERAGE) lastHairAt = now;
+          } finally {
+            result.close();
+          }
+        };
+
         const onFrame: VideoFrameRequestCallback = (now) => {
           if (stopped) return;
           lastFrameAt = performance.now();
@@ -233,6 +255,7 @@ export function useTryOnSession(
             const t0 = performance.now();
             if (needed.has("face") && landmarkers.face) detectFace(landmarkers.face, now);
             if (needed.has("hand") && landmarkers.hand) detectHand(landmarkers.hand, now);
+            if (needed.has("hair") && landmarkers.hair) segmentHair(landmarkers.hair, now);
             detectMs = detectMs * 0.8 + (performance.now() - t0) * 0.2;
 
             // Brief dropouts keep the last pose; after the grace period the product is hidden.
@@ -244,6 +267,9 @@ export function useTryOnSession(
             if (!hand && tracking.hand.present) handSmoother.reset();
             tracking.hand.present = hand;
             setHandDetected(hand);
+            const hair = needed.has("hair") && now - lastHairAt <= FACE_LOST_GRACE_MS;
+            tracking.hair.present = hair;
+            setHairDetected(hair);
           }
           frameHandle = video.requestVideoFrameCallback(onFrame);
         };

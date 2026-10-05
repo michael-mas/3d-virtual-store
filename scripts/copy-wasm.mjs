@@ -31,7 +31,11 @@ for (const { from, to } of targets) {
   console.log(`[copy-wasm] ${from} -> ${to}`);
 }
 
-const MODELS = { face: "mediapipe/face_landmarker.task", hand: "mediapipe/hand_landmarker.task" };
+const MODELS = {
+  face: "mediapipe/face_landmarker.task",
+  hand: "mediapipe/hand_landmarker.task",
+  hair: "mediapipe/hair_segmenter.tflite",
+};
 for (const model of Object.values(MODELS)) {
   if (!existsSync(join(root, "public", model))) {
     console.warn(`[copy-wasm] public/${model} not found — see README.md (Runtime assets).`);

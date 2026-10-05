@@ -15,6 +15,7 @@ import FrameStats from "./FrameStats";
 import IdlePrefetch from "./IdlePrefetch";
 import FacePaint from "./FacePaint";
 import Glasses from "./Glasses";
+import HairDye from "./HairDye";
 import Lipstick from "./Lipstick";
 import Ring from "./Ring";
 import Watch from "./Watch";
@@ -54,6 +55,7 @@ const RENDERERS: Record<ProductRenderer, ComponentType<{ productId: string }>> =
   facePaint: FacePaint,
   watch: Watch,
   ring: Ring,
+  hairDye: HairDye,
 };
 
 export default function Scene() {

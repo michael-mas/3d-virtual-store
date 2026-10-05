@@ -1,7 +1,7 @@
 import { MEDIAPIPE_MANIFEST_PATH } from "@/lib/assets";
 
 /** The MediaPipe models the try-on can run: one per tracked body part. */
-export type TrackerKind = "face" | "hand";
+export type TrackerKind = "face" | "hand" | "hair";
 
 type WasmEntry = { loader: string; binary: string; loaderSize: number; binarySize: number };
 type Manifest = { simd: WasmEntry; nosimd: WasmEntry; models: Record<TrackerKind, { path: string; size: number }> };
@@ -104,6 +104,10 @@ const models: Record<TrackerKind, ReturnType<typeof cached<Uint8Array>>> = {
   }),
   hand: cached(async () => {
     const { path, size } = (await manifest.get()).models.hand;
+    return download(path, size);
+  }),
+  hair: cached(async () => {
+    const { path, size } = (await manifest.get()).models.hair;
     return download(path, size);
   }),
 };

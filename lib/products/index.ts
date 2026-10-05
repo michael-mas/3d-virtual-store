@@ -1,5 +1,6 @@
 import { glassesProduct } from "./glasses";
 import { facePaintProduct } from "./facePaint";
+import { hairDyeProduct } from "./hairDye";
 import { lipstickProduct } from "./lipstick";
 import { ringProduct } from "./ring";
 import { watchProduct } from "./watch";
@@ -39,6 +40,7 @@ export const PRODUCTS: readonly Product[] = [
   facePaintProduct({ id: "glow-paint", name: "Glow Paint", basePrice: 24 }),
   watchProduct({ id: "chrono", name: "Chrono", basePrice: 249 }),
   ringProduct({ id: "solitaire", name: "Solitaire", basePrice: 189 }),
+  hairDyeProduct({ id: "prism-dye", name: "Prism Dye", basePrice: 29 }),
 ];
 
 export const DEFAULT_PRODUCT_ID = PRODUCTS[0].id;
