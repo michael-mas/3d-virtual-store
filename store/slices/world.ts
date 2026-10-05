@@ -71,8 +71,8 @@ export const createWorldSlice: Slice<WorldSlice> = (set, get) => ({
     }
     set({ mode: to });
     if (to !== "PHOTO" && get().photoUrl) get().setPhotoUrl(null);
-    // Demo mode and looks last for one try-on session.
-    if (!isTryOnMode(to) && get().tryOnSource !== "camera") set({ tryOnSource: "camera" });
+    // The demo / photo source and looks last for one try-on session.
+    if (!isTryOnMode(to) && get().tryOnSource !== "camera") set({ tryOnSource: "camera", tryOnImage: null });
     if (!isTryOnMode(to) && get().look) set({ look: null });
     return true;
   },

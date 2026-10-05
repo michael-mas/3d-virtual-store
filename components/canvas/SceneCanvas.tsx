@@ -6,7 +6,7 @@ import { useTryOnSession } from "@/hooks/useTryOnSession";
 import { isTryOnMode } from "@/lib/modes";
 import { installNetworkGuard } from "@/lib/networkGuard";
 import { setCaptureStage } from "@/lib/tryon/capture";
-import { TRY_ON_MIRRORED } from "@/lib/tryon/constants";
+import { isTryOnMirrored } from "@/lib/tryon/constants";
 import { useAppStore } from "@/store/useAppStore";
 import RendererErrorBoundary from "./RendererErrorBoundary";
 
@@ -24,7 +24,8 @@ const FALLBACK_ASPECT = 4 / 3;
 /**
  * The stage: the single persistent Canvas (mounted once in the root layout) plus the webcam <video>.
  * In try-on the stage takes the video's aspect ratio (so the 63° MediaPipe camera matches the frame),
- * covers the viewport, and is mirrored with one CSS transform that applies to video and 3D alike.
+ * covers the viewport (an uploaded photo fits inside it instead), and is mirrored like a selfie (not a photo) with
+ * one CSS transform that applies to video and 3D alike.
  */
 export default function SceneCanvas() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -40,10 +41,11 @@ export default function SceneCanvas() {
         position: "fixed",
         left: "50%",
         top: "50%",
-        // dvh: the visible viewport on mobile (100vh would include the collapsed address bar).
-        width: `max(100vw, calc(100dvh * ${aspect}))`,
+        // dvh: the visible viewport on mobile (100vh would include the collapsed address bar). Live video covers
+        // the viewport; an uploaded photo is shown whole (often portrait on a landscape screen).
+        width: `${source === "photo" ? "min" : "max"}(100vw, calc(100dvh * ${aspect}))`,
         aspectRatio: aspect,
-        transform: `translate(-50%, -50%)${TRY_ON_MIRRORED ? " scaleX(-1)" : ""}`,
+        transform: `translate(-50%, -50%)${isTryOnMirrored(source) ? " scaleX(-1)" : ""}`,
       }
     : { position: "fixed", inset: 0 };
   // The 3D view owns its gestures (drag to look, tap to walk, pinch in CUSTOMIZE): no browser pan/zoom on it.

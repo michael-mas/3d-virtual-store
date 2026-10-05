@@ -1,11 +1,12 @@
 import type { TryOnError } from "@/lib/tryon/errors";
+import { goToTryOn } from "./cart";
 import type { Slice } from "./types";
 
 /** idle → camera (opening the video source) → model (loading face tracking) → running; any step may → error. */
 export type TryOnStatus = "idle" | "camera" | "model" | "running" | "error";
 
-/** Webcam, or the bundled sample video run through the same pipeline. */
-export type TryOnSource = "camera" | "demo";
+/** Webcam, the optional sample video, or a photo from the visitor's device, all run through the same pipeline. */
+export type TryOnSource = "camera" | "demo" | "photo";
 
 /** Debug view of the surface (face mesh) layer: canonical-UV checker or the underlying video luminance. */
 export type SurfaceDebug = "off" | "uv" | "luma";
@@ -14,6 +15,8 @@ export type TryOnSlice = {
   tryOnStatus: TryOnStatus;
   tryOnError: TryOnError | null;
   tryOnSource: TryOnSource;
+  /** The image tried on when the source is "photo". Decoded on the device, never uploaded. */
+  tryOnImage: Blob | null;
   /** Bumped to restart the session (retry). */
   tryOnAttempt: number;
   /** Object URL / data URL of the last captured photo (PHOTO mode). */
@@ -33,6 +36,8 @@ export type TryOnSlice = {
   setTryOnProgress: (progress: number | null) => void;
   setTryOnStatus: (status: TryOnStatus, error?: TryOnError) => void;
   setTryOnSource: (source: TryOnSource) => void;
+  /** Tries the worn products on a photo (from CUSTOMIZE, PHOTO or during a try-on). */
+  tryOnWithPhoto: (image: Blob) => void;
   retryTryOn: () => void;
   setPhotoUrl: (url: string | null) => void;
   setVideoAspect: (aspect: number) => void;
@@ -41,10 +46,11 @@ export type TryOnSlice = {
   setHairDetected: (detected: boolean) => void;
 };
 
-export const createTryOnSlice: Slice<TryOnSlice> = (set) => ({
+export const createTryOnSlice: Slice<TryOnSlice> = (set, get) => ({
   tryOnStatus: "idle",
   tryOnError: null,
   tryOnSource: "camera",
+  tryOnImage: null,
   tryOnAttempt: 0,
   photoUrl: null,
   videoAspect: null,
@@ -57,6 +63,10 @@ export const createTryOnSlice: Slice<TryOnSlice> = (set) => ({
   setTryOnProgress: (tryOnProgress) => set({ tryOnProgress }),
   setTryOnStatus: (tryOnStatus, error) => set({ tryOnStatus, tryOnError: error ?? null }),
   setTryOnSource: (tryOnSource) => set((s) => ({ tryOnSource, tryOnAttempt: s.tryOnAttempt + 1 })),
+  tryOnWithPhoto: (tryOnImage) => {
+    goToTryOn(get);
+    set((s) => ({ tryOnSource: "photo", tryOnImage, tryOnAttempt: s.tryOnAttempt + 1 }));
+  },
   retryTryOn: () => set((s) => ({ tryOnAttempt: s.tryOnAttempt + 1 })),
   setPhotoUrl: (photoUrl) =>
     set((s) => {

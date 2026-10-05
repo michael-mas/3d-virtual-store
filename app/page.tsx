@@ -15,7 +15,7 @@ export default function Home() {
         <ul>
           <li>Explore: walk a 3D showroom with three pairs of glasses, a lipstick, a face paint, a watch, a ring, a hair color, headwear and a wig on pedestals.</li>
           <li>Customize: change frame finish and color, lens effect, lipstick finish and shade, face paint design and style, watch case, dial and strap, ring metal, stone and finger, hair color, finish and intensity, hat style and colors, wig style and color; the price updates live.</li>
-          <li>Try on: see the product on your face, hair or hand through your webcam, or the whole cart at once. Tracking runs in the page; no image leaves your device.</li>
+          <li>Try on: see the product on your face, hair or hand through your webcam or on a photo, or the whole cart at once. Tracking runs in the page; no image leaves your device.</li>
           <li>Photo: capture and download a photo-booth picture.</li>
         </ul>
         <h2>How it is built</h2>

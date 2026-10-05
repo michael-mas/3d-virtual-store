@@ -1,6 +1,6 @@
 # 3D Virtual Store
 
-> A portfolio proof of concept by Michael Mas: a 3D showroom where visitors walk between pedestals, customize products (three glasses, a lipstick, a face paint, a watch, a ring, a hair color, headwear, a wig) and try them on live with their webcam, alone or as a whole look. Everything runs in the browser: WebGPU rendering with a WebGL2 fallback, face tracking with MediaPipe in WebAssembly, no server and no third-party requests.
+> A portfolio proof of concept by Michael Mas: a 3D showroom where visitors walk between pedestals, customize products (three glasses, a lipstick, a face paint, a watch, a ring, a hair color, headwear, a wig) and try them on live with their webcam or on a photo from their device, alone or as a whole look. Everything runs in the browser: WebGPU rendering with a WebGL2 fallback, face tracking with MediaPipe in WebAssembly, no server and no third-party requests.
 
 - Source code and full technical write-up: https://github.com/michael-mas/3d-virtual-store
 - Author: Michael Mas (https://github.com/michael-mas)

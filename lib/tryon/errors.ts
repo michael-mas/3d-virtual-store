@@ -11,6 +11,7 @@ export type TryOnErrorKind =
   | "stalled"
   | "model"
   | "demo"
+  | "photo"
   | "unknown";
 
 export type TryOnError = { kind: TryOnErrorKind; title: string; message: string };
@@ -52,6 +53,10 @@ const COPY: Record<TryOnErrorKind, { title: string; message: string }> = {
     title: "Demo video unavailable",
     message: "The sample video couldn't be played. Try again or go back.",
   },
+  photo: {
+    title: "Photo couldn't be opened",
+    message: "This file isn't an image the browser can read. Choose a JPEG, PNG or WebP photo.",
+  },
   unknown: {
     title: "Something went wrong",
     message: "The try-on couldn't start. Try again or go back.",
@@ -89,7 +94,7 @@ export function classifyCameraError(error: unknown): TryOnErrorKind {
 
 /** Camera-related failures can fall back to the demo video, when one is configured (lib/assets.ts). */
 export const canUseDemo = (kind: TryOnErrorKind, available = DEMO_VIDEO_SOURCES.length > 0) =>
-  available && kind !== "model" && kind !== "demo";
+  available && kind !== "model" && kind !== "demo" && kind !== "photo";
 
 /** Face tracking keeps the last pose this long after the face is lost, then hides the glasses. */
 export const FACE_LOST_GRACE_MS = 1000;

@@ -39,7 +39,7 @@ const JSON_LD = {
   url: SITE_URL,
   applicationCategory: "MultimediaApplication",
   operatingSystem: "Any (WebGPU or WebGL2 browser)",
-  browserRequirements: "Requires WebGPU or WebGL2. A webcam is needed for the try-on.",
+  browserRequirements: "Requires WebGPU or WebGL2. The try-on uses a webcam or a photo from the device.",
   offers: { "@type": "Offer", price: 0, priceCurrency: "USD" },
   author: { "@type": "Person", name: AUTHOR.name, url: AUTHOR.url },
   isAccessibleForFree: true,

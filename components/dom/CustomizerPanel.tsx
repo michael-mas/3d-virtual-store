@@ -11,6 +11,7 @@ import {
   type RangeOption,
 } from "@/lib/products";
 import { useAppStore } from "@/store/useAppStore";
+import PhotoPicker from "./PhotoPicker";
 
 const legendClass = "mb-1.5 text-xs font-medium tracking-wide text-neutral-400 uppercase";
 
@@ -168,6 +169,9 @@ export default function CustomizerPanel() {
           Try on
         </button>
       </div>
+      <PhotoPicker className="w-full text-center text-xs text-neutral-400 underline-offset-2 hover:text-neutral-200 hover:underline">
+        No webcam? Try it on a photo
+      </PhotoPicker>
     </aside>
   );
 }

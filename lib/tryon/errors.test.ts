@@ -33,6 +33,7 @@ describe("tryOnError", () => {
     expect(canUseDemo("no-camera", true)).toBe(true);
     expect(canUseDemo("model", true)).toBe(false);
     expect(canUseDemo("demo", true)).toBe(false);
+    expect(canUseDemo("photo", true)).toBe(false);
     expect(canUseDemo("denied", false)).toBe(false);
   });
 

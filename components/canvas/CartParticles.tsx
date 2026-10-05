@@ -9,7 +9,7 @@ import { isDebugEnabled } from "@/lib/debug";
 import { productPosition } from "@/lib/explore/layout";
 import { isTryOnMode } from "@/lib/modes";
 import { screenToWorld, worldToScreen } from "@/lib/screenToWorld";
-import { TRY_ON_MIRRORED } from "@/lib/tryon/constants";
+import { isTryOnMirrored } from "@/lib/tryon/constants";
 import { prefersReducedMotion } from "@/hooks/useReducedMotion";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -88,7 +88,8 @@ export default function CartParticles() {
     const { activeProductId } = useAppStore.getState();
     const rect = gl.domElement.getBoundingClientRect();
     const ir = icon.getBoundingClientRect();
-    const mirrored = TRY_ON_MIRRORED && isTryOnMode(useAppStore.getState().mode);
+    const { mode, tryOnSource } = useAppStore.getState();
+    const mirrored = isTryOnMode(mode) && isTryOnMirrored(tryOnSource);
     const depth = camera.position.distanceTo(tmp.p.set(...productPosition(activeProductId))) * 0.5;
     screenToWorld(ir.left + ir.width / 2, ir.top + ir.height / 2, rect, camera, depth, mirrored, tmp.target);
 

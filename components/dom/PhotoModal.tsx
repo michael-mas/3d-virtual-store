@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
 import { capturePhoto } from "@/lib/tryon/capture";
+import { isTryOnMirrored } from "@/lib/tryon/constants";
 import { useAppStore } from "@/store/useAppStore";
 
 /** PHOTO mode: captures once on entry, then shows the result with Download (PNG) and Return. */
@@ -22,7 +23,7 @@ export default function PhotoModal() {
     if (mode !== "PHOTO") return;
     let cancelled = false;
     // Render + composite run synchronously inside capturePhoto(); only PNG encoding is awaited.
-    capturePhoto()
+    capturePhoto(isTryOnMirrored(useAppStore.getState().tryOnSource))
       .then((blob) => {
         if (!cancelled && useAppStore.getState().mode === "PHOTO") {
           useAppStore.getState().setPhotoUrl(URL.createObjectURL(blob));

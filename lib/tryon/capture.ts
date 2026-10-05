@@ -1,4 +1,3 @@
-import { TRY_ON_MIRRORED } from "./constants";
 import { tracking } from "./tracking";
 
 /**
@@ -19,10 +18,10 @@ export function setCaptureStage(el: HTMLElement | null) {
 
 /**
  * Composites the try-on view into a PNG that matches the screen: video frame, then the 3D canvas,
- * with the stage's mirroring, cropped to the part of the stage visible in the viewport.
+ * with the stage's mirroring (when `mirrored`), cropped to the part of the stage visible in the viewport.
  * Render + drawImage happen synchronously in the caller's task; only the PNG encode is async.
  */
-export function capturePhoto(): Promise<Blob> {
+export function capturePhoto(mirrored: boolean): Promise<Blob> {
   const glCanvas = stage?.querySelector("canvas");
   const video = tracking.video;
   if (!stage || !glCanvas || !video || !renderFrame) {
@@ -49,7 +48,7 @@ export function capturePhoto(): Promise<Blob> {
 
   // Screen-space crop, then the stage's own transform (mirror about its vertical axis).
   ctx.translate(-(left - rect.left) * scale, -(top - rect.top) * scale);
-  if (TRY_ON_MIRRORED) {
+  if (mirrored) {
     ctx.translate(W, 0);
     ctx.scale(-1, 1);
   }

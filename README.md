@@ -3,7 +3,7 @@
 [![CI](https://github.com/michael-mas/3d-virtual-store/actions/workflows/ci.yml/badge.svg)](https://github.com/michael-mas/3d-virtual-store/actions/workflows/ci.yml)
 
 A portfolio proof of concept: walk through a small 3D showroom, pick a product off a pedestal, customize it, try it
-on with your webcam and take a photo. It runs entirely in the browser, with WebGPU (plus an automatic WebGL 2
+on with your webcam (or on a photo from your device) and take a photo. It runs entirely in the browser, with WebGPU (plus an automatic WebGL 2
 fallback) for rendering and MediaPipe for face tracking.
 
 **Live demo: [3d-virtual-store-two.vercel.app](https://3d-virtual-store-two.vercel.app)** (desktop Chrome or Edge for WebGPU; any WebGL 2 browser works, including phones)
@@ -48,6 +48,10 @@ fallback) for rendering and MediaPipe for face tracking.
   - Hair color recolors the hair MediaPipe's hair segmenter finds in the frame, keeping its strands and shading;
     "vivid" lifts dark hair as if bleached first.
   - Selfie mirroring and pose smoothing.
+  - Photo try-on, for visitors without a webcam: a picture from the device is drawn on a canvas every frame and
+    captured as a stream (`captureStream`), so the same pipeline (trackers, hair recolor, photo booth) runs on it
+    unchanged. It is decoded in the browser (EXIF orientation applied), shown whole and unmirrored, and never
+    uploaded.
   - Optional demo mode: a looping face clip through the same pipeline, for visitors without a webcam (no clip is
     bundled, see `docs/demo-video.md`).
 - **Photo booth.** Captures the video frame and the 3D render together, exactly as shown on screen, and downloads
@@ -219,7 +223,8 @@ Everything runs locally in your browser:
 - **No checkout, no persistence.** The cart is a demo and is lost on reload.
 - **Testing coverage.** The end-to-end tests (`e2e/`, run in CI) drive headless Chromium on the WebGL 2 backend
   (SwiftShader, no GPU) with Chromium's synthetic camera stream, where frame rates are far below real hardware.
-  That stream has no face, so the tests stop at live tracking ("Face the camera"): pose, makeup rendering and photo
+  That stream has no face, so the tests stop at live tracking ("Face the camera"); photo try-on is tested with a
+  generated gradient image ("No face found in this photo"): pose, makeup rendering and photo
   capture on a real face, the WebGPU path and real webcams are exercised only on real devices.
 - **Browser-level console messages.** In production the app itself logs nothing. On machines without WebGPU,
   Chromium itself may still print "WebGPU is experimental on this platform" or driver messages, which the page

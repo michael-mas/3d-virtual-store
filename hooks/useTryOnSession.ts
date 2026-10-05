@@ -29,6 +29,9 @@ const CONSTRAINTS: MediaStreamConstraints = {
   video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
 };
 
+/** Longest side of a photo once drawn into its stream: plenty for tracking, light on the GPU. */
+const PHOTO_MAX_SIDE = 1280;
+
 /** Hand landmarks in camera space (meters): smooth when still, follows quick moves. */
 const HAND_SMOOTHING: OneEuroParams = { minCutoff: 1.5, beta: 8, dCutoff: 1.0 };
 /** Consecutive detections with the other label before the handedness flips. */
@@ -56,7 +59,8 @@ class SessionError extends Error {
 }
 
 /**
- * Runs a try-on session while `active`: opens the source (webcam via getUserMedia, or the optional demo video),
+ * Runs a try-on session while `active`: opens the source (webcam via getUserMedia, the optional demo video, or a
+ * photo turned into a video stream),
  * loads the trackers the worn products need (FaceLandmarker, HandLandmarker), and runs them on every new video
  * frame (requestVideoFrameCallback). Smoothed poses go to `tracking`. A tracker needed later (a look switching
  * to a hand product) is loaded in the background. Every failure ends in an explicit error state (never a blank or frozen stage):
@@ -95,6 +99,8 @@ export function useTryOnSession(
     };
     let stopped = false;
     let stream: MediaStream | null = null;
+    let photo: ImageBitmap | null = null;
+    let photoFrame = 0;
     let frameHandle = 0;
     let watchdog = 0;
     let lastTimestamp = -1;
@@ -123,6 +129,9 @@ export function useTryOnSession(
       video.cancelVideoFrameCallback(frameHandle);
       window.clearInterval(watchdog);
       document.removeEventListener("visibilitychange", onVisible);
+      cancelAnimationFrame(photoFrame);
+      photo?.close();
+      photo = null;
       stream?.getTracks().forEach((t) => t.stop());
       stream = null;
       tracking.hasFace = false;
@@ -165,16 +174,50 @@ export function useTryOnSession(
       video.src = playable.src;
     };
 
+    /**
+     * A photo becomes a live stream: drawn on a canvas every animation frame and captured (captureStream), so the
+     * whole video pipeline (trackers on each new frame, stage background, capture, stall watchdog) runs unchanged.
+     * The image is decoded on the device (orientation from its EXIF) and never leaves it.
+     */
+    const openPhoto = async () => {
+      const image = useAppStore.getState().tryOnImage;
+      if (!image) throw new SessionError("photo");
+      let bitmap: ImageBitmap;
+      try {
+        bitmap = await createImageBitmap(image, { imageOrientation: "from-image" });
+      } catch {
+        throw new SessionError("photo");
+      }
+      if (stopped) return bitmap.close();
+      photo = bitmap;
+      const scale = Math.min(1, PHOTO_MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(2, Math.round((bitmap.width * scale) / 2) * 2);
+      canvas.height = Math.max(2, Math.round((bitmap.height * scale) / 2) * 2);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new SessionError("unsupported");
+      const draw = () => {
+        ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        photoFrame = requestAnimationFrame(draw);
+      };
+      draw();
+      stream = canvas.captureStream(30);
+      video.loop = false;
+      video.removeAttribute("src");
+      video.srcObject = stream;
+    };
+
     setTryOnStatus("camera");
     (async () => {
       try {
         if (source === "camera") await openCamera();
+        else if (source === "photo") await openPhoto();
         else openDemo();
         if (stopped) return;
         try {
           await video.play();
         } catch {
-          throw new SessionError(source === "demo" ? "demo" : "in-use");
+          throw new SessionError(source === "camera" ? "in-use" : source);
         }
         if (stopped) return;
         setVideoAspect(video.videoWidth / video.videoHeight);
@@ -293,7 +336,7 @@ export function useTryOnSession(
             lastFrameAt = Math.max(lastFrameAt, now);
             return;
           }
-          if (now - lastFrameAt > STALL_TIMEOUT_MS) fail(source === "demo" ? "demo" : "stalled");
+          if (now - lastFrameAt > STALL_TIMEOUT_MS) fail(source === "camera" ? "stalled" : source);
         }, 500);
 
         setTryOnStatus("running");

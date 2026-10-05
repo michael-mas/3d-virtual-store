@@ -5,6 +5,7 @@ import { wornTrackers } from "@/lib/cart/look";
 import { canUseDemo } from "@/lib/tryon/errors";
 import { useAppStore } from "@/store/useAppStore";
 import LookSwitcher from "./LookSwitcher";
+import PhotoPicker from "./PhotoPicker";
 
 const STATUS_TEXT = {
   idle: "Starting…",
@@ -12,7 +13,12 @@ const STATUS_TEXT = {
   model: "Loading face tracking…",
 } as const;
 
-/** TRY_ON overlay: progress, "face the camera" hint, error card with a way out, look switcher, capture/exit controls. */
+const PILL = "rounded-full bg-neutral-900/80 px-5 py-2.5 text-sm text-white ring-1 ring-white/15 hover:bg-neutral-800";
+
+/**
+ * TRY_ON overlay: progress, "face the camera" hint, error card with a way out, look switcher, capture/exit controls,
+ * and the switch between the camera and a photo from the device.
+ */
 export default function TryOnPanel() {
   const mode = useAppStore((s) => s.mode);
   const status = useAppStore((s) => s.tryOnStatus);
@@ -51,14 +57,23 @@ export default function TryOnPanel() {
             {error.message}
           </p>
           <div className="flex flex-col gap-2">
-            <button
-              ref={primaryAction}
-              type="button"
-              onClick={retryTryOn}
-              className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-200"
-            >
-              Try again
-            </button>
+            {error.kind === "photo" ? (
+              <PhotoPicker
+                buttonRef={primaryAction}
+                className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-200"
+              >
+                Choose another photo
+              </PhotoPicker>
+            ) : (
+              <button
+                ref={primaryAction}
+                type="button"
+                onClick={retryTryOn}
+                className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-200"
+              >
+                Try again
+              </button>
+            )}
             {canUseDemo(error.kind) && (
               <button
                 type="button"
@@ -66,6 +81,21 @@ export default function TryOnPanel() {
                 className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium hover:bg-indigo-500"
               >
                 Use demo video
+              </button>
+            )}
+            {/* No webcam, or no permission: the same try-on on a photo. */}
+            {source === "camera" && error.kind !== "model" && (
+              <PhotoPicker className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium hover:bg-indigo-500">
+                Use a photo instead
+              </PhotoPicker>
+            )}
+            {source !== "camera" && (
+              <button
+                type="button"
+                onClick={() => setTryOnSource("camera")}
+                className="rounded-lg bg-neutral-800 px-4 py-2 text-sm hover:bg-neutral-700"
+              >
+                Use the camera
               </button>
             )}
             <button
@@ -84,7 +114,9 @@ export default function TryOnPanel() {
   const loadingText =
     status === "model" && progress !== null && progress < 1
       ? `Downloading face tracking… ${Math.round(progress * 100)}%`
-      : STATUS_TEXT[status === "error" || status === "running" ? "idle" : status];
+      : status === "camera" && source === "photo"
+        ? "Opening photo…"
+        : STATUS_TEXT[status === "error" || status === "running" ? "idle" : status];
   // What the worn products need in view; the photo is possible as soon as one of them is tracked.
   // Hair color needs the head in view too: it asks for the face like face products.
   const missingFace = (needs.includes("face") && !faceDetected) || (needs.includes("hair") && !hairDetected);
@@ -93,21 +125,33 @@ export default function TryOnPanel() {
     (needs.includes("face") && faceDetected) ||
     (needs.includes("hand") && handDetected) ||
     (needs.includes("hair") && hairDetected);
+  const photo = source === "photo";
   const hint =
     missingFace && missingHand
-      ? "Face the camera and show your hand"
+      ? photo
+        ? "No face or hand found in this photo"
+        : "Face the camera and show your hand"
       : missingFace
-        ? "Face the camera"
+        ? photo
+          ? "No face found in this photo"
+          : "Face the camera"
         : missingHand
-          ? "Show the back of your hand"
+          ? photo
+            ? "No hand found in this photo"
+            : "Show the back of your hand"
           : null;
   const message = status !== "running" ? loadingText : hint;
 
   return (
     <>
       {source === "demo" && (
-        <p className="fixed top-3 left-1/2 z-40 -translate-x-1/2 rounded-full bg-indigo-600/90 px-3 py-1 text-xs font-medium text-white">
+        <p className="fixed top-16 left-1/2 z-40 -translate-x-1/2 rounded-full bg-indigo-600/90 px-3 py-1 text-xs font-medium text-white">
           Demo video
+        </p>
+      )}
+      {photo && (
+        <p className="fixed top-16 left-1/2 z-40 -translate-x-1/2 rounded-full bg-indigo-600/90 px-3 py-1 text-xs font-medium text-white">
+          Your photo · stays on this device
         </p>
       )}
       {message && (
@@ -123,14 +167,16 @@ export default function TryOnPanel() {
         </p>
       )}
       <LookSwitcher />
-      <div className="fixed inset-x-0 bottom-6 z-40 flex justify-center gap-3">
-        <button
-          type="button"
-          onClick={() => transition("EXIT")}
-          className="rounded-full bg-neutral-900/80 px-5 py-2.5 text-sm text-white ring-1 ring-white/15 hover:bg-neutral-800"
-        >
+      <div className="fixed inset-x-0 bottom-6 z-40 flex flex-wrap justify-center gap-3 px-4">
+        <button type="button" onClick={() => transition("EXIT")} className={PILL}>
           Exit
         </button>
+        <PhotoPicker className={PILL}>{photo ? "Change photo" : "Use a photo"}</PhotoPicker>
+        {photo && (
+          <button type="button" onClick={() => setTryOnSource("camera")} className={PILL}>
+            Camera
+          </button>
+        )}
         <button
           type="button"
           disabled={!tracked}

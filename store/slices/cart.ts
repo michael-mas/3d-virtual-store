@@ -42,7 +42,7 @@ export type CartSlice = {
 const revoke = (item: CartItem) => item.thumbnailUrl && URL.revokeObjectURL(item.thumbnailUrl);
 
 /** EXPLORE / CUSTOMIZE / PHOTO → TRY_ON through the transition table (TRY_ON stays). */
-function goToTryOn(get: () => AppState) {
+export function goToTryOn(get: () => AppState) {
   const { transition } = get();
   switch (get().mode) {
     case "EXPLORE":
