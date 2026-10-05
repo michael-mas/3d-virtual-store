@@ -32,15 +32,18 @@ export default function LoadingScreen() {
       aria-valuemax={100}
       aria-valuenow={pct}
       data-testid="loading-screen"
-      className={`fixed inset-0 z-[80] flex flex-col items-center justify-center gap-4 bg-neutral-950 text-neutral-200 transition-opacity duration-500 ${
+      className={`fixed inset-0 z-[80] flex flex-col items-center justify-center gap-6 bg-noir text-ivory transition-opacity duration-700 ${
         ready ? "pointer-events-none opacity-0" : "opacity-100"
       }`}
     >
-      <p className="text-lg font-semibold tracking-tight">3D Virtual Store</p>
-      <div className="h-1 w-56 overflow-hidden rounded-full bg-neutral-800">
-        <div className="h-full rounded-full bg-indigo-500 transition-[width] duration-300" style={{ width: `${Math.max(pct, 4)}%` }} />
+      <div className="flex flex-col items-center gap-2">
+        <p className="wordmark text-2xl sm:text-3xl">Maison Miroir</p>
+        <p className="eyebrow text-gold">Virtual boutique</p>
       </div>
-      <p className="text-xs text-neutral-400">{label}</p>
+      <div className="h-px w-56 overflow-hidden bg-ivory/15">
+        <div className="h-full bg-gold transition-[width] duration-300" style={{ width: `${Math.max(pct, 4)}%` }} />
+      </div>
+      <p className="eyebrow text-[0.6rem]">{label}</p>
     </div>
   );
 }

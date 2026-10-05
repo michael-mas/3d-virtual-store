@@ -8,7 +8,7 @@ import { tracking } from "@/lib/tryon/tracking";
 import { setVideoTexture, videoWithSurface } from "@/lib/tryon/videoLayer";
 import { useAppStore } from "@/store/useAppStore";
 
-const STORE_BACKGROUND = new Color("#1c1917");
+const STORE_BACKGROUND = new Color("#0b0a09");
 
 /**
  * Store backdrop color, or the webcam feed during try-on. The video is part of the rendered frame so

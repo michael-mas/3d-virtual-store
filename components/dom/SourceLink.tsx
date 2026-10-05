@@ -3,7 +3,7 @@
 import { AUTHOR, REPO_URL } from "@/lib/site";
 import { useAppStore } from "@/store/useAppStore";
 
-const PILL = "rounded-full bg-neutral-900/85 text-white shadow-lg ring-1 ring-white/10 hover:bg-neutral-800";
+const PILL = "chip rounded-full";
 
 function GitHubIcon({ className }: { className: string }) {
   return (
@@ -21,7 +21,7 @@ export default function SourceLink() {
   const exploring = useAppStore((s) => s.mode === "EXPLORE");
   if (!exploring) return null;
   return (
-    <div className="pointer-events-auto fixed top-3 left-3 z-30">
+    <div className="pointer-events-auto fixed top-4 left-4 z-30">
       <a
         href={REPO_URL}
         target="_blank"
@@ -29,17 +29,17 @@ export default function SourceLink() {
         aria-label={`Source code on GitHub, by ${AUTHOR.name}`}
         className={`${PILL} block p-3 sm:hidden`}
       >
-        <GitHubIcon className="size-6" />
+        <GitHubIcon className="size-5" />
       </a>
-      <p className={`${PILL} hidden items-center gap-2 px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-900/85 sm:flex`}>
-        <GitHubIcon className="size-4 text-white" />
+      <p className={`${PILL} hidden items-center gap-2 px-4 py-2.5 text-ivory/70 sm:flex`}>
+        <GitHubIcon className="size-3.5 text-gold-light" />
         <span>
           By{" "}
-          <a href={AUTHOR.url} target="_blank" rel="noopener noreferrer" className="text-white hover:underline">
+          <a href={AUTHOR.url} target="_blank" rel="noopener noreferrer" className="text-ivory hover:text-gold-light">
             {AUTHOR.name}
           </a>{" "}
           ·{" "}
-          <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className="text-white hover:underline">
+          <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className="text-ivory hover:text-gold-light">
             Source code
           </a>
         </span>

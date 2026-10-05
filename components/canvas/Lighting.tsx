@@ -24,5 +24,6 @@ export default function Lighting() {
     };
   }, [gl, scene]);
 
-  return <directionalLight position={[0.6, 1.2, 0.8]} intensity={1.5} />;
+  // Warm key light, like the salon's 2700 K downlights.
+  return <directionalLight position={[0.6, 1.2, 0.8]} intensity={1.6} color="#ffe6c7" />;
 }

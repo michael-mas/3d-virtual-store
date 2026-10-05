@@ -33,11 +33,11 @@ export default function Player() {
 
   const materials = useMemo(
     () => ({
-      marker: Object.assign(new MeshBasicNodeMaterial({ transparent: true, opacity: 0.35, depthWrite: false }), {
-        colorNode: color("#e0e7ff"),
+      marker: Object.assign(new MeshBasicNodeMaterial({ transparent: true, opacity: 0.22, depthWrite: false }), {
+        colorNode: color("#c8a96a"),
       }),
-      target: Object.assign(new MeshBasicNodeMaterial({ transparent: true, opacity: 0.5, depthWrite: false }), {
-        colorNode: color("#818cf8"),
+      target: Object.assign(new MeshBasicNodeMaterial({ transparent: true, opacity: 0.6, depthWrite: false }), {
+        colorNode: color("#e2cc9a"),
       }),
     }),
     [],
@@ -97,10 +97,10 @@ export default function Player() {
   return (
     <>
       <mesh ref={marker} rotation={[-Math.PI / 2, 0, 0]} material={materials.marker}>
-        <ringGeometry args={[PLAYER_RADIUS * 0.82, PLAYER_RADIUS, 48]} />
+        <ringGeometry args={[PLAYER_RADIUS * 0.94, PLAYER_RADIUS, 64]} />
       </mesh>
       <mesh ref={targetRing} rotation={[-Math.PI / 2, 0, 0]} material={materials.target}>
-        <ringGeometry args={[0.12, 0.18, 32]} />
+        <ringGeometry args={[0.15, 0.17, 48]} />
       </mesh>
     </>
   );

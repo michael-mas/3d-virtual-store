@@ -1,13 +1,25 @@
 @import "tailwindcss";
 
+/*
+ * MAISON MIROIR: a dark luxury identity. Near-black lacquer, warm ivory text, brushed-gold accents; Bodoni Moda
+ * for the wordmark, product names and prices, Jost for the interface.
+ */
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: #0b0a09;
+  --foreground: #efe8dc;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-noir: #0b0a09;
+  --color-onyx: #15130f;
+  --color-ivory: #efe8dc;
+  --color-taupe: #a39a8b;
+  --color-gold: #c8a96a;
+  --color-gold-light: #e2cc9a;
+  --font-display: var(--font-bodoni), Didot, Georgia, serif;
+  --font-sans: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
 }
 
 html,
@@ -15,13 +27,82 @@ body {
   height: 100%;
   background: var(--background);
   color: var(--foreground);
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 350;
 }
 
 /* Visible keyboard focus everywhere (mouse/touch clicks don't show it). */
 :focus-visible {
-  outline: 2px solid #a5b4fc;
-  outline-offset: 2px;
+  outline: 1px solid var(--color-gold-light);
+  outline-offset: 3px;
+}
+
+@layer components {
+  /* Small caps-like label above a group: widely tracked, quiet. */
+  .eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 450;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-taupe);
+  }
+  /* Floating surface: smoked glass with a hairline gold edge. */
+  .panel {
+    background: color-mix(in srgb, var(--color-onyx) 82%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-gold) 22%, transparent);
+    box-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.75);
+    backdrop-filter: blur(18px) saturate(1.2);
+    color: var(--color-ivory);
+  }
+  /* Primary action: gold leaf. */
+  .btn-gold {
+    background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold));
+    color: var(--color-noir);
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    transition: filter 200ms, transform 200ms;
+  }
+  .btn-gold:hover {
+    filter: brightness(1.08);
+  }
+  .btn-gold:disabled {
+    filter: grayscale(0.6) brightness(0.6);
+  }
+  /* Secondary action: hairline outline. */
+  .btn-line {
+    border: 1px solid color-mix(in srgb, var(--color-ivory) 28%, transparent);
+    color: var(--color-ivory);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    transition: border-color 200ms, background-color 200ms;
+  }
+  .btn-line:hover {
+    border-color: var(--color-gold);
+    background: color-mix(in srgb, var(--color-gold) 8%, transparent);
+  }
+  /* Overlay controls on the 3D view / video: a dark rounded chip. */
+  .chip {
+    background: color-mix(in srgb, var(--color-noir) 72%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-gold) 25%, transparent);
+    color: var(--color-ivory);
+    backdrop-filter: blur(12px);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 0.6875rem;
+    transition: border-color 200ms, background-color 200ms;
+  }
+  .chip:hover {
+    border-color: var(--color-gold);
+  }
+  .wordmark {
+    font-family: var(--font-bodoni), Didot, Georgia, serif;
+    font-weight: 500;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+  }
 }
 
 /* Reduced motion: no UI transitions or spinners. 3D motion is handled in code (useReducedMotion). */

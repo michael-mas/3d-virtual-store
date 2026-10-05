@@ -38,7 +38,7 @@ export default function CartParticles() {
   const { geometry, material } = useMemo(() => {
     const material = new MeshBasicNodeMaterial({ depthTest: false, depthWrite: false });
     // HDR gold so it stays bright through tone mapping and the CUSTOMIZE vignette.
-    material.colorNode = color("#ffc24a").mul(1.8);
+    material.colorNode = color("#e8c98a").mul(1.25);
     return { geometry: new IcosahedronGeometry(1, 1), material };
   }, []);
   useEffect(

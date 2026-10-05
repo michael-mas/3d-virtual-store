@@ -45,11 +45,12 @@ export default function PhotoModal() {
       role="dialog"
       aria-modal="true"
       aria-label="Your try-on photo"
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
     >
-      <div className="flex max-h-full w-full max-w-2xl flex-col gap-4 rounded-2xl bg-neutral-900 p-4 text-neutral-100 shadow-2xl ring-1 ring-white/10">
+      <div className="panel flex max-h-full w-full max-w-2xl flex-col gap-4 rounded-sm p-5">
+        <p className="wordmark text-center text-sm">Maison Miroir</p>
         {/* Preview keeps the photo's own aspect (portrait on phones, landscape on desktop). */}
-        <div className="flex min-h-48 min-w-0 flex-1 items-center justify-center overflow-hidden rounded-lg bg-black">
+        <div className="flex min-h-48 min-w-0 flex-1 items-center justify-center overflow-hidden rounded-sm bg-black ring-1 ring-gold/20">
           {photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- object URL preview
             <img
@@ -59,7 +60,7 @@ export default function PhotoModal() {
               className="max-h-[70dvh] max-w-full object-contain"
             />
           ) : (
-            <p role="status" className="text-sm text-neutral-400">
+            <p role="status" className="eyebrow">
               {error ?? "Capturing…"}
             </p>
           )}
@@ -69,17 +70,15 @@ export default function PhotoModal() {
             ref={returnButton}
             type="button"
             onClick={close}
-            className="rounded-lg bg-neutral-800 px-4 py-2 text-sm hover:bg-neutral-700"
+            className="btn-line rounded-sm px-5 py-2.5"
           >
             Return
           </button>
           <a
             href={photoUrl ?? undefined}
-            download="try-on.png"
+            download="maison-miroir-try-on.png"
             aria-disabled={!photoUrl}
-            className={`rounded-lg bg-white px-4 py-2 text-sm font-medium text-neutral-900 ${
-              photoUrl ? "hover:bg-neutral-200" : "pointer-events-none opacity-40"
-            }`}
+            className={`btn-gold rounded-sm px-5 py-2.5 ${photoUrl ? "" : "pointer-events-none opacity-40"}`}
           >
             Download PNG
           </a>

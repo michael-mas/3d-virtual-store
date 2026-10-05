@@ -14,6 +14,7 @@ import TryOnPanel from "@/components/dom/TryOnPanel";
 import { DRACO_DECODER_PATH, SHOWROOM_MODEL_PATH } from "@/lib/assets";
 import { PRODUCTS } from "@/lib/products";
 import { AUTHOR, REPO_URL, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site";
+import { display, sans } from "./fonts";
 import "./globals.css";
 
 // The OG image comes from app/opengraph-image.jpg (a photo-booth capture) and the favicon from app/icon.svg.
@@ -46,7 +47,7 @@ const JSON_LD = {
   sameAs: [REPO_URL],
 };
 
-export const viewport: Viewport = { themeColor: "#0a0a0a" };
+export const viewport: Viewport = { themeColor: "#0b0a09" };
 
 /**
  * Assets the first frame needs, fetched in parallel with the JS instead of after it (three's loaders use
@@ -62,7 +63,7 @@ const CRITICAL_ASSETS = [
 export default function RootLayout({ children }: LayoutProps<"/">) {
   for (const href of CRITICAL_ASSETS) preload(href, { as: "fetch", crossOrigin: "anonymous" });
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="en" className={`${display.variable} ${sans.variable} h-full antialiased`}>
       <body className="h-full overflow-hidden">
         <script
           type="application/ld+json"

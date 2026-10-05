@@ -26,21 +26,21 @@ export default function CartButton() {
       type="button"
       onClick={toggleCart}
       aria-label={`Cart, ${count} item${count === 1 ? "" : "s"}`}
-      className="fixed top-3 right-3 z-50 rounded-full bg-neutral-900/85 p-3 text-white shadow-lg ring-1 ring-white/10 hover:bg-neutral-800"
+      className="chip fixed top-4 right-4 z-50 rounded-full p-3"
     >
       <span
         ref={setCartIcon}
         data-testid="cart-icon"
         className={`block transition-transform duration-300 ${bumping ? "scale-125" : "scale-100"}`}
       >
-        <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden>
-          <path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.2a1 1 0 0 0 1-.8L20 8H6.2" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="9.5" cy="19.5" r="1.3" />
-          <circle cx="17" cy="19.5" r="1.3" />
+        {/* A shopping bag, drawn with hairlines. */}
+        <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth={1.2} aria-hidden>
+          <path d="M5 8h14l-1 12.5H6L5 8Z" strokeLinejoin="round" />
+          <path d="M9 10.5V6.5a3 3 0 0 1 6 0v4" strokeLinecap="round" />
         </svg>
       </span>
       {count > 0 && (
-        <span className="absolute -top-1 -right-1 min-w-5 rounded-full bg-indigo-500 px-1.5 text-center text-xs leading-5 font-semibold">
+        <span className="absolute -top-1 -right-1 min-w-5 rounded-full bg-gold px-1.5 text-center font-display text-xs leading-5 tracking-normal text-noir">
           {count}
         </span>
       )}

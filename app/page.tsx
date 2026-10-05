@@ -7,10 +7,14 @@ import { REPO_URL, SITE_DESCRIPTION } from "@/lib/site";
  */
 export default function Home() {
   return (
-    <main className="flex justify-center p-6">
-      <h1 className="text-2xl font-semibold tracking-tight">3D Virtual Store</h1>
+    <main className="flex justify-center p-5">
+      <h1 className="flex flex-col items-center gap-1 text-ivory [text-shadow:0_1px_12px_rgb(0_0_0/0.6)]">
+        <span className="wordmark text-lg sm:text-xl">Maison Miroir</span>
+        <span className="eyebrow hidden text-[0.6rem] sm:block">Virtual boutique &amp; try-on</span>
+      </h1>
       <div className="sr-only">
         <p>{SITE_DESCRIPTION}</p>
+        <p>Maison Miroir is a fictional brand, built as a portfolio proof of concept.</p>
         <h2>What you can do</h2>
         <ul>
           <li>Explore: walk a 3D showroom with three pairs of glasses, a lipstick, a face paint, a watch, a ring, a hair color and headwear on pedestals.</li>

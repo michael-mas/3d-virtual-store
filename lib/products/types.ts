@@ -5,6 +5,17 @@
 
 export type ProductCategory = "eyewear" | "lips" | "face-paint" | "watch" | "ring" | "hair-color" | "headwear";
 
+/** Display name of each category (the customizer's eyebrow, the cart). */
+export const CATEGORY_LABELS: Record<ProductCategory, string> = {
+  eyewear: "Eyewear",
+  lips: "Lipstick",
+  "face-paint": "Face art",
+  watch: "Horology",
+  ring: "Fine jewelry",
+  "hair-color": "Hair color",
+  headwear: "Millinery",
+};
+
 /**
  * How a product follows the face in TRY_ON:
  * - rigid:    a 3D model driven by the facial transformation matrix (glasses, hats…)

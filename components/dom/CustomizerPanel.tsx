@@ -3,6 +3,7 @@
 import { formatPrice, priceOf } from "@/lib/cart/pricing";
 import { renderThumbnail } from "@/lib/cart/registry";
 import {
+  CATEGORY_LABELS,
   getProduct,
   optionValueLabel,
   type ChoiceOption,
@@ -13,14 +14,14 @@ import {
 import { useAppStore } from "@/store/useAppStore";
 import PhotoPicker from "./PhotoPicker";
 
-const legendClass = "mb-1.5 text-xs font-medium tracking-wide text-neutral-400 uppercase";
+const legendClass = "eyebrow mb-2 block";
 
 function ChoiceControl({ option, value, onChange }: { option: ChoiceOption; value: string; onChange: (v: string) => void }) {
   return (
     <fieldset>
       <legend className={legendClass}>{option.label}</legend>
       <div
-        className="grid gap-1 rounded-lg bg-neutral-800 p-1"
+        className="grid gap-px overflow-hidden rounded-sm border border-ivory/15 bg-ivory/15"
         // Up to 3 in a row; longer lists wrap into balanced rows (4 → 2×2).
         style={{ gridTemplateColumns: `repeat(${option.values.length <= 3 ? option.values.length : Math.ceil(option.values.length / 2)}, minmax(0, 1fr))` }}
       >
@@ -30,8 +31,8 @@ function ChoiceControl({ option, value, onChange }: { option: ChoiceOption; valu
             type="button"
             aria-pressed={value === v.value}
             onClick={() => onChange(v.value)}
-            className={`rounded-md px-2 py-1.5 text-sm transition-colors ${
-              value === v.value ? "bg-white text-neutral-900" : "text-neutral-300 hover:bg-neutral-700"
+            className={`px-2 py-2 text-[0.8rem] tracking-wide transition-colors ${
+              value === v.value ? "bg-ivory text-noir" : "bg-onyx text-ivory/75 hover:bg-[#1f1b16] hover:text-ivory"
             }`}
           >
             {v.label}
@@ -46,7 +47,7 @@ function ColorControl({ option, value, onChange }: { option: ColorOption; value:
   return (
     <fieldset>
       <legend className={legendClass}>{option.label}</legend>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2.5">
         {option.presets.map((c) => (
           <button
             key={c.value}
@@ -56,8 +57,8 @@ function ColorControl({ option, value, onChange }: { option: ColorOption; value:
             aria-pressed={value === c.value}
             onClick={() => onChange(c.value)}
             style={{ backgroundColor: c.value }}
-            className={`size-7 rounded-full ring-2 ring-offset-2 ring-offset-neutral-900 ${
-              value === c.value ? "ring-white" : "ring-transparent"
+            className={`size-6 rounded-full shadow-[inset_0_1px_2px_rgb(255_255_255/0.25),inset_0_-2px_3px_rgb(0_0_0/0.35)] ring-1 ring-offset-[3px] ring-offset-onyx transition ${
+              value === c.value ? "ring-gold" : "ring-ivory/10 hover:ring-ivory/40"
             }`}
           />
         ))}
@@ -67,7 +68,7 @@ function ColorControl({ option, value, onChange }: { option: ColorOption; value:
             aria-label={`Custom ${option.label.toLowerCase()}`}
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="size-7 cursor-pointer rounded-full bg-transparent"
+            className="size-6 cursor-pointer rounded-full bg-transparent"
           />
         )}
       </div>
@@ -81,7 +82,7 @@ function RangeControl({ option, value, onChange }: { option: RangeOption; value:
     <div>
       <label htmlFor={id} className={`${legendClass} flex justify-between`}>
         <span>{option.label}</span>
-        <span className="text-neutral-200 normal-case">{optionValueLabel(option, value)}</span>
+        <span className="text-ivory tracking-normal normal-case">{optionValueLabel(option, value)}</span>
       </label>
       <input
         id={id}
@@ -92,7 +93,7 @@ function RangeControl({ option, value, onChange }: { option: RangeOption; value:
         value={value}
         aria-valuetext={optionValueLabel(option, value)}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full accent-white"
+        className="w-full accent-gold"
       />
     </div>
   );
@@ -124,9 +125,9 @@ export default function CustomizerPanel() {
 
   if (mode === "EXPLORE") {
     return (
-      <p className="pointer-events-none fixed inset-x-0 bottom-8 px-4 text-center text-sm text-neutral-300">
+      <p className="pointer-events-none fixed inset-x-0 bottom-7 px-4 text-center text-[0.7rem] tracking-[0.14em] text-ivory/60 uppercase">
         <span className="pointer-coarse:hidden">
-          <kbd className="font-mono">WASD</kbd> / <kbd className="font-mono">ZQSD</kbd> / arrows or scroll to walk ·
+          <kbd className="text-gold-light">WASD</kbd> / <kbd className="text-gold-light">ZQSD</kbd> / arrows or scroll to walk ·
           Shift to run · drag to look around · click the floor to go there
         </span>
         <span className="hidden pointer-coarse:inline">Tap the floor to walk · drag to look around</span>
@@ -138,8 +139,17 @@ export default function CustomizerPanel() {
   return (
     <aside
       aria-label={`Customize ${product.name}`}
-      className="fixed bottom-4 left-1/2 z-40 max-h-[calc(100dvh-6rem)] w-[min(92vw,22rem)] -translate-x-1/2 space-y-4 overflow-y-auto rounded-2xl bg-neutral-900/85 p-4 text-neutral-100 shadow-2xl ring-1 ring-white/10 backdrop-blur md:top-1/2 md:right-6 md:bottom-auto md:left-auto md:translate-x-0 md:-translate-y-1/2"
+      className="panel fixed bottom-3 left-1/2 z-40 max-h-[52dvh] w-[min(94vw,22rem)] -translate-x-1/2 space-y-4 overflow-y-auto rounded-sm p-4 md:top-1/2 md:max-h-[calc(100dvh-6rem)] md:space-y-5 md:p-5 md:right-8 md:bottom-auto md:left-auto md:translate-x-0 md:-translate-y-1/2"
     >
+      <header className="flex items-end justify-between gap-3 border-b border-gold/20 pb-3 md:block md:pb-4 md:text-center">
+        <div>
+          <p className="eyebrow text-gold">{CATEGORY_LABELS[product.category]}</p>
+          <h2 className="mt-1 font-display text-xl leading-none font-medium tracking-wide md:mt-1.5 md:text-[1.65rem]">
+            {product.name}
+          </h2>
+        </div>
+        <p className="font-display text-base text-ivory/80 italic md:mt-2">{formatPrice(priceOf(productId, config))}</p>
+      </header>
       {product.options.map((o) => (
         <OptionControl key={o.id} option={o} value={config[o.id]} onChange={(v) => setOption(o.id, v)} />
       ))}
@@ -147,29 +157,31 @@ export default function CustomizerPanel() {
       <button
         type="button"
         onClick={onAddToCart}
-        className="flex w-full items-center justify-between rounded-lg bg-white px-3 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-200"
+        className="btn-gold flex w-full items-center justify-between rounded-sm px-4 py-3"
       >
         <span>Add to cart</span>
-        <span data-testid="config-price">{formatPrice(priceOf(productId, config))}</span>
+        <span data-testid="config-price" className="font-display text-sm tracking-normal normal-case">
+          {formatPrice(priceOf(productId, config))}
+        </span>
       </button>
 
       <div className="flex gap-2">
         <button
           type="button"
           onClick={() => transition("BACK")}
-          className="flex-1 rounded-lg bg-neutral-800 px-3 py-2 text-sm hover:bg-neutral-700"
+          className="btn-line flex-1 rounded-sm px-3 py-2.5"
         >
           Back
         </button>
         <button
           type="button"
           onClick={() => transition("TRY_ON")}
-          className="flex-1 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium hover:bg-indigo-500"
+          className="btn-line flex-1 rounded-sm border-gold/60 px-3 py-2.5 text-gold-light"
         >
           Try on
         </button>
       </div>
-      <PhotoPicker className="w-full text-center text-xs text-neutral-400 underline-offset-2 hover:text-neutral-200 hover:underline">
+      <PhotoPicker className="w-full text-center text-xs tracking-wide text-taupe underline-offset-4 hover:text-ivory hover:underline">
         No webcam? Try it on a photo
       </PhotoPicker>
     </aside>
