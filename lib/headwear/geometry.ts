@@ -1,4 +1,4 @@
-import { BufferGeometry, Float32BufferAttribute, Vector3 } from "three/webgpu";
+import { BufferGeometry, CylinderGeometry, Float32BufferAttribute, SphereGeometry, Vector3 } from "three/webgpu";
 
 /**
  * A typical skull as an ellipsoid in MediaPipe's canonical face space (meters: origin near the nose, +Y up, +Z toward
@@ -95,4 +95,69 @@ export function domeGeometry(dome: Dome, segmentsU = 72, segmentsV = 28): Buffer
     segmentsV,
     { closedU: true, inside: SKULL.center },
   );
+}
+
+/** Geometries of a milliner's head block (the skull on a short stand), for displaying hats and wigs. */
+export function headBlockGeometries(): { head: BufferGeometry; stand: BufferGeometry } {
+  const { center: c, radii: r } = SKULL;
+  const head = new SphereGeometry(1, 48, 32).scale(r.x, r.y, r.z).translate(c.x, c.y, c.z);
+  const stand = new CylinderGeometry(0.018, 0.03, 0.07, 24).translate(c.x, c.y - r.y - 0.025, c.z);
+  return { head, stand };
+}
+
+/** A wig's shape around the skull. */
+export type WigShape = {
+  /** Radii multipliers over SKULL (the hair's volume). */
+  scale: [number, number, number];
+  /** Height (canonical y, m) of the front hairline: the fringe for a bob. */
+  hairline: number;
+  /** Height where the hair ends at the sides and back. */
+  length: number;
+  /** Half-width (rad) of the face opening, around which the end blends from the hairline down to `length`. */
+  faceHalfAngle: number;
+  /** Outward spread per meter of fall below the head's widest line. */
+  flare: number;
+  /** Radial curl amplitude (m), for an afro. */
+  curls?: number;
+};
+
+const smoothstep = (a: number, b: number, x: number) => {
+  const t = Math.min(Math.max((x - a) / (b - a), 0), 1);
+  return t * t * (3 - 2 * t);
+};
+
+/** Height where the hair ends at angle θ: the hairline in front, `length` at the sides and back. */
+export function wigEnd(shape: WigShape, theta: number): number {
+  const a = Math.abs(Math.atan2(Math.sin(theta), Math.cos(theta)));
+  return shape.hairline + (shape.length - shape.hairline) * smoothstep(shape.faceHalfAngle, shape.faceHalfAngle + 0.45, a);
+}
+
+/**
+ * Point on a wig at angle θ and fraction v from the crown down to the hair's end: on the (scaled) skull above its
+ * widest line, then falling straight down, flaring a little; curls push it outward.
+ */
+export function wigPoint(shape: WigShape, theta: number, v: number, out = new Vector3()): Vector3 {
+  const { center: c, radii: r } = SKULL;
+  const [sx, sy, sz] = shape.scale;
+  const top = c.y + r.y * sy;
+  const y = top - v * (top - wigEnd(shape, theta));
+  let k: number;
+  if (y >= c.y) {
+    k = Math.sin(Math.acos(Math.min((y - c.y) / (r.y * sy), 1)));
+  } else {
+    k = 1 + shape.flare * (c.y - y);
+  }
+  if (shape.curls) {
+    const n = Math.sin(theta * 23 + v * 31) * Math.sin(theta * 17 - v * 19);
+    k += (shape.curls * (0.5 + 0.5 * n)) / r.x;
+  }
+  return out.set(c.x + r.x * sx * Math.sin(theta) * k, y, c.z + r.z * sz * Math.cos(theta) * k);
+}
+
+/** The wig surface (u around the head, v from the crown down to the hair's end). */
+export function wigGeometry(shape: WigShape, segmentsU = 96, segmentsV = 48): BufferGeometry {
+  return gridGeometry((u, v, out) => wigPoint(shape, u * Math.PI * 2, v, out), segmentsU, segmentsV, {
+    closedU: true,
+    inside: SKULL.center,
+  });
 }

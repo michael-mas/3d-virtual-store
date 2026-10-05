@@ -3,7 +3,7 @@
  * customization schema from which the customizer UI, validation and cart pricing are all derived.
  */
 
-export type ProductCategory = "eyewear" | "lips" | "face-paint" | "watch" | "ring" | "hair-color" | "headwear";
+export type ProductCategory = "eyewear" | "lips" | "face-paint" | "watch" | "ring" | "hair-color" | "headwear" | "wig";
 
 /**
  * How a product follows the face in TRY_ON:
@@ -84,7 +84,7 @@ export type TryOnCalibration = {
 };
 
 /** Which scene component renders the product (store display, CUSTOMIZE preview and try-on). */
-export type ProductRenderer = "glasses" | "lipstick" | "facePaint" | "watch" | "ring" | "hairDye" | "headwear";
+export type ProductRenderer = "glasses" | "lipstick" | "facePaint" | "watch" | "ring" | "hairDye" | "headwear" | "wig";
 
 export type Product = {
   id: string;

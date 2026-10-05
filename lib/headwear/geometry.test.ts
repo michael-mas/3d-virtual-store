@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { Vector3 } from "three";
 import { describe, expect, it } from "vitest";
-import { domeGeometry, domePoint, edgePhi, edgeY, SKULL, type Dome } from "./geometry";
+import { domeGeometry, domePoint, edgePhi, edgeY, SKULL, wigEnd, wigPoint, type Dome, type WigShape } from "./geometry";
 
 const dome: Dome = { scale: [1.04, 1.03, 1.04], edgeFront: 0.066, edgeBack: 0.03 };
 
@@ -32,5 +32,16 @@ describe("headwear geometry", () => {
     const i = 6 * 24 + 3; // a vertex mid-way down
     const radial = new Vector3().fromBufferAttribute(p, i).sub(SKULL.center);
     expect(new Vector3().fromBufferAttribute(n, i).dot(radial)).toBeGreaterThan(0);
+  });
+
+  it("leaves the face open: a wig ends at the hairline in front and lower at the sides and back", () => {
+    const bob: WigShape = { scale: [1.12, 1.1, 1.08], hairline: 0.052, length: -0.045, faceHalfAngle: 0.55, flare: 0.5 };
+    expect(wigEnd(bob, 0)).toBeCloseTo(0.052, 6);
+    expect(wigEnd(bob, Math.PI / 2)).toBeCloseTo(-0.045, 6);
+    expect(wigEnd(bob, Math.PI)).toBeCloseTo(-0.045, 6);
+    // Below the head's widest line the hair falls straight down (and flares), outside the skull.
+    const side = wigPoint(bob, Math.PI / 2, 1);
+    expect(side.y).toBeCloseTo(-0.045, 6);
+    expect(side.x).toBeGreaterThan(SKULL.radii.x * 1.12);
   });
 });

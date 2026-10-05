@@ -4,7 +4,6 @@ import { useEffect, useMemo } from "react";
 import { abs, float, mix, sin, smoothstep, uniform, uv } from "three/tsl";
 import {
   Color,
-  CylinderGeometry,
   DoubleSide,
   Group,
   IcosahedronGeometry,
@@ -16,7 +15,7 @@ import {
 } from "three/webgpu";
 import { wornProductIds } from "@/lib/cart/look";
 import { setProductModel } from "@/lib/cart/registry";
-import { domeGeometry, domePoint, edgePhi, edgeY, gridGeometry, SKULL, type Dome } from "@/lib/headwear/geometry";
+import { domeGeometry, domePoint, edgePhi, edgeY, gridGeometry, headBlockGeometries, SKULL, type Dome } from "@/lib/headwear/geometry";
 import { isTryOnMode } from "@/lib/modes";
 import { HEADWEAR_STYLES, readHeadwearConfig, type HeadwearStyle } from "@/lib/products/headwear";
 import { GLASSES_ANCHOR } from "@/lib/tryon/constants";
@@ -155,11 +154,8 @@ export default function Headwear({ productId }: { productId: string }) {
 
     // Pedestal display: a hat block (the skull) on a short stand.
     const block = new Group();
-    const head = mesh(new SphereGeometry(1, 48, 32).scale(SKULL.radii.x, SKULL.radii.y, SKULL.radii.z), blockMat);
-    head.position.copy(SKULL.center);
-    const stand = mesh(new CylinderGeometry(0.018, 0.03, 0.07, 24), blockMat);
-    stand.position.set(SKULL.center.x, SKULL.center.y - SKULL.radii.y - 0.025, SKULL.center.z);
-    block.add(head, stand);
+    const blockGeos = headBlockGeometries();
+    block.add(mesh(blockGeos.head, blockMat), mesh(blockGeos.stand, blockMat));
 
     const measure = new Group();
     measure.add(hat.clone(), block.clone());
