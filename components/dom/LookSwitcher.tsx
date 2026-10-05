@@ -29,7 +29,7 @@ export default function LookSwitcher() {
       role="group"
       aria-label="Look"
       data-testid="look-switcher"
-      className="fixed bottom-20 left-1/2 z-40 w-[min(92vw,26rem)] -translate-x-1/2 panel space-y-3 rounded-sm p-4 md:top-1/2 md:bottom-auto md:left-6 md:w-64 md:translate-x-0 md:-translate-y-1/2"
+      className="fixed bottom-[7.5rem] left-1/2 z-40 max-h-[40dvh] overflow-y-auto w-[min(92vw,26rem)] -translate-x-1/2 panel space-y-3 rounded-sm p-4 md:top-1/2 md:bottom-auto md:left-6 md:w-64 md:translate-x-0 md:-translate-y-1/2"
     >
       {itemsByZone(items).map((row) => (
         <div key={row.id} role="group" aria-label={row.label}>

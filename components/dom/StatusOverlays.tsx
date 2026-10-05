@@ -7,6 +7,7 @@ import { useAppStore } from "@/store/useAppStore";
 const LOW_FPS = 20;
 const LOW_FPS_WINDOWS = 4;
 const DISMISS_KEY = "perf-warning-dismissed";
+const AUTO_HIDE_MS = 8000;
 
 /** Fatal renderer problem: replaces a blank canvas with an explanation and a reload button. */
 function RendererError() {
@@ -55,6 +56,16 @@ function PerformanceWarning() {
     });
     return () => cancelAnimationFrame(id);
   }, [stats]);
+
+  // It says what it has to say, then gets out of the way (it would otherwise sit over the face in try-on).
+  useEffect(() => {
+    if (!show) return;
+    const t = setTimeout(() => {
+      dismissedRef.current = true;
+      setShow(false);
+    }, AUTO_HIDE_MS);
+    return () => clearTimeout(t);
+  }, [show]);
 
   if (!show) return null;
   const dismiss = () => {
