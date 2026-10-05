@@ -3,7 +3,7 @@
  * customization schema from which the customizer UI, validation and cart pricing are all derived.
  */
 
-export type ProductCategory = "eyewear" | "lips" | "face-paint" | "watch" | "ring" | "hair-color";
+export type ProductCategory = "eyewear" | "lips" | "face-paint" | "watch" | "ring" | "hair-color" | "headwear";
 
 /**
  * How a product follows the face in TRY_ON:
@@ -23,6 +23,7 @@ export const TRY_ON_ZONES = [
   { id: "hair", label: "Hair", tracker: "hair" },
   { id: "skin", label: "Face", tracker: "face" },
   { id: "lips", label: "Lips", tracker: "face" },
+  { id: "head", label: "Head", tracker: "face" },
   { id: "eyewear", label: "Eyewear", tracker: "face" },
   { id: "wrist", label: "Wrist", tracker: "hand" },
   { id: "finger", label: "Finger", tracker: "hand" },
@@ -83,7 +84,7 @@ export type TryOnCalibration = {
 };
 
 /** Which scene component renders the product (store display, CUSTOMIZE preview and try-on). */
-export type ProductRenderer = "glasses" | "lipstick" | "facePaint" | "watch" | "ring" | "hairDye";
+export type ProductRenderer = "glasses" | "lipstick" | "facePaint" | "watch" | "ring" | "hairDye" | "headwear";
 
 export type Product = {
   id: string;

@@ -12,7 +12,7 @@ fallback) for rendering and MediaPipe for face tracking.
 
 ## Features
 
-- **Explore.** A low-poly showroom with baked lighting and one pedestal per product (three glasses, a lipstick, a face paint, a watch, a ring, a hair color).
+- **Explore.** A low-poly showroom with baked lighting and one pedestal per product (three glasses, a lipstick, a face paint, a watch, a ring, a hair color, headwear).
   - Walk with WASD, ZQSD or the arrow keys (physical key positions, Shift to run), or with the mouse wheel.
   - Drag to look around. Click or tap the floor to walk there.
   - Near a pedestal, a "Press E / Click" prompt (or "Tap to view" on touch screens) opens the product.
@@ -27,6 +27,7 @@ fallback) for rendering and MediaPipe for face tracking.
     current time.
   - Ring: metal, stone (diamond, ruby, emerald, sapphire or none) and the finger it is worn on.
   - Hair color: color (presets plus any custom color), finish (natural, vivid, pastel) and intensity.
+  - Headwear: style (cap, beanie, bucket hat), color and accent color, shown on a hat block.
   - The price updates live. The whole panel is generated from the product's schema.
 - **Try on.**
   - Real-time face tracking from the webcam. Glasses are anchored to the head pose; a depth-only head occluder
@@ -39,6 +40,8 @@ fallback) for rendering and MediaPipe for face tracking.
   - Watches and rings follow the hand (MediaPipe HandLandmarker, loaded only when a hand product is worn): the
     watch sits on the wrist with its dial on the back of the wrist, the ring on the base of the chosen finger, and
     depth-only wrist and finger occluders hide what passes behind them.
+  - Headwear follows the head pose like glasses, cut along a tilted line on a skull fitted to MediaPipe's
+    canonical face so it clears the forehead.
   - Hair color recolors the hair MediaPipe's hair segmenter finds in the frame, keeping its strands and shading;
     "vivid" lifts dark hair as if bleached first.
   - Selfie mirroring and pose smoothing.
@@ -48,8 +51,8 @@ fallback) for rendering and MediaPipe for face tracking.
   the result as a PNG.
 - **Cart.**
   - A drawer with a 256 px rendered thumbnail of each configured item, per-option price lines and a total.
-  - "Try on" from any cart item, or **the whole look**: every zone at once (hair color, face paint, lipstick, glasses,
-    watch, ring), one item
+  - "Try on" from any cart item, or **the whole look**: every zone at once (hair color, face paint, lipstick, hat,
+    glasses, watch, ring), one item
     per zone, with a switcher in try-on to swap items within a zone or leave it bare. Zones come from the registry
     (`TRY_ON_ZONES`), so a new zone (hats, lenses…) needs no UI change.
   - Instanced particles fly to the cart icon when an item is added.
@@ -77,6 +80,7 @@ components/canvas/      Everything inside the single R3F <Canvas> (client-only, 
   Lipstick / FacePaint    Surface product renderers: packaging on the pedestal, mannequin in CUSTOMIZE
   Watch / Ring / HandAnchor                         Landmark products: on display, then pinned to the tracked hand
   HairDye                 Segmentation product: dye bottle on display, drives the hair recolor in try-on
+  Headwear                Rigid product: cap / beanie / bucket hat on a hat block, worn on the head pose
   MannequinPreview        Mannequin head wearing a surface product (CUSTOMIZE preview, cart thumbnail)
   FaceAnchor / HeadOccluder                         TRY_ON rigid layer: pose-driven group + depth-only occluder
   SurfaceLayer            TRY_ON surface layer: live face mesh, orthographic camera, render target
@@ -103,7 +107,7 @@ mode. Modes change what the one persistent `<Canvas>` draws; the Canvas is never
 - id, name, category and base price;
 - an attachment type: `rigid` (driven by the facial transformation matrix), `surface` (on the deforming face
   mesh), `landmark` (pinned to hand landmarks) or `segmentation` (a recolor of a segmented region of the video);
-- a try-on zone (hair, skin, lips, eyewear, wrist, finger), which also picks the tracker (face, hand or hair);
+- a try-on zone (hair, skin, lips, head, eyewear, wrist, finger), which also picks the tracker (face, hand or hair);
 - a customization schema: `choice` options with price deltas, `color` options with presets and optional custom
   colors, and `range` options (sliders, e.g. opacity);
 - try-on calibration;
@@ -118,7 +122,7 @@ How a product follows the body in TRY_ON is set by its `attachment` in the regis
 
 | Type | Products | How it works |
 | --- | --- | --- |
-| `rigid` | Glasses | A 3D model in the main scene, driven by FaceLandmarker's facial transformation matrix (smoothed with One Euro filters) under a camera matching MediaPipe's (63° vertical FOV). A depth-only head occluder hides what is behind the head. |
+| `rigid` | Glasses, headwear | A 3D model in the main scene, driven by FaceLandmarker's facial transformation matrix (smoothed with One Euro filters) under a camera matching MediaPipe's (63° vertical FOV). A depth-only head occluder hides what is behind the head. | Hats are domes cut along a tilted line on a typical skull ellipsoid fitted to enclose the canonical forehead (`lib/headwear/geometry.ts`, unit-tested against the canonical mesh), so the face part of the occluder never hides their front.
 | `surface` | Lipstick, face paint | A face mesh rebuilt in place from the 468 landmarks on every detection, with MediaPipe's canonical tessellation and UVs (`scripts/data/geometry_pipeline_metadata_landmarks.pbtxt`). It is drawn by an orthographic camera covering the video frame into a render target, which the scene background composites over the video and under the rigid layer, so glasses sit on top of makeup. Products are masks in canonical-UV space (lips from the official lip contours; face paint designs authored in centimeters on the canonical face) with TSL materials that reuse the video's luminance. |
 | `landmark` | Watch, ring | Pinned to HandLandmarker's 21 hand landmarks (`lib/tryon/handPose.ts`). The hand's shape comes from the normalized image landmarks (with their relative depth), which stay consistent where the world landmarks can degenerate; a typical palm size gives the metric scale and therefore the distance, and each point is back-projected under the same camera as the face. The palm side comes from MediaPipe's handedness label, checked on MediaPipe's own test images (palm or back toward the camera, and a mirrored pair, kept as a test fixture). The watch is placed up the forearm from the wrist with its dial out of the back of the hand; the ring on the base segment of the chosen finger. Points are smoothed with One Euro filters, and depth-only wrist and finger occluders hide the back of the strap and band. |
 | `segmentation` | Hair color | MediaPipe's hair segmenter (ImageSegmenter, 780 KB) gives a per-pixel hair confidence on each detection, resampled into a fixed 480×270 mask texture refilled in place. The scene background recolors the video through it before the surface layer: the dye's hue carried by the hair's own lightness (optionally lifted, for dark hair, and softened, for pastel), so strands and shading survive and the soft mask edges blend into the natural color. |

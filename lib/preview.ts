@@ -14,10 +14,13 @@ export const MANNEQUIN_FACE_Y = -MANNEQUIN_NECK_BOTTOM_CM * 0.01 * MANNEQUIN_SCA
 
 /**
  * Where the CUSTOMIZE camera should look, relative to the product origin, and how much farther it should stand:
- * surface products are previewed on the mannequin (a head, higher and larger than a pair of glasses).
+ * surface products are previewed on the mannequin and hats on a hat block (a head, higher and larger than a pair of
+ * glasses).
  */
 export function previewFraming(productId: string): { liftY: number; distanceScale: number } {
-  return getProduct(productId)?.attachment === "surface"
-    ? { liftY: MANNEQUIN_FACE_Y, distanceScale: 1.35 }
-    : { liftY: 0, distanceScale: 1 };
+  const product = getProduct(productId);
+  if (product?.attachment === "surface") return { liftY: MANNEQUIN_FACE_Y, distanceScale: 1.35 };
+  // Hats are shown on a head-sized hat block.
+  if (product?.zone === "head") return { liftY: 0.13, distanceScale: 1.7 };
+  return { liftY: 0, distanceScale: 1 };
 }

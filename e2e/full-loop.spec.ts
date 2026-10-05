@@ -11,6 +11,7 @@ const PRODUCTS: [id: string, spot: [number, number], hint: string][] = [
   ["glow-paint", [3.4, 0.7], "Face the camera"], // surface (face paint)
   ["chrono", [-1.1, -2.3], "Show the back of your hand"], // landmark (watch, hand tracking)
   ["prism-dye", [-3.4, -1.9], "Face the camera"], // segmentation (hair color, hair segmenter)
+  ["topper", [3.4, -1.9], "Face the camera"], // rigid (headwear on the head pose)
 ];
 
 test("full loop for every attachment type without reloading the Canvas", async ({ page }) => {
@@ -45,16 +46,16 @@ test("full loop for every attachment type without reloading the Canvas", async (
   await page.getByRole("button", { name: /^Cart,/ }).click();
   await page.getByRole("button", { name: /Try on the whole look/ }).click();
   const look = page.getByTestId("look-switcher");
-  await expect(look.getByRole("group")).toHaveCount(5);
+  await expect(look.getByRole("group")).toHaveCount(6);
   await expect
     .poll(async () => Object.keys((await state(page)).look ?? {}).sort())
-    .toEqual(["eyewear", "hair", "lips", "skin", "wrist"]);
+    .toEqual(["eyewear", "hair", "head", "lips", "skin", "wrist"]);
   // Face and hand products together: both trackers run, and the hint asks for both.
   await expect(page.getByTestId("tryon-status")).toHaveText("Face the camera and show your hand", { timeout: 180_000 });
   await look.getByRole("button", { name: "No lips" }).click();
   await expect
     .poll(async () => Object.keys((await state(page)).look ?? {}).sort())
-    .toEqual(["eyewear", "hair", "skin", "wrist"]);
+    .toEqual(["eyewear", "hair", "head", "skin", "wrist"]);
   await page.getByRole("button", { name: "Exit", exact: true }).click();
   await expect.poll(async () => (await state(page)).look).toBeNull();
 
