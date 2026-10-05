@@ -24,7 +24,9 @@ export async function denyCamera(page: Page) {
 
 export async function openApp(page: Page) {
   await page.goto("/?debug");
-  await page.getByTestId("loading-screen").waitFor({ state: "detached", timeout: 120_000 });
+  // The welcome screen appears once the first frame is rendered; entering lifts it.
+  await page.getByRole("button", { name: "Enter the Maison" }).click({ timeout: 120_000 });
+  await page.getByTestId("loading-screen").waitFor({ state: "detached" });
 }
 
 /** Teleports next to a pedestal and opens the product with the E key. */

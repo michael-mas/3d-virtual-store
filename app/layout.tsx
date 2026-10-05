@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { preload } from "react-dom";
 import SceneCanvas from "@/components/canvas/SceneCanvas";
+import AmbientToggle from "@/components/dom/AmbientToggle";
 import BackendBadge from "@/components/dom/BackendBadge";
 import CalibrationPanel from "@/components/dom/CalibrationPanel";
 import CartButton from "@/components/dom/CartButton";
@@ -76,6 +77,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <TryOnPanel />
         <PhotoModal />
         <CalibrationPanel />
+        <AmbientToggle />
         <CartButton />
         <CartDrawer />
         <BackendBadge />

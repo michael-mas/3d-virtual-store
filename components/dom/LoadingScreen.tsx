@@ -1,49 +1,81 @@
 "use client";
 
 import { useProgress } from "@react-three/drei";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppStore } from "@/store/useAppStore";
 
 /**
- * Initial loading screen: progress of the scene assets (GLBs via three's DefaultLoadingManager, through drei's
- * useProgress), until the first frame is rendered. Fades out, then unmounts.
+ * The house's threshold: loading progress of the scene assets (GLBs via three's DefaultLoadingManager, through
+ * drei's useProgress) until the first frame is rendered, then a welcome with the salon dimly visible behind it.
+ * "Enter the Maison" lifts the veil (fade), then the screen unmounts. A renderer error skips the welcome.
  */
 export default function LoadingScreen() {
   const { progress, active, item } = useProgress();
-  const ready = useAppStore((s) => s.sceneReady || s.rendererError !== null);
+  const ready = useAppStore((s) => s.sceneReady);
+  const failed = useAppStore((s) => s.rendererError !== null);
+  const [entered, setEntered] = useState(false);
   const [gone, setGone] = useState(false);
+  const enter = useRef<HTMLButtonElement>(null);
+
+  const leaving = entered || failed;
+  useEffect(() => {
+    if (!leaving) return;
+    const t = setTimeout(() => setGone(true), 900);
+    return () => clearTimeout(t);
+  }, [leaving]);
 
   useEffect(() => {
-    if (!ready) return;
-    const t = setTimeout(() => setGone(true), 500);
-    return () => clearTimeout(t);
+    if (ready) enter.current?.focus();
   }, [ready]);
 
   if (gone) return null;
   // Before any asset request starts, progress is 0 and inactive: show an indeterminate start.
   const pct = ready ? 100 : Math.round(progress);
-  const label = ready ? "Ready" : active ? `Loading ${item.split("/").pop() ?? "assets"}…` : "Starting renderer…";
+  const label = active ? `Loading ${item.split("/").pop() ?? "assets"}…` : "Preparing the salon…";
 
   return (
     <div
-      role="progressbar"
-      aria-label="Loading the store"
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={pct}
       data-testid="loading-screen"
-      className={`fixed inset-0 z-[80] flex flex-col items-center justify-center gap-6 bg-noir text-ivory transition-opacity duration-700 ${
-        ready ? "pointer-events-none opacity-0" : "opacity-100"
-      }`}
+      className={`fixed inset-0 z-[80] flex flex-col items-center justify-center gap-8 px-6 text-ivory transition-[opacity,backdrop-filter,background-color] duration-[900ms] ease-out ${
+        ready ? "bg-noir/70 backdrop-blur-md" : "bg-noir"
+      } ${leaving ? "pointer-events-none opacity-0" : "opacity-100"}`}
     >
-      <div className="flex flex-col items-center gap-2">
-        <p className="wordmark text-2xl sm:text-3xl">Maison Miroir</p>
-        <p className="eyebrow text-gold">Virtual boutique</p>
+      <div className="flex flex-col items-center gap-3 text-center">
+        <p className="eyebrow text-gold">Est. MMXXVI · Virtual boutique</p>
+        <p className="wordmark text-3xl sm:text-5xl">Maison Miroir</p>
+        <p
+          className={`max-w-sm font-display text-base text-ivory/70 italic transition-opacity duration-700 sm:text-lg ${
+            ready ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          Eyewear, beauty, horology and fine jewelry, to try on in the mirror of your camera.
+        </p>
       </div>
-      <div className="h-px w-56 overflow-hidden bg-ivory/15">
-        <div className="h-full bg-gold transition-[width] duration-300" style={{ width: `${Math.max(pct, 4)}%` }} />
-      </div>
-      <p className="eyebrow text-[0.6rem]">{label}</p>
+
+      {ready ? (
+        <button
+          ref={enter}
+          type="button"
+          onClick={() => setEntered(true)}
+          className="btn-line rounded-sm border-gold/60 px-8 py-3.5 text-gold-light"
+        >
+          Enter the Maison
+        </button>
+      ) : (
+        <div
+          role="progressbar"
+          aria-label="Loading the store"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={pct}
+          className="flex flex-col items-center gap-3"
+        >
+          <div className="h-px w-56 overflow-hidden bg-ivory/15">
+            <div className="h-full bg-gold transition-[width] duration-300" style={{ width: `${Math.max(pct, 4)}%` }} />
+          </div>
+          <p className="eyebrow text-[0.6rem]">{label}</p>
+        </div>
+      )}
     </div>
   );
 }

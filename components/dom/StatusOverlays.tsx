@@ -70,7 +70,7 @@ function PerformanceWarning() {
     <div
       role="status"
       data-testid="perf-warning"
-      className="fixed top-16 left-1/2 z-50 flex w-[min(92vw,28rem)] -translate-x-1/2 items-start gap-3 panel rounded-sm px-3 py-2 text-xs sm:p-3 sm:text-sm"
+      className="fixed top-32 left-1/2 z-50 flex w-[min(92vw,28rem)] sm:top-20 -translate-x-1/2 items-start gap-3 panel rounded-sm px-3 py-2 text-xs sm:p-3 sm:text-sm"
     >
       <p className="flex-1">
         Low frame rate ({lastFps?.toFixed(0)} fps): the experience may feel choppy.
