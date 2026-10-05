@@ -68,7 +68,7 @@ export default function FacePaint({ productId }: { productId: string }) {
     paint.emissiveNode = color.mul(weights.y.mul(1.6)).add(rainbow.mul(weights.z.mul(0.7)));
     paint.metalnessNode = weights.z.mul(0.6);
 
-    const ceramic = new MeshPhysicalNodeMaterial({ name: "face-paint-jar", color: "#f4f1ec", roughness: 0.3, clearcoat: 0.6 });
+    const ceramic = new MeshPhysicalNodeMaterial({ name: "face-paint-jar", color: "#141210", roughness: 0.3, clearcoat: 1 });
     const jarGeo = jarGeometry();
     const paintGeo = new CylinderGeometry(JAR_RADIUS - WALL, JAR_RADIUS - WALL, 0.001, 48);
     const lidGeo = new CylinderGeometry(JAR_RADIUS + 0.001, JAR_RADIUS + 0.001, 0.012, 48);

@@ -11,7 +11,7 @@ import { isTryOnMode } from "@/lib/modes";
 import { setCaptureRenderer } from "@/lib/tryon/capture";
 import { useAppStore } from "@/store/useAppStore";
 
-const BLOOM_STRENGTH = 0.35;
+const BLOOM_STRENGTH = 0.3;
 
 /**
  * TSL post-processing: a soft bloom on the salon's lights and brass (off in try-on, where the background is the
@@ -36,7 +36,7 @@ export default function PostFx() {
     const behind = smoothstep(focus.add(0.02), focus.add(0.08), distance);
     const vignette = smoothstep(0.35, 0.8, screenUV.sub(0.5).length().mul(1.3));
     const amount = dim.mul(max(behind.mul(0.72), vignette.mul(0.55)));
-    const glow = bloom(color, BLOOM_STRENGTH, 0.5, 0.75);
+    const glow = bloom(color, BLOOM_STRENGTH, 0.5, 1);
     const lit = color.rgb.add(glow.rgb);
     const pipeline = new RenderPipeline(gl, vec4(lit.mul(oneMinus(amount)), color.a));
     return { pipeline, scenePass, dim, focus, glow };

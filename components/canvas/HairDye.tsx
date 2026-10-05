@@ -68,9 +68,9 @@ export default function HairDye({ productId }: { productId: string }) {
   const config = readHairDyeConfig(useAppStore((s) => s.configs[productId]));
 
   const parts = useMemo(() => {
-    const bottleMat = new MeshPhysicalNodeMaterial({ name: "dye-bottle", color: "#f4f1ec", roughness: 0.35, clearcoat: 0.6 });
+    const bottleMat = new MeshPhysicalNodeMaterial({ name: "dye-bottle", color: "#141210", roughness: 0.3, clearcoat: 1 });
     const labelMat = new MeshPhysicalNodeMaterial({ name: "dye-label", roughness: 0.5 });
-    const capMat = new MeshPhysicalNodeMaterial({ name: "dye-cap", color: "#1c1917", roughness: 0.4 });
+    const capMat = new MeshPhysicalNodeMaterial({ name: "dye-cap", color: "#c8a96a", roughness: 0.25, metalness: 1 });
     const swatchMat = new MeshPhysicalNodeMaterial({ name: "dye-swatch", roughness: 0.6, sheen: 1 });
     const geometries: BufferGeometry[] = [bottleGeometry(), new CylinderGeometry(0.0205, 0.0205, 0.03, 40, 1, true), new ConeGeometry(0.0055, 0.016, 20)];
     const [bottleGeo, labelGeo, nozzleGeo] = geometries;

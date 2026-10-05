@@ -96,7 +96,7 @@ export default function Watch({ productId }: { productId: string }) {
     const inkMat = new MeshPhysicalNodeMaterial({ name: "watch-ink", metalness: 0.7, roughness: 0.3 });
     const secondMat = new MeshPhysicalNodeMaterial({ name: "watch-second", color: "#d62828", roughness: 0.4 });
     const strapMat = new MeshPhysicalNodeMaterial({ name: "watch-strap", roughness: 0.7 });
-    const cushionMat = new MeshPhysicalNodeMaterial({ name: "watch-cushion", color: "#efe6d8", roughness: 0.95, sheen: 1 });
+    const cushionMat = new MeshPhysicalNodeMaterial({ name: "watch-cushion", color: "#1b1815", roughness: 0.95, sheen: 1, sheenColor: "#6b5a44" });
     const occluderMat = depthOnlyMaterial("wrist-occluder");
 
     const geometries: BufferGeometry[] = [];

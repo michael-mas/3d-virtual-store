@@ -127,7 +127,7 @@ export default function Headwear({ productId }: { productId: string }) {
     const ribs = smoothstep(0.2, 0.8, abs(sin(uv().x.mul(Math.PI * 110))));
     knitMat.colorNode = color.mul(mix(float(0.78), float(1), ribs));
     const accentMat = new MeshPhysicalNodeMaterial({ name: "hat-accent", roughness: 0.8, side: DoubleSide });
-    const blockMat = new MeshPhysicalNodeMaterial({ name: "hat-block", color: "#d8c3a5", roughness: 0.6 });
+    const blockMat = new MeshPhysicalNodeMaterial({ name: "hat-block", color: "#4a3324", roughness: 0.45, clearcoat: 0.5 });
 
     const geometries: BufferGeometry[] = [];
     const keep = <T extends BufferGeometry>(g: T) => (geometries.push(g), g);

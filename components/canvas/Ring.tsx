@@ -80,7 +80,7 @@ export default function Ring({ productId }: { productId: string }) {
     const facing = abs(dot(normalView, positionViewDirection));
     const flash = pow(abs(sin(dot(normalView, vec3(12.9898, 78.233, 37.719)).mul(9).add(time.mul(2.5)))), float(24));
     stoneMat.emissiveNode = stoneColor.mul(facing.mul(0.25)).add(vec3(flash.mul(0.9)));
-    const boxMat = new MeshPhysicalNodeMaterial({ name: "ring-box", color: "#2b1d3a", roughness: 0.9, sheen: 1 });
+    const boxMat = new MeshPhysicalNodeMaterial({ name: "ring-box", color: "#3a0f16", roughness: 0.9, sheen: 1 });
     const occluderMat = depthOnlyMaterial("finger-occluder");
 
     const geometries: BufferGeometry[] = [];
