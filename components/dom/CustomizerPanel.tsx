@@ -149,6 +149,9 @@ export default function CustomizerPanel() {
           </h2>
         </div>
         <p className="font-display text-base text-ivory/80 italic md:mt-2">{formatPrice(priceOf(productId, config))}</p>
+        {product.tagline && (
+          <p className="mt-2 hidden text-xs leading-relaxed tracking-wide text-taupe md:block">{product.tagline}</p>
+        )}
       </header>
       {product.options.map((o) => (
         <OptionControl key={o.id} option={o} value={config[o.id]} onChange={(v) => setOption(o.id, v)} />

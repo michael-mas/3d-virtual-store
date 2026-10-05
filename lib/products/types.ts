@@ -100,6 +100,8 @@ export type ProductRenderer = "glasses" | "lipstick" | "facePaint" | "watch" | "
 export type Product = {
   id: string;
   name: string;
+  /** One line of house copy under the name (customizer). */
+  tagline?: string;
   category: ProductCategory;
   attachment: AttachmentType;
   /** Where it is worn; one product per zone in a look. */

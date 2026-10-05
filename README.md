@@ -90,7 +90,7 @@ Maison Miroir is a fictional house, designed like a luxury boutique at night:
   soft pads over a sine bass with sparse bells through a generated hall reverb (`lib/ambient.ts`). No audio file,
   nothing to download or license.
 - **Products** carry house names: L'Aviateur, Atelier 03, Cristal, Rouge Velours, Nuit Lumière, Chrono Nuit,
-  Solitaire, Prisme, Le Chapeau.
+  Solitaire, Prisme, Le Chapeau, each with a line of house copy (the registry's `tagline`).
 - **Interface.** Near-black lacquer, ivory text and brushed-gold accents (Tailwind theme tokens in
   `app/globals.css`), Bodoni Moda for the wordmark, product names and prices, Jost for the interface. Both fonts are
   self-hosted from `app/fonts/` (SIL Open Font License), so the strict CSP and the zero-external-requests rule hold.
