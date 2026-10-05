@@ -22,5 +22,7 @@ export function previewFraming(productId: string): { liftY: number; distanceScal
   if (product?.attachment === "surface") return { liftY: MANNEQUIN_FACE_Y, distanceScale: 1.35 };
   // Hats are shown on a head-sized hat block.
   if (product?.zone === "head") return { liftY: 0.13, distanceScale: 1.7 };
+  // Rings are small: closer, aimed at the ring standing in its box.
+  if (product?.zone === "finger") return { liftY: 0.025, distanceScale: 0.6 };
   return { liftY: 0, distanceScale: 1 };
 }

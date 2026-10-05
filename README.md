@@ -8,7 +8,7 @@ fallback) for rendering and MediaPipe for face tracking.
 
 **Live demo: [3d-virtual-store-two.vercel.app](https://3d-virtual-store-two.vercel.app)** (desktop Chrome or Edge for WebGPU; any WebGL 2 browser works, including phones)
 
-![Demo: walking the showroom, customizing the glasses, then lipstick and face paint on the mannequin head](docs/demo.gif)
+![Demo: walking the showroom, then customizing glasses, a wig, headwear, a watch, a ring and face paint (on the mannequin head)](docs/demo.gif)
 
 ## Features
 
