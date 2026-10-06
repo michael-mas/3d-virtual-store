@@ -24,6 +24,8 @@ const FLOOR_REFLECTION = 0.3;
  */
 export default function Showroom() {
   const hidden = useAppStore((s) => isTryOnMode(s.mode));
+  // The floor reflection is an effect too: off with them (low-end fallback, render failures).
+  const postFx = useAppStore((s) => s.postFx);
   const { scene } = useGLTF(SHOWROOM_MODEL_PATH, DRACO_DECODER_PATH);
 
   const room = useMemo(() => {
@@ -64,7 +66,7 @@ export default function Showroom() {
   return (
     <group visible={!hidden}>
       <primitive object={room} />
-      <primitive object={mirror} />
+      {postFx && <primitive object={mirror} />}
       <mesh visible={false} rotation={[-Math.PI / 2, 0, 0]} position={[0, FLOOR_Y, 0]} onClick={onGroundClick}>
         <planeGeometry args={[ROOM.halfWidth * 2, ROOM.halfDepth * 2]} />
       </mesh>

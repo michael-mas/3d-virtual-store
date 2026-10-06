@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { preload } from "react-dom";
+import FrameErrorWatchdog from "@/components/canvas/FrameErrorWatchdog";
 import SceneCanvas from "@/components/canvas/SceneCanvas";
 import BackendBadge from "@/components/dom/BackendBadge";
 import CalibrationPanel from "@/components/dom/CalibrationPanel";
@@ -72,6 +73,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD).replace(/</g, "\\u003c") }}
         />
         <SceneCanvas />
+        <FrameErrorWatchdog />
         <div className="pointer-events-none relative h-full">{children}</div>
         <ConciergePanel />
         <CustomizerPanel />

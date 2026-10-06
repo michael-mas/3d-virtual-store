@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { bloom } from "three/addons/tsl/display/BloomNode.js";
 import { max, oneMinus, pass, screenUV, smoothstep, uniform, vec4 } from "three/tsl";
 import { ACESFilmicToneMapping, NoToneMapping, RenderPipeline, Vector3, type WebGPURenderer } from "three/webgpu";
@@ -12,6 +12,9 @@ import { setCaptureRenderer } from "@/lib/tryon/capture";
 import { useAppStore } from "@/store/useAppStore";
 
 const BLOOM_STRENGTH = 0.3;
+/** Consecutive failed frames before the effects are switched off, then before the error is shown. */
+const FAILURES_BEFORE_FALLBACK = 3;
+const FAILURES_BEFORE_ERROR = 30;
 
 /**
  * TSL post-processing: a soft bloom on the salon's lights and brass (off in try-on, where the background is the
@@ -69,6 +72,25 @@ export default function PostFx() {
 
   const productPos = useMemo(() => new Vector3(), []);
 
+  /**
+   * A frame that throws would otherwise leave the last image on screen while the app keeps running (the view
+   * "freezes"). The error is logged once; after a few failed frames the effects (post-processing, floor
+   * reflection) are switched off and rendering retries plainly; if that fails too, the error is shown.
+   */
+  const failures = useRef(0);
+  const onRenderFailure = (error: unknown) => {
+    failures.current++;
+    if (failures.current === 1) console.error("[render] frame failed", error);
+    const { postFx, setPostFx, setRendererError } = useAppStore.getState();
+    if (failures.current === FAILURES_BEFORE_FALLBACK && postFx) {
+      console.warn("[render] switching effects off after repeated failures");
+      setPostFx(false);
+      failures.current = 0;
+    } else if (failures.current >= FAILURES_BEFORE_ERROR) {
+      setRendererError(`The 3D view stopped rendering (${error instanceof Error ? error.message : String(error)}). Reload to continue.`);
+    }
+  };
+
   useFrame((state, delta) => {
     const { mode, activeProductId } = useAppStore.getState();
     const target = mode === "CUSTOMIZE" ? 1 : 0;
@@ -78,7 +100,12 @@ export default function PostFx() {
     productPos.set(...productPosition(activeProductId));
     productPos.y += previewFraming(activeProductId).liftY;
     focus.value = state.camera.position.distanceTo(productPos);
-    renderFrame();
+    try {
+      renderFrame();
+      failures.current = 0;
+    } catch (error) {
+      onRenderFailure(error);
+    }
   }, 1);
 
   return null;

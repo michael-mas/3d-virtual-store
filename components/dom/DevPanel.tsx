@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { moveAxes } from "@/lib/explore/input";
+import { player } from "@/lib/explore/player";
 import { isDebugEnabled } from "@/lib/debug";
 import { MODE_EVENTS, nextMode } from "@/lib/modes";
 import { useAppStore } from "@/store/useAppStore";
@@ -21,6 +23,32 @@ export default function DevPanel() {
   // Debug-only handle for driving the app from the console / e2e checks.
   useEffect(() => {
     if (visible) Object.assign(window, { __store: useAppStore });
+  }, [visible]);
+
+  // Live movement diagnostics, and the last uncaught error (a throw in the frame loop freezes the view).
+  const [live, setLive] = useState("");
+  const [lastError, setLastError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!visible) return;
+    const f = (v: number) => v.toFixed(2);
+    const id = window.setInterval(() => {
+      const [ax, az] = moveAxes();
+      const cam = (window as unknown as { __cameraControls?: { distance: number } }).__cameraControls;
+      setLive(
+        `pos ${f(player.position[0])},${f(player.position[1])} vel ${f(Math.hypot(...player.velocity))}\n` +
+          `keys ${ax},${az} target ${player.target ? player.target.map(f).join(",") : "–"} path ${player.path.length}\n` +
+          `camera ${cam ? f(cam.distance) : "–"} m · ${useAppStore.getState().backend ?? "–"}`,
+      );
+    }, 250);
+    const onError = (e: ErrorEvent | PromiseRejectionEvent) =>
+      setLastError(String("message" in e ? e.message : (e.reason as Error)?.message ?? e.reason));
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onError);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onError);
+    };
   }, [visible]);
 
   if (!visible) return null;
@@ -73,6 +101,10 @@ export default function DevPanel() {
         </span>
         <span data-testid="programs">programs {stats?.programs ?? "–"}</span>
       </div>
+      <pre data-testid="player-debug" className="mt-2 whitespace-pre-wrap text-[10px] leading-snug text-neutral-300">
+        {live}
+      </pre>
+      {lastError && <p className="mt-1 text-[10px] break-words text-red-400">error: {lastError}</p>}
     </div>
   );
 }
