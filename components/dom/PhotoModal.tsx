@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useDialogFocus } from "@/hooks/useDialogFocus";
 import { capturePhoto } from "@/lib/tryon/capture";
 import { isTryOnMirrored } from "@/lib/tryon/constants";
+import { useT } from "@/hooks/useT";
 import { useAppStore } from "@/store/useAppStore";
 
 /** PHOTO mode: captures once on entry, then shows the result with Download (PNG) and Return. */
@@ -12,6 +13,7 @@ export default function PhotoModal() {
   const photoUrl = useAppStore((s) => s.photoUrl);
   const transition = useAppStore((s) => s.transition);
   const [error, setError] = useState<string | null>(null);
+  const t = useT();
   const returnButton = useRef<HTMLButtonElement>(null);
   const dialog = useRef<HTMLDivElement>(null);
   const close = () => {
@@ -44,7 +46,7 @@ export default function PhotoModal() {
       ref={dialog}
       role="dialog"
       aria-modal="true"
-      aria-label="Your try-on photo"
+      aria-label={t("Your try-on photo")}
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
     >
       <div className="panel flex max-h-full w-full max-w-2xl flex-col gap-4 rounded-sm p-5">
@@ -55,13 +57,13 @@ export default function PhotoModal() {
             // eslint-disable-next-line @next/next/no-img-element -- object URL preview
             <img
               src={photoUrl}
-              alt="Your try-on photo"
+              alt={t("Your try-on photo")}
               data-testid="photo"
               className="max-h-[70dvh] max-w-full object-contain"
             />
           ) : (
             <p role="status" className="eyebrow">
-              {error ?? "Capturing…"}
+              {error ?? t("Capturing…")}
             </p>
           )}
         </div>
@@ -72,7 +74,7 @@ export default function PhotoModal() {
             onClick={close}
             className="btn-line rounded-sm px-5 py-2.5"
           >
-            Return
+            {t("Return")}
           </button>
           <a
             href={photoUrl ?? undefined}
@@ -80,7 +82,7 @@ export default function PhotoModal() {
             aria-disabled={!photoUrl}
             className={`btn-gold rounded-sm px-5 py-2.5 ${photoUrl ? "" : "pointer-events-none opacity-40"}`}
           >
-            Download PNG
+            {t("Download PNG")}
           </a>
         </div>
       </div>

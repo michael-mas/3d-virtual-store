@@ -4,12 +4,14 @@ import { Html } from "@react-three/drei";
 import { useEffect } from "react";
 import { productPosition } from "@/lib/explore/layout";
 import { getProduct } from "@/lib/products";
+import { useT } from "@/hooks/useT";
 import { useAppStore } from "@/store/useAppStore";
 
 /** "Press E / Click" prompt above the pedestal the player is near (EXPLORE only). */
 export default function InteractPrompt() {
   const near = useAppStore((s) => (s.mode === "EXPLORE" ? s.nearPedestal : null));
   const interactWith = useAppStore((s) => s.interactWith);
+  const t = useT();
 
   useEffect(() => {
     if (!near) return;
@@ -35,8 +37,8 @@ export default function InteractPrompt() {
           E
         </kbd>
         <span>
-          <span className="pointer-coarse:hidden">Press E / Click · </span>
-          <span className="hidden pointer-coarse:inline">Tap to view · </span>
+          <span className="pointer-coarse:hidden">{t("Press E / Click")} · </span>
+          <span className="hidden pointer-coarse:inline">{t("Tap to view")} · </span>
           <span className="font-display text-sm tracking-[0.08em] normal-case">{getProduct(near)?.name}</span>
         </span>
       </button>

@@ -18,5 +18,9 @@ export function priceBreakdown(productId: string, config: ProductConfig): PriceB
 
 export const priceOf = (productId: string, config: ProductConfig) => priceBreakdown(productId, config).total;
 
-const formatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-export const formatPrice = (amount: number) => formatter.format(amount);
+const FORMATTERS = {
+  en: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }),
+  fr: new Intl.NumberFormat("fr-FR", { style: "currency", currency: "USD", currencyDisplay: "narrowSymbol" }),
+} as const;
+/** Prices are in US dollars; French formatting puts the symbol after ("149,00 $"). */
+export const formatPrice = (amount: number, locale: keyof typeof FORMATTERS = "en") => FORMATTERS[locale].format(amount);

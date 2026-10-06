@@ -91,6 +91,10 @@ Maison Miroir is a fictional house, designed like a luxury boutique at night:
   nothing to download or license.
 - **Products** carry house names: L'Aviateur, Atelier 03, Cristal, Rouge Velours, Nuit Lumière, Chrono Nuit,
   Solitaire, Prisme, Le Chapeau, each with a line of house copy (the registry's `tagline`).
+- **Bilingual.** English and French (EN | FR switch, top right and on the welcome screen). The browser's
+  language picks the first one; a manual choice is remembered. Messages are keyed by their English text
+  (`lib/i18n/`), and a unit test fails if any interface string, schema label, error or hint lacks its French
+  translation. Prices follow the language's format ($169.00 / 169,00 $).
 - **Interface.** Near-black lacquer, ivory text and brushed-gold accents (Tailwind theme tokens in
   `app/globals.css`), Bodoni Moda for the wordmark, product names and prices, Jost for the interface. Both fonts are
   self-hosted from `app/fonts/` (SIL Open Font License), so the strict CSP and the zero-external-requests rule hold.

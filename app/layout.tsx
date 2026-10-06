@@ -1,16 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import { preload } from "react-dom";
 import SceneCanvas from "@/components/canvas/SceneCanvas";
-import AmbientToggle from "@/components/dom/AmbientToggle";
 import BackendBadge from "@/components/dom/BackendBadge";
 import CalibrationPanel from "@/components/dom/CalibrationPanel";
-import CartButton from "@/components/dom/CartButton";
 import CartDrawer from "@/components/dom/CartDrawer";
 import CustomizerPanel from "@/components/dom/CustomizerPanel";
 import DevPanel from "@/components/dom/DevPanel";
 import LoadingScreen from "@/components/dom/LoadingScreen";
 import PhotoModal from "@/components/dom/PhotoModal";
 import StatusOverlays from "@/components/dom/StatusOverlays";
+import TopBar from "@/components/dom/TopBar";
 import TryOnPanel from "@/components/dom/TryOnPanel";
 import { DRACO_DECODER_PATH, SHOWROOM_MODEL_PATH } from "@/lib/assets";
 import { PRODUCTS } from "@/lib/products";
@@ -77,8 +76,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <TryOnPanel />
         <PhotoModal />
         <CalibrationPanel />
-        <AmbientToggle />
-        <CartButton />
+        <TopBar />
         <CartDrawer />
         <BackendBadge />
         <DevPanel />

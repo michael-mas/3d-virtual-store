@@ -1,6 +1,7 @@
 "use client";
 
 import { AUTHOR, REPO_URL } from "@/lib/site";
+import { useT } from "@/hooks/useT";
 import { useAppStore } from "@/store/useAppStore";
 
 const PILL = "chip rounded-full";
@@ -19,6 +20,7 @@ function GitHubIcon({ className }: { className: string }) {
  */
 export default function SourceLink() {
   const exploring = useAppStore((s) => s.mode === "EXPLORE");
+  const t = useT();
   if (!exploring) return null;
   return (
     <div className="pointer-events-auto fixed top-4 left-4 z-30">
@@ -26,7 +28,7 @@ export default function SourceLink() {
         href={REPO_URL}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label={`Source code on GitHub, by ${AUTHOR.name}`}
+        aria-label={t("Source code on GitHub, by {author}", { author: AUTHOR.name })}
         className={`${PILL} block p-3 sm:hidden`}
       >
         <GitHubIcon className="size-5" />
@@ -34,13 +36,13 @@ export default function SourceLink() {
       <p className={`${PILL} hidden items-center gap-2 px-4 py-2.5 text-ivory/70 sm:flex`}>
         <GitHubIcon className="size-3.5 text-gold-light" />
         <span>
-          By{" "}
+          {t("By")}{" "}
           <a href={AUTHOR.url} target="_blank" rel="noopener noreferrer" className="text-ivory hover:text-gold-light">
             {AUTHOR.name}
           </a>{" "}
           ·{" "}
           <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className="text-ivory hover:text-gold-light">
-            Source code
+            {t("Source code")}
           </a>
         </span>
       </p>

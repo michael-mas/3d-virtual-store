@@ -1,4 +1,5 @@
 import { DEMO_VIDEO_SOURCES } from "@/lib/assets";
+import type { Translate } from "@/lib/i18n";
 
 /** Everything that can stop a try-on session, each with a user-facing explanation and the ways out. */
 export type TryOnErrorKind =
@@ -14,7 +15,7 @@ export type TryOnErrorKind =
   | "photo"
   | "unknown";
 
-export type TryOnError = { kind: TryOnErrorKind; title: string; message: string };
+export type TryOnError = { kind: TryOnErrorKind; title: string; message: string; detail?: string };
 
 const COPY: Record<TryOnErrorKind, { title: string; message: string }> = {
   denied: {
@@ -63,12 +64,17 @@ const COPY: Record<TryOnErrorKind, { title: string; message: string }> = {
   },
 };
 
-export function tryOnError(kind: TryOnErrorKind, detail?: string): TryOnError {
+/** The error's user-facing copy, in the language of `t` (English by default; the panel passes its translator). */
+export function tryOnError(kind: TryOnErrorKind, detail?: string, t: Translate = (key) => key): TryOnError {
   const copy = COPY[kind];
-  let message = detail && kind === "unknown" ? `${copy.message} (${detail})` : copy.message;
-  if (canUseDemo(kind)) message += " You can also use the demo video.";
-  return { kind, title: copy.title, message };
+  let message = t(copy.message);
+  if (detail && kind === "unknown") message += ` (${detail})`;
+  if (canUseDemo(kind)) message += ` ${t("You can also use the demo video.")}`;
+  return { kind, title: t(copy.title), message, detail };
 }
+
+/** Every title and message, for the translation catalog's completeness test. */
+export const ERROR_COPY: readonly string[] = Object.values(COPY).flatMap((c) => [c.title, c.message]);
 
 /** Maps a getUserMedia failure (or its absence) to an error kind. */
 export function classifyCameraError(error: unknown): TryOnErrorKind {

@@ -2,7 +2,9 @@
 
 import { useProgress } from "@react-three/drei";
 import { useEffect, useRef, useState } from "react";
+import { useT } from "@/hooks/useT";
 import { useAppStore } from "@/store/useAppStore";
+import LanguageToggle from "./LanguageToggle";
 
 /**
  * The house's threshold: loading progress of the scene assets (GLBs via three's DefaultLoadingManager, through
@@ -16,12 +18,13 @@ export default function LoadingScreen() {
   const [entered, setEntered] = useState(false);
   const [gone, setGone] = useState(false);
   const enter = useRef<HTMLButtonElement>(null);
+  const t = useT();
 
   const leaving = entered || failed;
   useEffect(() => {
     if (!leaving) return;
-    const t = setTimeout(() => setGone(true), 900);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setGone(true), 900);
+    return () => clearTimeout(timer);
   }, [leaving]);
 
   useEffect(() => {
@@ -31,7 +34,7 @@ export default function LoadingScreen() {
   if (gone) return null;
   // Before any asset request starts, progress is 0 and inactive: show an indeterminate start.
   const pct = ready ? 100 : Math.round(progress);
-  const label = active ? `Loading ${item.split("/").pop() ?? "assets"}…` : "Preparing the salon…";
+  const label = active ? t("Loading {file}…", { file: item.split("/").pop() ?? "" }) : t("Preparing the salon…");
 
   return (
     <div
@@ -40,15 +43,18 @@ export default function LoadingScreen() {
         ready ? "bg-noir/70 backdrop-blur-md" : "bg-noir"
       } ${leaving ? "pointer-events-none opacity-0" : "opacity-100"}`}
     >
+      <div className="absolute top-4 right-4">
+        <LanguageToggle />
+      </div>
       <div className="flex flex-col items-center gap-3 text-center">
-        <p className="eyebrow text-gold">Est. MMXXVI · Virtual boutique</p>
+        <p className="eyebrow text-gold">{t("Est. MMXXVI · Virtual boutique")}</p>
         <p className="wordmark text-3xl sm:text-5xl">Maison Miroir</p>
         <p
           className={`max-w-sm font-display text-base text-ivory/70 italic transition-opacity duration-700 sm:text-lg ${
             ready ? "opacity-100" : "opacity-0"
           }`}
         >
-          Eyewear, beauty, horology and fine jewelry, to try on in the mirror of your camera.
+          {t("Eyewear, beauty, horology and fine jewelry, to try on in the mirror of your camera.")}
         </p>
       </div>
 
@@ -59,12 +65,12 @@ export default function LoadingScreen() {
           onClick={() => setEntered(true)}
           className="btn-line rounded-sm border-gold/60 px-8 py-3.5 text-gold-light"
         >
-          Enter the Maison
+          {t("Enter the Maison")}
         </button>
       ) : (
         <div
           role="progressbar"
-          aria-label="Loading the store"
+          aria-label={t("Loading the store")}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={pct}

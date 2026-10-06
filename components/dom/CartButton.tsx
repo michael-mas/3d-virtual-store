@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { setCartIcon } from "@/lib/cart/registry";
+import { useT } from "@/hooks/useT";
 import { useAppStore } from "@/store/useAppStore";
 
 /** Cart icon (particle target) with item count; bounces when the add-to-cart particles land. */
@@ -10,6 +11,7 @@ export default function CartButton() {
   const bumpId = useAppStore((s) => s.cartBumpId);
   const toggleCart = useAppStore((s) => s.toggleCart);
   const [bumping, setBumping] = useState(false);
+  const t = useT();
 
   useEffect(() => {
     if (bumpId === 0) return;
@@ -25,8 +27,8 @@ export default function CartButton() {
     <button
       type="button"
       onClick={toggleCart}
-      aria-label={`Cart, ${count} item${count === 1 ? "" : "s"}`}
-      className="chip fixed top-4 right-4 z-50 rounded-full p-3"
+      aria-label={t(count === 1 ? "Cart, {count} item" : "Cart, {count} items", { count })}
+      className="chip relative rounded-full p-3"
     >
       <span
         ref={setCartIcon}

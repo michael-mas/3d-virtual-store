@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createCartSlice } from "./slices/cart";
+import { createLocaleSlice } from "./slices/locale";
 import { createProductSlice } from "./slices/product";
 import { createTryOnSlice } from "./slices/tryOn";
 import type { AppState } from "./slices/types";
@@ -14,4 +15,5 @@ export const useAppStore = create<AppState>()((...a) => ({
   ...createProductSlice(...a),
   ...createCartSlice(...a),
   ...createTryOnSlice(...a),
+  ...createLocaleSlice(...a),
 }));

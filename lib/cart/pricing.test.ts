@@ -37,5 +37,6 @@ describe("pricing", () => {
 
   it("formats USD", () => {
     expect(formatPrice(149)).toBe("$149.00");
+    expect(formatPrice(149, "fr").replace(/\s/g, " ")).toBe("149,00 $");
   });
 });

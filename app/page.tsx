@@ -1,4 +1,5 @@
 import SourceLink from "@/components/dom/SourceLink";
+import Wordmark from "@/components/dom/Wordmark";
 import { REPO_URL, SITE_DESCRIPTION } from "@/lib/site";
 
 /**
@@ -8,10 +9,7 @@ import { REPO_URL, SITE_DESCRIPTION } from "@/lib/site";
 export default function Home() {
   return (
     <main className="flex justify-center p-5">
-      <h1 className="flex flex-col items-center gap-1 text-ivory [text-shadow:0_1px_12px_rgb(0_0_0/0.6)]">
-        <span className="wordmark text-lg sm:text-xl">Maison Miroir</span>
-        <span className="eyebrow hidden text-[0.6rem] sm:block">Virtual boutique &amp; try-on</span>
-      </h1>
+      <Wordmark />
       <div className="sr-only">
         <p>{SITE_DESCRIPTION}</p>
         <p>Maison Miroir is a fictional brand, built as a portfolio proof of concept.</p>
