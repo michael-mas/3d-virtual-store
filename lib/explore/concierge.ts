@@ -4,8 +4,8 @@ import { isFree, resolveCollisions } from "./movement";
 /** The concierge's footprint on the floor plan (m). */
 export const CONCIERGE_RADIUS = 0.3;
 /** Where it keeps itself relative to the player: ahead and to the right of the camera's view (m). */
-const AHEAD = 1.15;
-const ASIDE = 1.15;
+const AHEAD = 1.5;
+const ASIDE = 1.2;
 /** Spring that moves it toward its spot (stiffness 1/s², damping 1/s) and its top speed (m/s). */
 const STIFFNESS = 9;
 const DAMPING = 6;
