@@ -34,6 +34,31 @@ export const FR: Readonly<Record<string, string>> = {
   Dismiss: "Fermer",
   "Dismiss performance warning": "Fermer l'alerte de performance",
 
+  // ---------------------------------------------------------------- concierge
+  "Your concierge": "Votre concierge",
+  "Welcome to Maison Miroir. Walk up to any piece and I will present it.":
+    "Bienvenue à la Maison Miroir. Approchez-vous d'une pièce, je vous la présente.",
+  "Next piece: {name}": "Pièce suivante : {name}",
+  "Begin the tour": "Commencer la visite",
+  "L'Aviateur suits nearly every face. Gold metal with clear lenses is the daytime classic.":
+    "L'Aviateur va à presque tous les visages. Le métal or aux verres transparents est le classique de jour.",
+  "Atelier 03's square line balances round and oval faces. Matte black never fails.":
+    "La ligne carrée d'Atelier 03 équilibre les visages ronds et ovales. Le noir mat ne déçoit jamais.",
+  "Cristal is made for the evening: the glass finish catches the light. Try the iridescent lenses.":
+    "Cristal est fait pour le soir : la finition verre accroche la lumière. Essayez les verres irisés.",
+  "Matte for the day, gloss for the evening. The try-on keeps the texture of your own lips.":
+    "Mat pour le jour, brillant pour le soir. L'essayage garde la texture de vos propres lèvres.",
+  "Smile in the try-on: Nuit Lumière glows brighter. Neon on the constellation is the showpiece.":
+    "Souriez pendant l'essayage : Nuit Lumière s'illumine. Le néon sur la constellation est la pièce maîtresse.",
+  "Chrono Nuit shows your real time. To try it, show the back of your hand to the camera.":
+    "Chrono Nuit affiche votre heure réelle. Pour l'essayer, montrez le dos de votre main à la caméra.",
+  "Choose the finger first: the band size follows it. Then the metal, then the stone.":
+    "Choisissez d'abord le doigt : la taille de l'anneau suit. Puis le métal, puis la pierre.",
+  "Prisme colors your real hair. Vivid lifts dark hair as if bleached first.":
+    "Prisme colore vos vrais cheveux. Intense éclaircit les cheveux foncés comme après une décoloration.",
+  "A cream beanie with L'Aviateur is a house favorite. Try them together from your selection.":
+    "Un bonnet crème avec L'Aviateur est un favori de la maison. Essayez-les ensemble depuis votre sélection.",
+
   // ---------------------------------------------------------------- customizer
   "Customize {name}": "Personnaliser {name}",
   "Custom {option}": "{option} sur mesure",

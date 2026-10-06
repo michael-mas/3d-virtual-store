@@ -33,6 +33,7 @@ function schemaKeys(): string[] {
   const keys = new Set<string>();
   for (const p of PRODUCTS) {
     if (p.tagline) keys.add(p.tagline);
+    if (p.tip) keys.add(p.tip);
     for (const o of p.options) {
       keys.add(o.label);
       if (o.kind === "choice") o.values.forEach((v) => keys.add(v.label));

@@ -62,7 +62,10 @@ export default function LoadingScreen() {
         <button
           ref={enter}
           type="button"
-          onClick={() => setEntered(true)}
+          onClick={() => {
+            setEntered(true);
+            useAppStore.getState().setEntered();
+          }}
           className="btn-line rounded-sm border-gold/60 px-8 py-3.5 text-gold-light"
         >
           {t("Enter the Maison")}

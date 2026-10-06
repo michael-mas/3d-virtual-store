@@ -102,6 +102,8 @@ export type Product = {
   name: string;
   /** One line of house copy under the name (customizer). */
   tagline?: string;
+  /** The concierge's advice in front of the product's pedestal. */
+  tip?: string;
   category: ProductCategory;
   attachment: AttachmentType;
   /** Where it is worn; one product per zone in a look. */

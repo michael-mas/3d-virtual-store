@@ -25,6 +25,7 @@ export const PRODUCTS: readonly Product[] = [
       defaults: { finish: "metal", frameColor: "#c9a44c", lens: "clear" },
     }),
     tagline: "A double-bridge pilot frame, drawn in fine metal.",
+    tip: "L'Aviateur suits nearly every face. Gold metal with clear lenses is the daytime classic.",
   },
   {
     ...glassesProduct({
@@ -35,6 +36,7 @@ export const PRODUCTS: readonly Product[] = [
       defaults: { finish: "matte", frameColor: "#111827", lens: "clear" },
     }),
     tagline: "The square acetate frame of the house's third atelier.",
+    tip: "Atelier 03's square line balances round and oval faces. Matte black never fails.",
   },
   {
     ...glassesProduct({
@@ -45,30 +47,37 @@ export const PRODUCTS: readonly Product[] = [
       defaults: { finish: "glass", frameColor: "#7c3aed", lens: "iridescent" },
     }),
     tagline: "A cat-eye cut from translucent glass, for the evening.",
+    tip: "Cristal is made for the evening: the glass finish catches the light. Try the iridescent lenses.",
   },
   {
     ...lipstickProduct({ id: "velvet-lip", name: "Rouge Velours", basePrice: 32 }),
     tagline: "A lipstick in a gold case, from velvet matte to mirror gloss.",
+    tip: "Matte for the day, gloss for the evening. The try-on keeps the texture of your own lips.",
   },
   {
     ...facePaintProduct({ id: "glow-paint", name: "Nuit Lumière", basePrice: 24 }),
     tagline: "Face art that glows brighter as you smile.",
+    tip: "Smile in the try-on: Nuit Lumière glows brighter. Neon on the constellation is the showpiece.",
   },
   {
     ...watchProduct({ id: "chrono", name: "Chrono Nuit", basePrice: 249 }),
     tagline: "A three-hand watch that keeps your time, to the second.",
+    tip: "Chrono Nuit shows your real time. To try it, show the back of your hand to the camera.",
   },
   {
     ...ringProduct({ id: "solitaire", name: "Solitaire", basePrice: 189 }),
     tagline: "A single stone, raised on four claws.",
+    tip: "Choose the finger first: the band size follows it. Then the metal, then the stone.",
   },
   {
     ...hairDyeProduct({ id: "prism-dye", name: "Prisme", basePrice: 29 }),
     tagline: "Color for your own hair, strand by strand, without a single drop.",
+    tip: "Prisme colors your real hair. Vivid lifts dark hair as if bleached first.",
   },
   {
     ...headwearProduct({ id: "topper", name: "Le Chapeau", basePrice: 39 }),
     tagline: "A cap, a beanie or a bucket hat, cut to the head.",
+    tip: "A cream beanie with L'Aviateur is a house favorite. Try them together from your selection.",
   },
 ];
 

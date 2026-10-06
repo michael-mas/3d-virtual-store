@@ -34,8 +34,21 @@ import ThumbnailRenderer from "./ThumbnailRenderer";
 extend(THREE as unknown as Catalogue);
 quietThreeConsole();
 
+// The concierge: its own chunk (it shares the face topology with the mannequin), fetched once the salon is shown.
+const Concierge = lazy(() => import("./Concierge"));
+
 // Surface (face mesh) layer: its own chunk (topology data), fetched on the first try-on or prefetched in CUSTOMIZE.
 const SurfaceLayer = lazy(loadSurfaceLayer);
+
+/** Mounted once the salon is shown, so it never delays the first frame; kept mounted afterwards. */
+function LazyConcierge() {
+  const ready = useAppStore((s) => s.sceneReady);
+  return ready ? (
+    <Suspense fallback={null}>
+      <Concierge />
+    </Suspense>
+  ) : null;
+}
 
 /** Mounted from the first try-on on and kept mounted, so its materials compile once. */
 function LazySurfaceLayer() {
@@ -104,6 +117,7 @@ export default function Scene() {
         <SceneReadyMarker />
       </Suspense>
       <Player />
+      <LazyConcierge />
       <InteractPrompt />
       <CartParticles />
       <CameraRig />

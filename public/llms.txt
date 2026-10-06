@@ -1,6 +1,6 @@
 # Maison Miroir
 
-> A portfolio proof of concept by Michael Mas for a fictional luxury house, Maison Miroir: a dark 3D salon where visitors walk between pedestals, customize products (three glasses, a lipstick, a face paint, a watch, a ring, a hair color, headwear) and try them on live with their webcam or on a photo from their device, alone or as a whole look. The interface is in English and French. Everything runs in the browser: WebGPU rendering with a WebGL2 fallback, face tracking with MediaPipe in WebAssembly, no server and no third-party requests.
+> A portfolio proof of concept by Michael Mas for a fictional luxury house, Maison Miroir: a dark 3D salon where visitors walk between pedestals, customize products (three glasses, a lipstick, a face paint, a watch, a ring, a hair color, headwear) and try them on live with their webcam or on a photo from their device, alone or as a whole look. The interface is in English and French, and a procedural concierge android guides visitors from piece to piece. Everything runs in the browser: WebGPU rendering with a WebGL2 fallback, face tracking with MediaPipe in WebAssembly, no server and no third-party requests.
 
 - Source code and full technical write-up: https://github.com/michael-mas/3d-virtual-store
 - Author: Michael Mas (https://github.com/michael-mas)

@@ -4,6 +4,7 @@ import SceneCanvas from "@/components/canvas/SceneCanvas";
 import BackendBadge from "@/components/dom/BackendBadge";
 import CalibrationPanel from "@/components/dom/CalibrationPanel";
 import CartDrawer from "@/components/dom/CartDrawer";
+import ConciergePanel from "@/components/dom/ConciergePanel";
 import CustomizerPanel from "@/components/dom/CustomizerPanel";
 import DevPanel from "@/components/dom/DevPanel";
 import LoadingScreen from "@/components/dom/LoadingScreen";
@@ -72,6 +73,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
         <SceneCanvas />
         <div className="pointer-events-none relative h-full">{children}</div>
+        <ConciergePanel />
         <CustomizerPanel />
         <TryOnPanel />
         <PhotoModal />
