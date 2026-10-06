@@ -8,7 +8,7 @@ import { isDebugEnabled } from "@/lib/debug";
 import { bindKeyboard, isRunning, moveAxes } from "@/lib/explore/input";
 import { FLOOR_Y, INTERACT_RADIUS, OBSTACLES, PEDESTALS, PLAYER_RADIUS, ROOM, type Vec2 } from "@/lib/explore/layout";
 import { cameraRelative, nearestPedestal, resolveCollisions, stepMotion, WALK } from "@/lib/explore/movement";
-import { player } from "@/lib/explore/player";
+import { advancePath, player, walkGoal, walkTo } from "@/lib/explore/player";
 import { useAppStore } from "@/store/useAppStore";
 
 const RUN_MULTIPLIER = 1.8;
@@ -60,8 +60,8 @@ export default function Player() {
       const step = Math.max(-WHEEL_MAX_STEP, Math.min(WHEEL_MAX_STEP, -px * WHEEL_METRES_PER_PX));
       get().camera.getWorldDirection(forward);
       const [fx, fz] = cameraRelative([forward.x, forward.z], [0, 1]);
-      const from = player.target ?? player.position;
-      player.target = resolveCollisions([from[0] + fx * step, from[1] + fz * step], PLAYER_RADIUS, ROOM, OBSTACLES);
+      const from = walkGoal() ?? player.position;
+      walkTo([from[0] + fx * step, from[1] + fz * step]);
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
@@ -72,7 +72,7 @@ export default function Player() {
     if (explore) {
       camera.getWorldDirection(forward);
       const input: Vec2 = cameraRelative([forward.x, forward.z], moveAxes());
-      if (player.target) player.target = resolveCollisions(player.target, PLAYER_RADIUS, ROOM, OBSTACLES);
+      advancePath();
       const next = stepMotion(player, input, Math.min(delta, 0.1), WALK, isRunning() ? RUN_MULTIPLIER : 1, {
         radius: PLAYER_RADIUS,
         obstacles: OBSTACLES,
@@ -81,10 +81,13 @@ export default function Player() {
       player.position = resolved;
       player.velocity = next.velocity;
       player.target = next.target;
+      // Keyboard input (or arrival) ends a walk.
+      if (!next.target) player.path = [];
       useAppStore.getState().setNearPedestal(nearestPedestal(player.position, PEDESTALS, INTERACT_RADIUS)?.productId ?? null);
     } else {
       player.velocity = [0, 0];
       player.target = null;
+      player.path = [];
     }
 
     if (marker.current) {
@@ -92,8 +95,9 @@ export default function Player() {
       marker.current.position.set(player.position[0], FLOOR_Y + 0.005, player.position[1]);
     }
     if (targetRing.current) {
-      targetRing.current.visible = explore && player.target !== null;
-      if (player.target) targetRing.current.position.set(player.target[0], FLOOR_Y + 0.006, player.target[1]);
+      const goal = walkGoal();
+      targetRing.current.visible = explore && goal !== null;
+      if (goal) targetRing.current.position.set(goal[0], FLOOR_Y + 0.006, goal[1]);
     }
   });
 

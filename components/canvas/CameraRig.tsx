@@ -49,11 +49,20 @@ function createColliders(): Mesh[] {
   room.position.y = FLOOR_Y + roomHeight / 2;
   const solid = new MeshBasicMaterial();
   const pedestalHeight = PEDESTAL.top - FLOOR_Y;
-  const obstacles = OBSTACLES.map((o, i) => {
+  const obstacles = OBSTACLES.flatMap((o, i) => {
     const height = i < PEDESTALS.length ? pedestalHeight : DECOR_HEIGHT;
-    const mesh = new Mesh(new CylinderGeometry(o.radius, o.radius, height, 12), solid);
-    mesh.position.set(o.position[0], FLOOR_Y + height / 2, o.position[1]);
-    return mesh;
+    // A capsule on the floor plan, extruded up: a cylinder at each end and a box between them.
+    const ends = [o.a, o.b].map((p) => {
+      const mesh = new Mesh(new CylinderGeometry(o.radius, o.radius, height, 12), solid);
+      mesh.position.set(p[0], FLOOR_Y + height / 2, p[1]);
+      return mesh;
+    });
+    const length = Math.hypot(o.b[0] - o.a[0], o.b[1] - o.a[1]);
+    if (length < 1e-6) return ends.slice(0, 1);
+    const box = new Mesh(new BoxGeometry(length, height, o.radius * 2), solid);
+    box.position.set((o.a[0] + o.b[0]) / 2, FLOOR_Y + height / 2, (o.a[1] + o.b[1]) / 2);
+    box.rotation.y = -Math.atan2(o.b[1] - o.a[1], o.b[0] - o.a[0]);
+    return [...ends, box];
   });
   const vitrines = [-1, 1].flatMap((side) =>
     VITRINE.z.map((z) => {

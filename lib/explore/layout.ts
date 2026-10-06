@@ -16,36 +16,39 @@ export const PEDESTALS: readonly Pedestal[] = PRODUCTS.map((product, i) => {
 });
 export const SPAWN: Vec2 = [layout.spawn[0], layout.spawn[1]];
 
-export type Obstacle = { position: Vec2; radius: number };
+/**
+ * Something the player walks around, on the floor plan: a capsule (the points within `radius` of segment a–b).
+ * Pedestals and plants are circles (a = b); benches and consoles are capsules along their length, so the player
+ * slides along them smoothly (a row of circles has notches where the slide catches).
+ */
+export type Obstacle = { a: Vec2; b: Vec2; radius: number };
 
-/** Benches and consoles as rows of circles along their length, plants as one circle (collisions are circle push-outs). */
+const circle = (p: readonly number[], radius: number): Obstacle => ({ a: [p[0], p[1]], b: [p[0], p[1]], radius });
+
+/** A capsule along a box's length (local x rotated by rotationY about +y), as thick as the box is deep. */
+function lengthwise(center: readonly number[], length: number, depth: number, rotationY: number): Obstacle {
+  const radius = depth / 2 + 0.025;
+  const half = Math.max(length / 2 - radius, 0);
+  const [ax, az] = [Math.cos(rotationY), -Math.sin(rotationY)];
+  return {
+    a: [center[0] - ax * half, center[1] - az * half],
+    b: [center[0] + ax * half, center[1] + az * half],
+    radius,
+  };
+}
+
 function decorObstacles(): Obstacle[] {
-  const { benches, bench, plants, plantCollisionRadius } = layout.decor;
-  const out: Obstacle[] = [];
-  const radius = bench.depth / 2 + 0.025;
-  const count = Math.ceil(bench.length / (radius * 2));
-  for (const { position: [x, z], rotationY } of benches) {
-    // Local x (length axis) rotated by rotationY about +y: (cos, -sin) in (x, z).
-    const [ax, az] = [Math.cos(rotationY), -Math.sin(rotationY)];
-    for (let i = 0; i < count; i++) {
-      const t = (i / (count - 1) - 0.5) * (bench.length - radius * 2);
-      out.push({ position: [x + ax * t, z + az * t], radius });
-    }
-  }
-  for (const [x, z] of plants) out.push({ position: [x, z], radius: plantCollisionRadius });
-  // Consoles against the entrance wall: a row of circles along x.
-  const { consoles, console: table } = layout.decor;
-  const r = table.depth / 2 + 0.025;
-  const n = Math.ceil(table.length / (r * 2));
-  for (const [x, z] of consoles) {
-    for (let i = 0; i < n; i++) out.push({ position: [x + (i / (n - 1) - 0.5) * (table.length - r * 2), z], radius: r });
-  }
-  return out;
+  const { benches, bench, plants, plantCollisionRadius, consoles, console: table } = layout.decor;
+  return [
+    ...benches.map((b) => lengthwise(b.position, bench.length, bench.depth, b.rotationY)),
+    ...plants.map((p) => circle(p, plantCollisionRadius)),
+    ...consoles.map((c) => lengthwise(c, table.length, table.depth, 0)),
+  ];
 }
 
 /** Everything the player walks around: pedestals and decor. */
 export const OBSTACLES: readonly Obstacle[] = [
-  ...PEDESTALS.map((p) => ({ position: p.position, radius: layout.pedestal.collisionRadius })),
+  ...PEDESTALS.map((p) => circle(p.position, layout.pedestal.collisionRadius)),
   ...decorObstacles(),
 ];
 export const PLAYER_RADIUS = layout.playerRadius;

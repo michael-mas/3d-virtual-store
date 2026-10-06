@@ -1,34 +1,60 @@
-import type { Pedestal, Vec2 } from "./layout";
+import type { Obstacle, Pedestal, Vec2 } from "./layout";
 
 export type Bounds = { halfWidth: number; halfDepth: number };
 
+/** Closest point to p on the obstacle's segment a–b (its center, for a circle). */
+export function closestOnSegment(p: Vec2, o: Obstacle): Vec2 {
+  const [ax, az] = o.a;
+  const dx = o.b[0] - ax;
+  const dz = o.b[1] - az;
+  const len2 = dx * dx + dz * dz;
+  const t = len2 > 0 ? Math.min(Math.max(((p[0] - ax) * dx + (p[1] - az) * dz) / len2, 0), 1) : 0;
+  return [ax + dx * t, az + dz * t];
+}
+
+/** Collision passes per step: enough for a contact with an obstacle and a wall at once to settle. */
+const PASSES = 3;
+
 /**
- * Keeps a circle of `radius` inside the room and outside circular obstacles (pedestals).
- * Simple push-out; enough for a showroom, so no physics engine is needed.
+ * Keeps a circle of `radius` inside the room and outside the obstacles (capsules). Simple push-out, repeated a few
+ * times so simultaneous contacts settle; enough for a showroom, so no physics engine is needed.
  */
-export function resolveCollisions(
-  p: Vec2,
-  radius: number,
-  bounds: Bounds,
-  obstacles: readonly { position: Vec2; radius: number }[],
-): Vec2 {
+export function resolveCollisions(p: Vec2, radius: number, bounds: Bounds, obstacles: readonly Obstacle[]): Vec2 {
   let [x, z] = p;
-  for (const o of obstacles) {
-    const dx = x - o.position[0];
-    const dz = z - o.position[1];
-    const min = radius + o.radius;
-    const d = Math.hypot(dx, dz);
-    if (d < min) {
-      // Exactly on the centre: push toward +z (the front of the pedestal).
-      const nx = d > 1e-6 ? dx / d : 0;
-      const nz = d > 1e-6 ? dz / d : 1;
-      x = o.position[0] + nx * min;
-      z = o.position[1] + nz * min;
+  for (let pass = 0; pass < PASSES; pass++) {
+    let moved = false;
+    for (const o of obstacles) {
+      const [cx, cz] = closestOnSegment([x, z], o);
+      const dx = x - cx;
+      const dz = z - cz;
+      const min = radius + o.radius;
+      const d = Math.hypot(dx, dz);
+      if (d < min) {
+        // Exactly on the axis: push toward +z (the front of a pedestal).
+        const nx = d > 1e-6 ? dx / d : 0;
+        const nz = d > 1e-6 ? dz / d : 1;
+        x = cx + nx * min;
+        z = cz + nz * min;
+        moved = true;
+      }
     }
+    const cx = Math.min(Math.max(x, -bounds.halfWidth + radius), bounds.halfWidth - radius);
+    const cz = Math.min(Math.max(z, -bounds.halfDepth + radius), bounds.halfDepth - radius);
+    if (cx !== x || cz !== z) moved = true;
+    x = cx;
+    z = cz;
+    if (!moved) break;
   }
-  x = Math.min(Math.max(x, -bounds.halfWidth + radius), bounds.halfWidth - radius);
-  z = Math.min(Math.max(z, -bounds.halfDepth + radius), bounds.halfDepth - radius);
   return [x, z];
+}
+
+/** True when a circle of `radius` at p touches no obstacle and stays inside the room. */
+export function isFree(p: Vec2, radius: number, bounds: Bounds, obstacles: readonly Obstacle[]): boolean {
+  if (Math.abs(p[0]) > bounds.halfWidth - radius || Math.abs(p[1]) > bounds.halfDepth - radius) return false;
+  return obstacles.every((o) => {
+    const c = closestOnSegment(p, o);
+    return Math.hypot(p[0] - c[0], p[1] - c[1]) >= radius + o.radius - 1e-9;
+  });
 }
 
 /** Nearest pedestal within `radius` (2D distance on the floor), or null. */
@@ -53,8 +79,6 @@ export function approachPoint(pedestal: Pedestal, from: Vec2, distance: number):
   return [pedestal.position[0] + (dx / d) * distance, pedestal.position[1] + (dz / d) * distance];
 }
 
-type Obstacle = { position: Vec2; radius: number };
-
 /** Extra distance at which an obstacle starts deflecting the walk (m). */
 const STEER_MARGIN = 0.06;
 
@@ -75,8 +99,9 @@ export function steerAround(
   const speed = Math.hypot(vx, vz);
   if (speed < 1e-6) return desired;
   for (const o of obstacles) {
-    const dx = position[0] - o.position[0];
-    const dz = position[1] - o.position[1];
+    const [cx, cz] = closestOnSegment(position, o);
+    const dx = position[0] - cx;
+    const dz = position[1] - cz;
     const d = Math.hypot(dx, dz);
     if (d > radius + o.radius + STEER_MARGIN || d < 1e-6) continue;
     const nx = dx / d;
