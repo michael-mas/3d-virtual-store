@@ -4,9 +4,10 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useT } from "@/hooks/useT";
 import { respond, type Action, type Suggestion } from "@/lib/concierge/dialogue";
 import { say, speech } from "@/lib/concierge/speech";
-import { PEDESTALS } from "@/lib/explore/layout";
+import { GALLERY, PEDESTALS } from "@/lib/explore/layout";
 import { approachPoint } from "@/lib/explore/movement";
 import { player, walkTo } from "@/lib/explore/player";
+import { ARTWORKS, getArtwork } from "@/lib/gallery/artworks";
 import { getProduct } from "@/lib/products";
 import { useAppStore } from "@/store/useAppStore";
 import { chooseLocale } from "./LanguageToggle";
@@ -60,6 +61,15 @@ function run(action: Action) {
     case "tour":
       walkTo(approachPoint(PEDESTALS[0], player.position, 0.9));
       break;
+    case "gallery":
+      // Just inside the doors (they open on the way).
+      walkTo([0, GALLERY.zStart + 1.4]);
+      break;
+    case "visit": {
+      const work = getArtwork(action.artworkId);
+      if (work) walkTo(work.viewpoint);
+      break;
+    }
     case "music":
       store.setMusicOn(action.on);
       break;
@@ -71,7 +81,8 @@ function run(action: Action) {
 
 /**
  * The concierge's voice in the interface (EXPLORE). Folded: a card with its welcome, then the advice for the piece
- * in front of the visitor and a guided tour ("Next piece"). Open: a conversation in the house's style, with quick
+ * in front of the visitor and a guided tour ("Next piece"); in the gallery, the story of the work in front of the
+ * visitor and a tour of the works ("Next work"). Open: a conversation in the house's style, with quick
  * replies, a question field and an optional local voice; every reply also moves the android's mouth (lib/concierge/
  * speech.ts) and may act on the boutique (lib/concierge/dialogue.ts). Announced to screen readers.
  */
@@ -79,6 +90,8 @@ export default function ConciergePanel() {
   const mode = useAppStore((s) => s.mode);
   const ready = useAppStore((s) => s.sceneReady && s.entered);
   const near = useAppStore((s) => (s.mode === "EXPLORE" ? s.nearPedestal : null));
+  const nearWork = useAppStore((s) => (s.mode === "EXPLORE" ? s.nearArtwork : null));
+  const inGallery = useAppStore((s) => s.mode === "EXPLORE" && s.inGallery);
   const locale = useAppStore((s) => s.locale);
   const t = useT();
   const [welcome, setWelcome] = useState(true);
@@ -98,9 +111,18 @@ export default function ConciergePanel() {
   }, [ready]);
 
   // The face moves with each line the concierge says, folded or open.
-  const greeting = welcome && !near;
+  const greeting = welcome && !near && !inGallery;
   const product = near ? getProduct(near) : undefined;
-  const line = greeting ? t("Welcome to Maison Miroir. Walk up to any piece and I will present it.") : product?.tip ? t(product.tip) : null;
+  const work = nearWork ? getArtwork(nearWork) : undefined;
+  const line = work
+    ? t(work.note)
+    : inGallery
+      ? t("Welcome to the gallery: ten works on light and matter. Walk up to one and I will tell you its story.")
+      : greeting
+        ? t("Welcome to Maison Miroir. Walk up to any piece and I will present it.")
+        : product?.tip
+          ? t(product.tip)
+          : null;
   useEffect(() => {
     if (line && ready && mode === "EXPLORE") say(line, nowSeconds());
   }, [line, ready, mode]);
@@ -156,6 +178,7 @@ export default function ConciergePanel() {
     }
     const index = near ? PEDESTALS.findIndex((p) => p.productId === near) : -1;
     const next = PEDESTALS[(index + 1) % PEDESTALS.length];
+    const nextWork = ARTWORKS[(work ? ARTWORKS.indexOf(work) + 1 : 0) % ARTWORKS.length];
     return (
       <aside
         aria-label={t("Your concierge")}
@@ -167,13 +190,23 @@ export default function ConciergePanel() {
           {line}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-          <button
-            type="button"
-            onClick={() => walkTo(approachPoint(greeting ? PEDESTALS[0] : next, player.position, 0.9))}
-            className="eyebrow text-[0.6rem] text-gold-light underline-offset-4 hover:underline"
-          >
-            {greeting ? t("Begin the tour") : t("Next piece: {name}", { name: getProduct(next.productId)?.name ?? "" })} →
-          </button>
+          {inGallery ? (
+            <button
+              type="button"
+              onClick={() => walkTo(nextWork.viewpoint)}
+              className="eyebrow text-[0.6rem] text-gold-light underline-offset-4 hover:underline"
+            >
+              {t("Next work: {title}", { title: nextWork.title })} →
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => walkTo(approachPoint(greeting ? PEDESTALS[0] : next, player.position, 0.9))}
+              className="eyebrow text-[0.6rem] text-gold-light underline-offset-4 hover:underline"
+            >
+              {greeting ? t("Begin the tour") : t("Next piece: {name}", { name: getProduct(next.productId)?.name ?? "" })} →
+            </button>
+          )}
           <button type="button" onClick={openChat} className="eyebrow text-[0.6rem] underline-offset-4 hover:text-ivory hover:underline">
             {t("Talk")}
           </button>

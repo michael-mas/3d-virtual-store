@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { conciergeSpot, headingTo, stepConcierge, type Concierge } from "./concierge";
-import { OBSTACLES, PLAYER_RADIUS, ROOM, SPAWN } from "./layout";
+import { OBSTACLES, PLAYER_RADIUS, WALK_BOUNDS, SPAWN } from "./layout";
 import { isFree } from "./movement";
 
 describe("concierge", () => {
@@ -16,7 +16,7 @@ describe("concierge", () => {
       for (let z = -4; z <= 4; z += 0.5) {
         for (const f of [[0, -1], [1, 0], [0, 1], [-1, 0]] as [number, number][]) {
           const spot = conciergeSpot([x, z], f);
-          expect(isFree(spot, PLAYER_RADIUS - 0.01, ROOM, OBSTACLES)).toBe(true);
+          expect(isFree(spot, PLAYER_RADIUS - 0.01, WALK_BOUNDS, OBSTACLES)).toBe(true);
         }
       }
     }

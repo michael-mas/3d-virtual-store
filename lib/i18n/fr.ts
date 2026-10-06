@@ -245,6 +245,44 @@ export const FR: Readonly<Record<string, string>> = {
   Beanie: "Bonnet",
   "Bucket hat": "Bob",
 
+  // ---------------------------------------------------------------- gallery
+  "Museum label": "Cartel",
+  "The Gallery": "La Galerie",
+  "Contemporary art · {count} works": "Art contemporain · {count} œuvres",
+  "Welcome to the gallery: ten works on light and matter. Walk up to one and I will tell you its story.":
+    "Bienvenue dans la galerie : dix œuvres sur la lumière et la matière. Approchez-vous de l'une d'elles, je vous raconterai son histoire.",
+  "Next work: {title}": "Œuvre suivante : {title}",
+  "Gold leaf on panel": "Feuille d'or sur panneau",
+  "Twelve hundred squares of gold leaf, laid by hand. Each one catches the light at its own angle, so the field changes as you walk past it.":
+    "Mille deux cents carrés de feuille d'or, posés à la main. Chacun prend la lumière sous son propre angle : le champ change à mesure que vous passez devant.",
+  "Light and pigment, endless loop": "Lumière et pigment, boucle infinie",
+  "A horizon that never settles: the sea breathes at the pace of a sleeping tide, one wave every eleven seconds.":
+    "Un horizon qui ne se pose jamais : la mer respire au rythme d'une marée endormie, une vague toutes les onze secondes.",
+  "Brass points on black lacquer": "Points de laiton sur laque noire",
+  "Brass points set where the stars stood above Paris on the night the house opened. A few of them still flicker.":
+    "Des points de laiton posés là où se tenaient les étoiles au-dessus de Paris, la nuit où la maison a ouvert. Quelques-uns scintillent encore.",
+  "Cut canvas": "Toile fendue",
+  "A single cut, made in one gesture. What matters is the space behind it.":
+    "Une seule entaille, d'un seul geste. Ce qui compte, c'est l'espace derrière.",
+  "Light installation": "Installation lumineuse",
+  "The field drifts from dawn amber to night blue over four minutes. Sit on the bench and let your eyes adjust.":
+    "Le champ glisse de l'ambre de l'aube au bleu de la nuit en quatre minutes. Asseyez-vous sur le banc, laissez vos yeux s'accorder.",
+  "Polished obsidian, brass": "Obsidienne polie, laiton",
+  "The house's emblem: a black mirror, which painters once used to judge their values. It gives the room back, only quieter.":
+    "L'emblème de la maison : un miroir noir, dont les peintres se servaient pour juger leurs valeurs. Il rend la salle, en plus calme.",
+  "Polished brass": "Laiton poli",
+  "One strip of brass with a single twist: it has only one side. Follow its edge with your eyes and you come back reversed.":
+    "Une seule bande de laiton, vrillée une fois : elle n'a qu'une face. Suivez son bord du regard, vous revenez à l'envers.",
+  "Carrara marble, brass": "Marbre de Carrare, laiton",
+  "A marble sphere resting on a brass point a few millimetres wide. It has not moved since it was set down.":
+    "Une sphère de marbre posée sur une pointe de laiton de quelques millimètres. Elle n'a pas bougé depuis qu'on l'y a posée.",
+  "Mirror-polished steel": "Acier poli miroir",
+  "A trefoil knot, the simplest knot that cannot be undone. It turns once a minute.":
+    "Un nœud de trèfle, le plus simple des nœuds qu'on ne peut défaire. Il fait un tour par minute.",
+  "Basalt and gold": "Basalte et or",
+  "A basalt slab, split and mended with gold, after the Japanese art of kintsugi.":
+    "Une dalle de basalte, fendue puis réparée à l'or, selon l'art japonais du kintsugi.",
+
   // ---------------------------------------------------------------- colors
   Amber: "Ambre",
   Berry: "Baie",

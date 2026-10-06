@@ -19,8 +19,8 @@ export type NavMap = {
 
 /** Precomputes which grid cells a player of `radius` (plus a margin) can stand on. */
 export function buildNavMap(bounds: Bounds, radius: number, obstacles: readonly Obstacle[]): NavMap {
-  const cols = Math.floor((bounds.halfWidth * 2) / CELL) + 1;
-  const rows = Math.floor((bounds.halfDepth * 2) / CELL) + 1;
+  const cols = Math.floor((bounds.maxX - bounds.minX) / CELL) + 1;
+  const rows = Math.floor((bounds.maxZ - bounds.minZ) / CELL) + 1;
   const free = new Uint8Array(cols * rows);
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
@@ -30,10 +30,10 @@ export function buildNavMap(bounds: Bounds, radius: number, obstacles: readonly 
   return { free, cols, rows, bounds, radius, obstacles };
 }
 
-const cellCenter = (c: number, r: number, b: Bounds): Vec2 => [-b.halfWidth + c * CELL, -b.halfDepth + r * CELL];
+const cellCenter = (c: number, r: number, b: Bounds): Vec2 => [b.minX + c * CELL, b.minZ + r * CELL];
 const cellOf = (p: Vec2, m: NavMap): [number, number] => [
-  Math.min(Math.max(Math.round((p[0] + m.bounds.halfWidth) / CELL), 0), m.cols - 1),
-  Math.min(Math.max(Math.round((p[1] + m.bounds.halfDepth) / CELL), 0), m.rows - 1),
+  Math.min(Math.max(Math.round((p[0] - m.bounds.minX) / CELL), 0), m.cols - 1),
+  Math.min(Math.max(Math.round((p[1] - m.bounds.minZ) / CELL), 0), m.rows - 1),
 ];
 
 /** Nearest free cell to (c, r), searching outward ring by ring. */

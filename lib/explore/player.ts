@@ -1,4 +1,4 @@
-import { OBSTACLES, PLAYER_RADIUS, ROOM, SPAWN, type Vec2 } from "./layout";
+import { OBSTACLES, PLAYER_RADIUS, SPAWN, WALK_BOUNDS, type Vec2 } from "./layout";
 import type { Motion } from "./movement";
 import { buildNavMap, findPath, type NavMap } from "./navigation";
 
@@ -19,7 +19,8 @@ let navMap: NavMap | null = null;
 
 /** Walk to a floor point (click / tap / wheel), along a path around the obstacles. Keyboard input cancels it. */
 export function walkTo(goal: Vec2) {
-  navMap ??= buildNavMap(ROOM, PLAYER_RADIUS, OBSTACLES);
+  // Planned with the gallery door open: it opens as the visitor walks up to it.
+  navMap ??= buildNavMap(WALK_BOUNDS, PLAYER_RADIUS, OBSTACLES);
   player.path = findPath(navMap, player.position, goal);
   player.target = player.path[0] ?? null;
 }

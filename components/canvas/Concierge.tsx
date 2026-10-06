@@ -12,6 +12,7 @@ import { isSpeaking, mouthOpenAt, say, speech } from "@/lib/concierge/speech";
 import { angleDelta, concierge, conciergeSpot, headingTo, stepConcierge } from "@/lib/explore/concierge";
 import { FLOOR_Y, PEDESTALS } from "@/lib/explore/layout";
 import { player } from "@/lib/explore/player";
+import { getArtwork } from "@/lib/gallery/artworks";
 import { createMannequinGeometry } from "@/lib/tryon/surface/mannequin";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -31,8 +32,8 @@ const ease = (value: number, target: number, rate: number, dt: number) => value 
  * pelvis to head, clavicles to five three-phalanx fingers, hips to toes, after PointForge's VANTA-9 anatomy). Its
  * head is MediaPipe's canonical face in porcelain under a lacquer shell with a swept brass crest, so face pieces fit
  * it exactly. In EXPLORE it walks beside the visitor (procedural gait from its speed, arms swinging in opposition,
- * breathing at rest), keeps them in its gaze, and in front of a pedestal turns to the piece and presents it with an
- * open hand (its words are in ConciergePanel). Hidden outside EXPLORE. Procedural: no model file.
+ * breathing at rest), keeps them in its gaze, and in front of a pedestal or a gallery work turns to it and presents
+ * it with an open hand (its words are in ConciergePanel); it follows the visitor into the gallery, through the doors. Hidden outside EXPLORE. Procedural: no model file.
  */
 export default function Concierge() {
   const mode = useAppStore((s) => s.mode);
@@ -93,9 +94,11 @@ export default function Concierge() {
     camera.getWorldDirection(forward);
     const nearId = useAppStore.getState().nearPedestal;
     const piece = nearId ? PEDESTALS.find((p) => p.productId === nearId) : undefined;
+    const workId = useAppStore.getState().nearArtwork;
+    const work = workId ? getArtwork(workId) : undefined;
     const spot = conciergeSpot(player.position, [forward.x, forward.z]);
-    // Faces the visitor; in front of a piece, turns toward it.
-    const face = piece ? piece.position : player.position;
+    // Faces the visitor; in front of a piece or a work, turns toward it.
+    const face: [number, number] = piece ? piece.position : work ? [work.center[0], work.center[2]] : player.position;
     const before = concierge.position;
     // Debug-only: a frozen concierge keeps its place (close-up screenshots move the camera it follows).
     const frozen = (concierge as { frozen?: boolean }).frozen === true;
@@ -111,7 +114,7 @@ export default function Concierge() {
     const walked = Math.hypot(concierge.position[0] - before[0], concierge.position[1] - before[1]);
     m.phase += (walked / STRIDE) * Math.PI * 2;
     m.walk = ease(m.walk, Math.min(walked / Math.max(dt, 1e-3) / FULL_WALK_SPEED, 1), 6, dt);
-    m.present = ease(m.present, piece && m.walk < 0.3 ? 1 : 0, 3.5, dt);
+    m.present = ease(m.present, (piece || work) && m.walk < 0.3 ? 1 : 0, 3.5, dt);
     // Gaze at the visitor's eyes, bounded; the body may face the piece meanwhile.
     const yaw = angleDelta(concierge.heading, headingTo(concierge.position, player.position));
     const dist = Math.hypot(player.position[0] - concierge.position[0], player.position[1] - concierge.position[1]);

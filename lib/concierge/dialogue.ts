@@ -1,4 +1,5 @@
 import { formatPrice, priceOf } from "@/lib/cart/pricing";
+import { ARTWORKS, type Artwork, type ArtworkId } from "@/lib/gallery/artworks";
 import { translate, type Locale } from "@/lib/i18n";
 import { getProduct, PRODUCTS, type Product } from "@/lib/products";
 
@@ -6,7 +7,8 @@ import { getProduct, PRODUCTS, type Product } from "@/lib/products";
  * The concierge's conversation: no model, no server. A question is normalized (case, accents, punctuation), its
  * intent found from English and French keywords, the product it names recognized, and a reply written in the
  * visitor's language with suggestions (quick replies) and actions the interface carries out (walk to a piece,
- * customize or try it on, open the cart, try the whole look, start the tour, music, language).
+ * customize or try it on, open the cart, try the whole look, start the tour, lead to the gallery or one of its works,
+ * music, language).
  */
 
 export type Action =
@@ -16,6 +18,8 @@ export type Action =
   | { kind: "openCart" }
   | { kind: "tryLook" }
   | { kind: "tour" }
+  | { kind: "gallery" }
+  | { kind: "visit"; artworkId: ArtworkId }
   | { kind: "music"; on: boolean }
   | { kind: "locale"; locale: Locale };
 
@@ -52,6 +56,30 @@ const PRODUCT_WORDS: Record<string, readonly string[]> = {
   "prism-dye": ["prisme", "cheveux", "hair", "coloration", "couleur de cheveux", "hair color", "teinture", "dye"],
   topper: ["chapeau", "chapeaux", "hat", "hats", "le chapeau", "casquette", "cap", "bonnet", "beanie", "bob", "bucket"],
 };
+/** The gallery's works, by title (normalized). */
+const ARTWORK_WORDS: Record<ArtworkId, readonly string[]> = {
+  "champ-d-or": ["champ d or", "field of gold", "feuille d or", "gold leaf"],
+  maree: ["maree", "tide", "la mer", "the sea", "seascape"],
+  constellation: ["constellation", "etoiles", "stars"],
+  fragment: ["fragment", "la toile fendue", "the cut", "slash"],
+  "lumiere-lente": ["lumiere lente", "slow light", "le champ de lumiere", "the light"],
+  "miroir-noir": ["miroir noir", "black mirror", "obsidienne", "obsidian"],
+  ruban: ["ruban", "ribbon", "moebius", "mobius"],
+  equilibre: ["equilibre", "balance", "la sphere", "the sphere", "marbre", "marble"],
+  noeud: ["noeud", "knot", "trefle", "trefoil"],
+  monolithe: ["monolithe", "monolith", "kintsugi", "basalte", "basalt"],
+};
+const GALLERY_WORDS = ["galerie", "gallery", "art", "art contemporain", "contemporary art", "oeuvre", "oeuvres", "artwork", "artworks", "exposition", "expo", "exhibition", "musee", "museum", "porte", "door", "sculpture", "sculptures", "tableau", "tableaux", "painting", "paintings"];
+
+/** The work the text names, if any. */
+export function artworkIn(text: string): Artwork | undefined {
+  let best: { id: string; len: number } | null = null;
+  for (const [id, words] of Object.entries(ARTWORK_WORDS)) {
+    for (const w of words) if (text.includes(` ${w} `) && (!best || w.length > best.len)) best = { id, len: w.length };
+  }
+  return best ? ARTWORKS.find((a) => a.id === best.id) : undefined;
+}
+
 const EYEWEAR_WORDS = ["lunettes", "glasses", "eyewear", "lunetterie", "monture", "montures", "frames", "sunglasses"];
 
 const INTENTS = {
@@ -83,7 +111,9 @@ const SHAPES = {
 const pick = (t: Text, locale: Locale) => t[locale];
 
 /** The piece the text names, if any (the longest matching phrase wins). */
-export function productIn(text: string): Product | undefined {
+export function productIn(input: string): Product | undefined {
+  // "montre-moi" (show me) is not the watch.
+  const text = input.replaceAll(" montre moi ", " ");
   let best: { id: string; len: number } | null = null;
   for (const [id, words] of Object.entries(PRODUCT_WORDS)) {
     for (const w of words) if (text.includes(` ${w} `) && (!best || w.length > best.len)) best = { id, len: w.length };
@@ -103,7 +133,14 @@ const DEFAULT_SUGGESTIONS = (locale: Locale): Suggestion[] =>
     L("Which glasses suit my face?", "Quelles lunettes pour mon visage ?"),
     L("How does the try-on work?", "Comment marche l'essayage ?"),
     L("Show me the watch", "Montrez-moi la montre"),
+    L("Visit the gallery", "Visiter la galerie"),
   ].map((t) => ({ label: pick(t, locale), send: pick(t, locale) }));
+
+const GALLERY_SUGGESTIONS = (locale: Locale): Suggestion[] =>
+  (["lumiere-lente", "champ-d-or", "noeud"] as const).map((id) => {
+    const a = ARTWORKS.find((w) => w.id === id)!;
+    return { label: a.title, send: pick(L(`Tell me about ${a.title}`, `Parlez-moi de ${a.title}`), locale) };
+  });
 
 const reply = (text: Text, locale: Locale, actions: Action[] = [], suggestions: Suggestion[] = DEFAULT_SUGGESTIONS(locale)): Reply => ({
   text: pick(text, locale),
@@ -129,6 +166,28 @@ export function respond(input: string, ctx: Context): Reply {
   // Walking to a piece: "take me to…", "emmenez-moi…", "où est…".
   if (product && has(text, ["take me", "emmenez moi", "emmene moi", "ou est", "where is", "aller", "go to", "show me", "montrez moi", "montre moi"])) {
     return reply(L(`This way: ${product.name} is waiting for you.`, `Par ici : ${product.name} vous attend.`), locale, [{ kind: "walk", productId: product.id }], PRODUCT_SUGGESTIONS(product, locale));
+  }
+  // The gallery, and its works.
+  const artwork = product ? undefined : artworkIn(text);
+  const goPhrases = ["take me", "emmenez moi", "emmene moi", "ou est", "where is", "aller", "go to", "show me", "montrez moi", "montre moi", "voir", "see", "visit", "visiter"];
+  if (artwork) {
+    const notice = `${artwork.title}, ${artwork.artist}, ${artwork.year}. ${translate(locale, artwork.note)}`;
+    const visit: Suggestion = { label: pick(L("Take me there", "Emmenez-moi"), locale), send: pick(L(`Take me to ${artwork.title}`, `Emmenez-moi vers ${artwork.title}`), locale) };
+    if (has(text, goPhrases)) {
+      return reply(L(`This way, to ${artwork.title}.`, `Par ici, vers ${artwork.title}.`), locale, [{ kind: "visit", artworkId: artwork.id }], GALLERY_SUGGESTIONS(locale));
+    }
+    return { text: notice, actions: [], suggestions: [visit, ...GALLERY_SUGGESTIONS(locale).slice(0, 2)] };
+  }
+  if (!product && has(text, GALLERY_WORDS)) {
+    return reply(
+      L(
+        "Behind the entrance doors, our gallery shows ten works on light and matter. The doors open as you come near. Follow me.",
+        "Derrière les portes d'entrée, notre galerie présente dix œuvres sur la lumière et la matière. Les portes s'ouvrent à votre approche. Suivez-moi.",
+      ),
+      locale,
+      [{ kind: "gallery" }],
+      GALLERY_SUGGESTIONS(locale),
+    );
   }
   if (has(text, INTENTS.look)) {
     if (ctx.cart.length < 2) return reply(L("Add at least two pieces to your selection, then I will dress you in all of them at once.", "Ajoutez au moins deux pièces à votre sélection, je vous les ferai alors porter toutes ensemble."), locale);
@@ -188,10 +247,10 @@ export function respond(input: string, ctx: Context): Reply {
   if (has(text, INTENTS.tour)) return reply(L("With pleasure. Follow me.", "Avec plaisir. Suivez-moi."), locale, [{ kind: "tour" }]);
   if (has(text, INTENTS.musicOn)) return reply(L("A little music for the salon.", "Un peu de musique pour le salon."), locale, [{ kind: "music", on: true }]);
   if (has(text, INTENTS.who)) {
-    return reply(L("I am the concierge of Maison Miroir. I know every piece in the salon, and I can dress you in them.", "Je suis le concierge de la Maison Miroir. Je connais chaque pièce du salon, et je peux vous les faire porter."), locale);
+    return reply(L("I am the concierge of Maison Miroir. I know every piece in the salon and every work in the gallery, and I can dress you in the pieces.", "Je suis le concierge de la Maison Miroir. Je connais chaque pièce du salon et chaque œuvre de la galerie, et je peux vous faire porter les pièces."), locale);
   }
   if (has(text, INTENTS.help)) {
-    return reply(L("Ask me about a piece, a price, the frame for your face, or the try-on. I can also guide you through the salon.", "Demandez-moi une pièce, un prix, la monture pour votre visage, ou l'essayage. Je peux aussi vous guider dans le salon."), locale);
+    return reply(L("Ask me about a piece, a price, the frame for your face, or the try-on. I can also guide you through the salon and the gallery.", "Demandez-moi une pièce, un prix, la monture pour votre visage, ou l'essayage. Je peux aussi vous guider dans le salon et la galerie."), locale);
   }
   if (has(text, INTENTS.thanks)) return reply(L("A pleasure. I remain at your service.", "Avec plaisir. Je reste à votre service."), locale);
   if (has(text, INTENTS.greeting)) return reply(L("Good day, and welcome to Maison Miroir. How may I help you?", "Bonjour, et bienvenue à la Maison Miroir. Comment puis-je vous aider ?"), locale);

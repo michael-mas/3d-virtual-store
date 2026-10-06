@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { ARTWORKS } from "@/lib/gallery/artworks";
 import { CATEGORY_LABELS, PRODUCTS, TRY_ON_ZONES } from "@/lib/products";
 import { ERROR_COPY } from "@/lib/tryon/errors";
 import { ALL_HINTS, STATUS_TEXT } from "@/lib/tryon/hints";
@@ -28,7 +29,7 @@ function literalKeys(): string[] {
   return [...keys];
 }
 
-/** Everything the schema-generated UI shows: option labels and values, zones, categories, taglines. */
+/** Everything the schema-generated UI shows: option labels and values, zones, categories, taglines; the artworks. */
 function schemaKeys(): string[] {
   const keys = new Set<string>();
   for (const p of PRODUCTS) {
@@ -42,6 +43,8 @@ function schemaKeys(): string[] {
   }
   TRY_ON_ZONES.forEach((z) => keys.add(z.label));
   Object.values(CATEGORY_LABELS).forEach((c) => keys.add(c));
+  // The gallery's labels and the concierge's stories (titles and artists are proper names).
+  ARTWORKS.forEach((a) => keys.add(a.medium).add(a.note));
   return [...keys];
 }
 

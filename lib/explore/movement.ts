@@ -1,6 +1,7 @@
 import type { Obstacle, Pedestal, Vec2 } from "./layout";
 
-export type Bounds = { halfWidth: number; halfDepth: number };
+/** The walkable rectangle on the floor plan (walls inside it are obstacles). */
+export type Bounds = { minX: number; maxX: number; minZ: number; maxZ: number };
 
 /** Closest point to p on the obstacle's segment a–b (its center, for a circle). */
 export function closestOnSegment(p: Vec2, o: Obstacle): Vec2 {
@@ -38,8 +39,8 @@ export function resolveCollisions(p: Vec2, radius: number, bounds: Bounds, obsta
         moved = true;
       }
     }
-    const cx = Math.min(Math.max(x, -bounds.halfWidth + radius), bounds.halfWidth - radius);
-    const cz = Math.min(Math.max(z, -bounds.halfDepth + radius), bounds.halfDepth - radius);
+    const cx = Math.min(Math.max(x, bounds.minX + radius), bounds.maxX - radius);
+    const cz = Math.min(Math.max(z, bounds.minZ + radius), bounds.maxZ - radius);
     if (cx !== x || cz !== z) moved = true;
     x = cx;
     z = cz;
@@ -50,7 +51,7 @@ export function resolveCollisions(p: Vec2, radius: number, bounds: Bounds, obsta
 
 /** True when a circle of `radius` at p touches no obstacle and stays inside the room. */
 export function isFree(p: Vec2, radius: number, bounds: Bounds, obstacles: readonly Obstacle[]): boolean {
-  if (Math.abs(p[0]) > bounds.halfWidth - radius || Math.abs(p[1]) > bounds.halfDepth - radius) return false;
+  if (p[0] < bounds.minX + radius || p[0] > bounds.maxX - radius || p[1] < bounds.minZ + radius || p[1] > bounds.maxZ - radius) return false;
   return obstacles.every((o) => {
     const c = closestOnSegment(p, o);
     return Math.hypot(p[0] - c[0], p[1] - c[1]) >= radius + o.radius - 1e-9;

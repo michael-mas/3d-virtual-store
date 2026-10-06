@@ -5,7 +5,8 @@ import type CameraControlsImpl from "camera-controls";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { BackSide, BoxGeometry, CylinderGeometry, Mesh, MeshBasicMaterial } from "three/webgpu";
-import { FLOOR_Y, OBSTACLES, PEDESTAL, PEDESTALS, ROOM, productPosition } from "@/lib/explore/layout";
+import { door, DOOR_PASSABLE } from "@/lib/explore/door";
+import { DOOR_OBSTACLE, FLOOR_Y, GALLERY, OBSTACLES, PEDESTAL, PEDESTALS, ROOM, WALK_BOUNDS, WALL_OBSTACLES, productPosition, type Obstacle } from "@/lib/explore/layout";
 import { player } from "@/lib/explore/player";
 import { previewFraming } from "@/lib/preview";
 import { isTryOnMode } from "@/lib/modes";
@@ -33,38 +34,47 @@ const VITRINE = { depth: 0.34, width: 1.7, bottom: 0.4, top: 2.4, z: [-2.4, 0, 2
 /** Decor collider height (plants, benches, consoles), above anything the camera could pass over. */
 const DECOR_HEIGHT = 2.2;
 
+/** Walls keep the camera this much further away than their own thickness (m). */
+const WALL_CAMERA_CLEARANCE = 0.18;
+
+/** A capsule on the floor plan, extruded up: a cylinder at each end and a box between them. */
+function extrude(o: Obstacle, height: number, material: MeshBasicMaterial, inflate = 0): Mesh[] {
+  const radius = o.radius + inflate;
+  const ends = [o.a, o.b].map((p) => {
+    const mesh = new Mesh(new CylinderGeometry(radius, radius, height, 12), material);
+    mesh.position.set(p[0], FLOOR_Y + height / 2, p[1]);
+    return mesh;
+  });
+  const length = Math.hypot(o.b[0] - o.a[0], o.b[1] - o.a[1]);
+  if (length < 1e-6) return ends.slice(0, 1);
+  const box = new Mesh(new BoxGeometry(length, height, radius * 2), material);
+  box.position.set((o.a[0] + o.b[0]) / 2, FLOOR_Y + height / 2, (o.a[1] + o.b[1]) / 2);
+  box.rotation.y = -Math.atan2(o.b[1] - o.a[1], o.b[0] - o.a[0]);
+  return [...ends, box];
+}
+
 /**
  * Invisible volumes the third-person camera may not enter (camera-controls' colliders: when one comes between the
  * player and the camera, the camera moves in front of it, like a spring arm). Without them the camera, 1.5 m behind
- * the player, ends up inside the entrance door, a vitrine or a plant, and the view is filled with a dark surface.
- * The room is a box seen from inside, inset from the walls; every obstacle the player walks around is a cylinder;
- * the side-wall vitrines are boxes.
+ * the player, ends up inside a wall, a vitrine or a plant, and the view is filled with a dark surface.
+ * The salon and the gallery share a box seen from inside, inset from the outer walls; the walls between them, and
+ * every obstacle the player walks around, are extruded from the floor plan; the side-wall vitrines are boxes; the
+ * gallery door is a separate collider, in force while it is closed.
  */
-function createColliders(): Mesh[] {
+function createColliders(): { fixed: Mesh[]; door: Mesh[] } {
   const material = new MeshBasicMaterial({ side: BackSide });
   const roomHeight = ROOM.height;
-  const room = new Mesh(
-    new BoxGeometry((ROOM.halfWidth - WALL_CLEARANCE) * 2, roomHeight, (ROOM.halfDepth - WALL_CLEARANCE) * 2),
-    material,
-  );
-  room.position.y = FLOOR_Y + roomHeight / 2;
+  const width = WALK_BOUNDS.maxX - WALK_BOUNDS.minX - WALL_CLEARANCE * 2;
+  const depth = WALK_BOUNDS.maxZ - WALK_BOUNDS.minZ - WALL_CLEARANCE * 2;
+  const room = new Mesh(new BoxGeometry(width, roomHeight, depth), material);
+  room.position.set((WALK_BOUNDS.minX + WALK_BOUNDS.maxX) / 2, FLOOR_Y + roomHeight / 2, (WALK_BOUNDS.minZ + WALK_BOUNDS.maxZ) / 2);
   const solid = new MeshBasicMaterial();
   const pedestalHeight = PEDESTAL.top - FLOOR_Y;
-  const obstacles = OBSTACLES.flatMap((o, i) => {
-    const height = i < PEDESTALS.length ? pedestalHeight : DECOR_HEIGHT;
-    // A capsule on the floor plan, extruded up: a cylinder at each end and a box between them.
-    const ends = [o.a, o.b].map((p) => {
-      const mesh = new Mesh(new CylinderGeometry(o.radius, o.radius, height, 12), solid);
-      mesh.position.set(p[0], FLOOR_Y + height / 2, p[1]);
-      return mesh;
-    });
-    const length = Math.hypot(o.b[0] - o.a[0], o.b[1] - o.a[1]);
-    if (length < 1e-6) return ends.slice(0, 1);
-    const box = new Mesh(new BoxGeometry(length, height, o.radius * 2), solid);
-    box.position.set((o.a[0] + o.b[0]) / 2, FLOOR_Y + height / 2, (o.a[1] + o.b[1]) / 2);
-    box.rotation.y = -Math.atan2(o.b[1] - o.a[1], o.b[0] - o.a[0]);
-    return [...ends, box];
-  });
+  const obstacles = OBSTACLES.flatMap((o, i) =>
+    WALL_OBSTACLES.includes(o)
+      ? extrude(o, GALLERY.height, solid, WALL_CAMERA_CLEARANCE)
+      : extrude(o, i < PEDESTALS.length ? pedestalHeight : DECOR_HEIGHT, solid),
+  );
   const vitrines = [-1, 1].flatMap((side) =>
     VITRINE.z.map((z) => {
       const mesh = new Mesh(new BoxGeometry(VITRINE.depth * 2, VITRINE.top - VITRINE.bottom, VITRINE.width), solid);
@@ -72,12 +82,13 @@ function createColliders(): Mesh[] {
       return mesh;
     }),
   );
-  const colliders = [room, ...obstacles, ...vitrines];
-  for (const c of colliders) {
+  const doorColliders = extrude(DOOR_OBSTACLE, GALLERY.door.height, solid, WALL_CAMERA_CLEARANCE);
+  const fixed = [room, ...obstacles, ...vitrines];
+  for (const c of [...fixed, ...doorColliders]) {
     c.visible = false;
     c.updateMatrixWorld(true);
   }
-  return colliders;
+  return { fixed, door: doorColliders };
 }
 
 /** Behind the player, facing the nearest pedestal (or -Z at spawn). */
@@ -132,15 +143,10 @@ export default function CameraRig() {
   const productId = useAppStore((s) => s.activeProductId);
   const reducedMotion = useReducedMotion();
   const lastPlayer = useRef<[number, number]>([...player.position]);
+  // Kept for the app's lifetime (never disposed: see Concierge on memoized GPU resources).
   const colliders = useMemo(() => createColliders(), []);
-  useEffect(
-    () => () => {
-      for (const c of colliders) c.geometry.dispose();
-      (colliders[0].material as MeshBasicMaterial).dispose();
-      (colliders[1]?.material as MeshBasicMaterial | undefined)?.dispose();
-    },
-    [colliders],
-  );
+  const withDoor = useMemo(() => [...colliders.fixed, ...colliders.door], [colliders]);
+  const doorClosed = useRef(true);
 
   useEffect(() => {
     const c = controls.current;
@@ -149,7 +155,8 @@ export default function CameraRig() {
     // (the wheel walks, see Player). CUSTOMIZE: regular orbit + dolly + truck around the product.
     const { ACTION } = c.constructor as typeof CameraControlsImpl;
     // Colliders only while walking: in CUSTOMIZE the camera is close to the product, above its pedestal.
-    c.colliderMeshes = mode === "EXPLORE" ? colliders : [];
+    doorClosed.current = door.amount < DOOR_PASSABLE;
+    c.colliderMeshes = mode === "EXPLORE" ? (doorClosed.current ? withDoor : colliders.fixed) : [];
     if (mode === "EXPLORE") {
       c.mouseButtons = { left: ACTION.ROTATE, middle: ACTION.NONE, right: ACTION.NONE, wheel: ACTION.NONE };
       c.touches = { one: ACTION.TOUCH_ROTATE, two: ACTION.NONE, three: ACTION.NONE };
@@ -162,12 +169,18 @@ export default function CameraRig() {
     const pose = mode === "EXPLORE" ? explorePose() : mode === "CUSTOMIZE" ? customizePose(productId) : null;
     if (pose) void c.setLookAt(...pose.position, ...pose.target, true);
     lastPlayer.current = [...player.position];
-  }, [mode, productId, colliders]);
+  }, [mode, productId, colliders, withDoor]);
 
   // EXPLORE: the camera follows the player (target and camera move together; drag still orbits).
   useFrame(() => {
     const c = controls.current;
     if (!c || mode !== "EXPLORE") return;
+    // The closed gallery door stops the camera too.
+    const closed = door.amount < DOOR_PASSABLE;
+    if (closed !== doorClosed.current) {
+      doorClosed.current = closed;
+      c.colliderMeshes = closed ? withDoor : colliders.fixed;
+    }
     const [px, pz] = player.position;
     const [lx, lz] = lastPlayer.current;
     if (Math.abs(px - lx) + Math.abs(pz - lz) < 1e-5) return;

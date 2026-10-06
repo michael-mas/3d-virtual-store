@@ -1,34 +1,34 @@
 import { describe, expect, it } from "vitest";
-import { INTERACT_RADIUS, OBSTACLES, PEDESTAL, PEDESTALS, PLAYER_RADIUS, ROOM, SPAWN } from "./layout";
+import { INTERACT_RADIUS, OBSTACLES, PEDESTAL, PEDESTALS, PLAYER_RADIUS, WALK_BOUNDS, SPAWN } from "./layout";
 import { approachPoint, cameraRelative, nearestPedestal, resolveCollisions, steerAround, stepMotion, WALK, type Motion } from "./movement";
 
 const obstacles = OBSTACLES;
 
 describe("resolveCollisions", () => {
   it("pushes the player out of a pedestal", () => {
-    const [x, z] = resolveCollisions([0.1, 0.1], PLAYER_RADIUS, ROOM, obstacles);
+    const [x, z] = resolveCollisions([0.1, 0.1], PLAYER_RADIUS, WALK_BOUNDS, obstacles);
     expect(Math.hypot(x, z)).toBeCloseTo(PLAYER_RADIUS + PEDESTAL.collisionRadius, 6);
   });
 
   it("keeps the player inside the room", () => {
-    const [x, z] = resolveCollisions([100, -100], PLAYER_RADIUS, ROOM, obstacles);
-    expect(x).toBe(ROOM.halfWidth - PLAYER_RADIUS);
-    expect(z).toBe(-ROOM.halfDepth + PLAYER_RADIUS);
+    const [x, z] = resolveCollisions([100, -100], PLAYER_RADIUS, WALK_BOUNDS, obstacles);
+    expect(x).toBe(WALK_BOUNDS.maxX - PLAYER_RADIUS);
+    expect(z).toBe(WALK_BOUNDS.minZ + PLAYER_RADIUS);
   });
 
   it("keeps the player out of the benches and plants", () => {
     // Middle and both ends of the bench at (-3.2, 2.2), rotated along z.
     for (const z of [2.2, 1.6, 2.8]) {
-      const [x, z2] = resolveCollisions([-3.2, z], PLAYER_RADIUS, ROOM, obstacles);
+      const [x, z2] = resolveCollisions([-3.2, z], PLAYER_RADIUS, WALK_BOUNDS, obstacles);
       expect(Math.hypot(x + 3.2, z2 - z)).toBeGreaterThan(0.3);
     }
     // Walking into the corner plant at (4.3, 3.8) from the room.
-    const [px, pz] = resolveCollisions([4.05, 3.55], PLAYER_RADIUS, ROOM, obstacles);
+    const [px, pz] = resolveCollisions([4.05, 3.55], PLAYER_RADIUS, WALK_BOUNDS, obstacles);
     expect(Math.hypot(px - 4.3, pz - 3.8)).toBeCloseTo(PLAYER_RADIUS + 0.35, 6);
   });
 
   it("leaves free positions untouched", () => {
-    expect(resolveCollisions(SPAWN, PLAYER_RADIUS, ROOM, obstacles)).toEqual(SPAWN);
+    expect(resolveCollisions(SPAWN, PLAYER_RADIUS, WALK_BOUNDS, obstacles)).toEqual(SPAWN);
   });
 });
 
@@ -46,7 +46,7 @@ describe("nearestPedestal", () => {
   it("every approach point is reachable (outside collision) and within interaction range", () => {
     for (const p of PEDESTALS) {
       const spot = approachPoint(p, SPAWN, 0.9);
-      expect(resolveCollisions(spot, PLAYER_RADIUS, ROOM, obstacles)).toEqual(spot);
+      expect(resolveCollisions(spot, PLAYER_RADIUS, WALK_BOUNDS, obstacles)).toEqual(spot);
       expect(nearestPedestal(spot, PEDESTALS, INTERACT_RADIUS)?.productId).toBe(p.productId);
     }
   });
@@ -141,7 +141,7 @@ describe("pedestal footprint", () => {
     let m: Motion = { position: from, velocity: [0, 0], target: null };
     for (let i = 0; i < seconds * 60; i++) {
       const next = stepMotion(m, dir, 1 / 60, WALK, 1, { radius: PLAYER_RADIUS, obstacles });
-      m = { ...next, position: resolveCollisions(next.position, PLAYER_RADIUS, ROOM, obstacles) };
+      m = { ...next, position: resolveCollisions(next.position, PLAYER_RADIUS, WALK_BOUNDS, obstacles) };
     }
     return m.position;
   }

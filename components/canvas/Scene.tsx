@@ -36,17 +36,24 @@ quietThreeConsole();
 
 // The concierge: its own chunk (it shares the face topology with the mannequin), fetched once the salon is shown.
 const Concierge = lazy(() => import("./Concierge"));
+// The gallery behind the entrance wall: its own chunk too (works and sculptures), fetched once the salon is shown.
+const Gallery = lazy(() => import("./Gallery"));
 
 // Surface (face mesh) layer: its own chunk (topology data), fetched on the first try-on or prefetched in CUSTOMIZE.
 const SurfaceLayer = lazy(loadSurfaceLayer);
 
-/** Mounted once the salon is shown, so it never delays the first frame; kept mounted afterwards. */
-function LazyConcierge() {
+/** The concierge and the gallery: mounted once the salon is shown, so they never delay the first frame; kept. */
+function AfterFirstFrame() {
   const ready = useAppStore((s) => s.sceneReady);
   return ready ? (
-    <Suspense fallback={null}>
-      <Concierge />
-    </Suspense>
+    <>
+      <Suspense fallback={null}>
+        <Concierge />
+      </Suspense>
+      <Suspense fallback={null}>
+        <Gallery />
+      </Suspense>
+    </>
   ) : null;
 }
 
@@ -117,7 +124,7 @@ export default function Scene() {
         <SceneReadyMarker />
       </Suspense>
       <Player />
-      <LazyConcierge />
+      <AfterFirstFrame />
       <InteractPrompt />
       <CartParticles />
       <CameraRig />

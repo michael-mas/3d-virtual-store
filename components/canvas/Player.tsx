@@ -6,9 +6,11 @@ import { color } from "three/tsl";
 import { MeshBasicNodeMaterial, Vector3, type Mesh } from "three/webgpu";
 import { isDebugEnabled } from "@/lib/debug";
 import { bindKeyboard, isRunning, moveAxes } from "@/lib/explore/input";
-import { FLOOR_Y, INTERACT_RADIUS, OBSTACLES, PEDESTALS, PLAYER_RADIUS, ROOM, type Vec2 } from "@/lib/explore/layout";
+import { walkObstacles } from "@/lib/explore/door";
+import { FLOOR_Y, INTERACT_RADIUS, PEDESTALS, PLAYER_RADIUS, WALK_BOUNDS, type Vec2 } from "@/lib/explore/layout";
 import { cameraRelative, nearestPedestal, resolveCollisions, stepMotion, WALK } from "@/lib/explore/movement";
 import { advancePath, player, walkGoal, walkTo } from "@/lib/explore/player";
+import { inGallery, nearestArtwork } from "@/lib/gallery/artworks";
 import { useAppStore } from "@/store/useAppStore";
 
 const RUN_MULTIPLIER = 1.8;
@@ -21,8 +23,8 @@ const WHEEL_MAX_STEP = 0.6;
  * - keyboard (WASD / ZQSD / arrows, Shift to run), relative to where the camera looks;
  * - mouse wheel walks forward / backward along the view direction;
  * - click / tap on the floor walks there (secondary, mostly for touch).
- * Smooth acceleration/braking, circle collisions against pedestals and walls, and distance-based pedestal
- * proximity (published to the store only when it changes).
+ * Smooth acceleration/braking, circle collisions against pedestals and walls, and distance-based pedestal and
+ * artwork proximity (published to the store only when it changes).
  */
 export default function Player() {
   const gl = useThree((s) => s.gl);
@@ -75,15 +77,17 @@ export default function Player() {
       advancePath();
       const next = stepMotion(player, input, Math.min(delta, 0.1), WALK, isRunning() ? RUN_MULTIPLIER : 1, {
         radius: PLAYER_RADIUS,
-        obstacles: OBSTACLES,
+        obstacles: walkObstacles(),
       });
-      const resolved = resolveCollisions(next.position, PLAYER_RADIUS, ROOM, OBSTACLES);
+      const resolved = resolveCollisions(next.position, PLAYER_RADIUS, WALK_BOUNDS, walkObstacles());
       player.position = resolved;
       player.velocity = next.velocity;
       player.target = next.target;
       // Keyboard input (or arrival) ends a walk.
       if (!next.target) player.path = [];
       useAppStore.getState().setNearPedestal(nearestPedestal(player.position, PEDESTALS, INTERACT_RADIUS)?.productId ?? null);
+      useAppStore.getState().setNearArtwork(nearestArtwork(player.position)?.id ?? null);
+      useAppStore.getState().setInGallery(inGallery(player.position));
     } else {
       player.velocity = [0, 0];
       player.target = null;

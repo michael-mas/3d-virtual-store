@@ -39,6 +39,12 @@ export type WorldSlice = {
   /** Product whose pedestal the player is standing near in EXPLORE (null if none). */
   nearPedestal: string | null;
   setNearPedestal: (productId: string | null) => void;
+  /** Gallery work the player stands before in EXPLORE (null if none). */
+  nearArtwork: string | null;
+  setNearArtwork: (artworkId: string | null) => void;
+  /** The player is in the gallery (past the entrance wall) in EXPLORE. */
+  inGallery: boolean;
+  setInGallery: (inGallery: boolean) => void;
   /** Selects the product and fires INTERACT (EXPLORE → CUSTOMIZE). */
   interactWith: (productId: string) => boolean;
   /** Applies a mode event via the transition table. Returns false (and ignores it) if invalid. */
@@ -64,6 +70,14 @@ export const createWorldSlice: Slice<WorldSlice> = (set, get) => ({
   nearPedestal: null,
   setNearPedestal: (nearPedestal) => {
     if (get().nearPedestal !== nearPedestal) set({ nearPedestal });
+  },
+  nearArtwork: null,
+  setNearArtwork: (nearArtwork) => {
+    if (get().nearArtwork !== nearArtwork) set({ nearArtwork });
+  },
+  inGallery: false,
+  setInGallery: (inGallery) => {
+    if (get().inGallery !== inGallery) set({ inGallery });
   },
   interactWith: (productId) => {
     if (get().mode !== "EXPLORE") return get().transition("INTERACT");

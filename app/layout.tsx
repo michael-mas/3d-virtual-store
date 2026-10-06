@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { preload } from "react-dom";
 import FrameErrorWatchdog from "@/components/canvas/FrameErrorWatchdog";
 import SceneCanvas from "@/components/canvas/SceneCanvas";
+import ArtworkLabel from "@/components/dom/ArtworkLabel";
 import BackendBadge from "@/components/dom/BackendBadge";
 import CalibrationPanel from "@/components/dom/CalibrationPanel";
 import CartDrawer from "@/components/dom/CartDrawer";
@@ -76,6 +77,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <FrameErrorWatchdog />
         <div className="pointer-events-none relative h-full">{children}</div>
         <ConciergePanel />
+        <ArtworkLabel />
         <CustomizerPanel />
         <TryOnPanel />
         <PhotoModal />

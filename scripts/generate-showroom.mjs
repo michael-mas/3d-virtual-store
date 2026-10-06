@@ -72,7 +72,10 @@ const _l = new THREE.Vector3();
  * Bakes lighting into vertex colors. `emissive` (a color or a function of the position) replaces lighting.
  * `gloss` adds a view-independent sheen proportional to the incoming light (brass, lacquer).
  */
-function bake(geo, albedo, { emissive = null, ao = null, gloss = 0 } = {}) {
+/** A lit room: its lights and its box (for ambient occlusion in the corners). */
+const SALON = { lights: null, minX: -HW, maxX: HW, minZ: -HD, maxZ: HD, ceil: CEIL };
+function bake(geo, albedo, { emissive = null, ao = null, gloss = 0, room: r = SALON } = {}) {
+  const roomLights = r.lights ?? lights;
   const g = geo.index ? geo.toNonIndexed() : geo;
   g.computeVertexNormals();
   const pos = g.getAttribute("position");
@@ -87,7 +90,7 @@ function bake(geo, albedo, { emissive = null, ao = null, gloss = 0 } = {}) {
       c = typeof emissive === "function" ? emissive(p) : emissive.clone();
     } else {
       const light = AMBIENT.clone();
-      for (const L of lights) {
+      for (const L of roomLights) {
         _l.copy(L.pos).sub(p);
         const d = _l.length();
         _l.normalize();
@@ -104,13 +107,13 @@ function bake(geo, albedo, { emissive = null, ao = null, gloss = 0 } = {}) {
       c = light.clone().multiply(albedo);
       if (gloss) c.add(light.multiplyScalar(gloss * 0.12));
       // Ambient occlusion: creases where walls meet the floor and the ceiling.
-      const wallDist = Math.min(HW - Math.abs(p.x), HD - Math.abs(p.z));
+      const wallDist = Math.min(p.x - r.minX, r.maxX - p.x, p.z - r.minZ, r.maxZ - p.z);
       const floorDist = p.y - floorY;
       let occ = 1 - 0.45 * Math.exp(-wallDist / 0.35) * Math.exp(-Math.max(floorDist, 0) / 0.5);
-      occ *= 1 - 0.4 * Math.exp(-wallDist / 0.3) * Math.exp(-Math.max(CEIL - p.y, 0) / 0.4);
+      occ *= 1 - 0.4 * Math.exp(-wallDist / 0.3) * Math.exp(-Math.max(r.ceil - p.y, 0) / 0.4);
       // Contact shadows on the floor.
       if (floorDist < 0.02) {
-        for (const s of shadowCasters) {
+        for (const s of r.shadowCasters ?? shadowCasters) {
           const d = Math.hypot(p.x - s.x, p.z - s.z) - s.r;
           occ *= 1 - s.strength * Math.exp(-Math.max(d, 0) / s.falloff);
         }
@@ -180,7 +183,14 @@ function placeWall(width, ry, x, z) {
   parts.push(bake(at(new THREE.BoxGeometry(width, 0.022, 0.05, Math.ceil(width / 0.2), 1, 1).translate(0, FLUTE_TOP + 0.011, 0.02), x, floorY, z, ry), BRASS, { gloss: 1 }));
 }
 placeWall(HW * 2, 0, 0, -HD); // back
-placeWall(HW * 2, Math.PI, 0, HD); // front
+// Front: two segments either side of the gallery doorway, and a plaster lintel over it.
+const gallery = layout.gallery;
+const OPEN_HW = gallery.door.halfWidth + 0.06;
+const OPEN_H = gallery.door.height + 0.06;
+const segment = HW - OPEN_HW;
+placeWall(segment, Math.PI, -(OPEN_HW + segment / 2), HD);
+placeWall(segment, Math.PI, OPEN_HW + segment / 2, HD);
+parts.push(bake(at(new THREE.PlaneGeometry(OPEN_HW * 2, room.height - OPEN_H, 6, 3).translate(0, OPEN_H + (room.height - OPEN_H) / 2, 0), 0, floorY, HD, Math.PI), PLASTER));
 placeWall(HD * 2, Math.PI / 2, -HW, 0); // left
 placeWall(HD * 2, -Math.PI / 2, HW, 0); // right
 
@@ -233,24 +243,17 @@ for (const x of [-3.7, -1.85, 0, 1.85, 3.7]) {
 // ---------------------------------------------------------------- entrance wall: doors, monograms, consoles
 // Everything faces -z (into the salon): built in the XY plane, turned half a turn, placed against the wall.
 const front = (geo, x, y, depth) => at(geo, x, y, HD - depth, Math.PI);
-// Arched double doors, glazed, onto the night street.
-const DOOR_W = 1.7;
-const DOOR_H = 2.75;
-parts.push(bake(front(new THREE.ShapeGeometry(archShape(DOOR_W / 2 + 0.06, 0, DOOR_H + 0.06), 32), 0, floorY, 0.05), BRASS, { gloss: 1 }));
-parts.push(
-  bake(front(new THREE.ShapeGeometry(archShape(DOOR_W / 2, 0, DOOR_H), 32), 0, floorY, 0.055), null, {
-    emissive: (p) => {
-      // Night outside: deep blue sky above, the warm glow of the street lamps low.
-      const t = Math.min(Math.max((p.y - floorY) / DOOR_H, 0), 1);
-      return C(0.09, 0.06, 0.035).lerp(C(0.012, 0.018, 0.04), Math.sqrt(t));
-    },
-  }),
-);
-// Mullions: center stile, transom, and two pull handles.
-parts.push(bake(front(new THREE.BoxGeometry(0.035, DOOR_H - DOOR_W / 2, 0.03), 0, floorY + (DOOR_H - DOOR_W / 2) / 2, 0.075), BRASS, { gloss: 1 }));
-parts.push(bake(front(new THREE.BoxGeometry(DOOR_W, 0.03, 0.03), 0, floorY + DOOR_H - DOOR_W / 2, 0.075), BRASS, { gloss: 1 }));
-for (const x of [-0.09, 0.09]) {
-  parts.push(bake(front(new THREE.CylinderGeometry(0.012, 0.012, 0.55, 12), x, floorY + 1.05, 0.12), BRASS, { gloss: 1 }));
+// The gallery doorway: a brass portal (jambs and head) through the wall's thickness; the glazed leaves are
+// animated at runtime (components/canvas/Gallery.tsx).
+{
+  const t = gallery.wall;
+  const zMid = HD + t / 2;
+  for (const side of [-1, 1]) {
+    parts.push(bake(at(new THREE.BoxGeometry(0.06, OPEN_H, t + 0.04), side * (gallery.door.halfWidth + 0.03), floorY + OPEN_H / 2, zMid), BRASS, { gloss: 1 }));
+  }
+  parts.push(bake(at(new THREE.BoxGeometry(OPEN_HW * 2, 0.06, t + 0.04), 0, floorY + OPEN_H - 0.03, zMid), BRASS, { gloss: 1 }));
+  // Threshold: a brass strip across the floor.
+  parts.push(bake(at(new THREE.BoxGeometry(gallery.door.halfWidth * 2, 0.006, t), 0, floorY + 0.003, zMid), BRASS, { gloss: 1 }));
 }
 // Monogram plaques either side: an M inside an arch, in brass on black lacquer (the house mark, as in the icon).
 function monogram(x) {
@@ -434,6 +437,91 @@ for (const [x, z] of layout.decor.plants) {
 
 // Floor last, now that every shadow caster is known.
 parts.push(...floorParts());
+
+// ---------------------------------------------------------------- the gallery behind the entrance wall
+// A contemporary art room in the house's palette: waxed black concrete, charcoal plaster, a thin brass line at the
+// plinth, brass ceiling tracks; every work has its own spot (baked here, with the gallery's own lights only).
+{
+  const g = gallery;
+  const z0 = HD + g.wall;
+  const z1 = z0 + g.depth;
+  const gw = g.halfWidth;
+  const gCeil = floorY + g.height;
+  const CONCRETE = C(0.026, 0.025, 0.025);
+  const CHARCOAL = C(0.06, 0.057, 0.054);
+  const SPOT = C(1.0, 0.86, 0.7);
+  const workPos = (w) => {
+    const y = floorY + g.workCenterY;
+    if (w.wall === "left") return { p: new THREE.Vector3(-gw, y, w.at), n: new THREE.Vector3(1, 0, 0) };
+    if (w.wall === "right") return { p: new THREE.Vector3(gw, y, w.at), n: new THREE.Vector3(-1, 0, 0) };
+    if (w.wall === "back") return { p: new THREE.Vector3(w.at, y, z1), n: new THREE.Vector3(0, 0, -1) };
+    return { p: new THREE.Vector3(w.at, y, z0), n: new THREE.Vector3(0, 0, 1) };
+  };
+  const galleryLights = [
+    // A tight wall-washer on every work, from the ceiling 1.2 m out.
+    ...g.works.map((w) => {
+      const { p, n } = workPos(w);
+      const from = p.clone().addScaledVector(n, 1.2).setY(gCeil - 0.05);
+      return { pos: from, color: SPOT.clone().multiplyScalar(2.6), range: 2.8, dir: p.clone().sub(from).normalize(), inner: 0.97, outer: 0.88 };
+    }),
+    // A downlight on every plinth.
+    ...g.plinths.map(([x, z]) => ({ pos: new THREE.Vector3(x, gCeil - 0.05, z), color: SPOT.clone().multiplyScalar(2.4), range: 2.6, dir: new THREE.Vector3(0, -1, 0), inner: 0.98, outer: 0.92 })),
+    // Low fill.
+    { pos: new THREE.Vector3(0, gCeil - 0.4, (z0 + z1) / 2), color: C(0.07, 0.065, 0.06), range: 5 },
+  ];
+  const GALLERY_ROOM = {
+    lights: galleryLights,
+    minX: -gw,
+    maxX: gw,
+    minZ: z0,
+    maxZ: z1,
+    ceil: gCeil,
+    shadowCasters: [
+      ...g.plinths.map(([x, z]) => ({ x, z, r: 0.3, strength: 0.7, falloff: 0.25 })),
+      { x: g.bench.position[0], z: g.bench.position[1], r: 0.4, strength: 0.5, falloff: 0.3 },
+    ],
+  };
+  const gb = (geo, albedo, opts = {}) => parts.push(bake(geo, albedo, { ...opts, room: GALLERY_ROOM }));
+
+  // Floor and ceiling.
+  gb(new THREE.PlaneGeometry(gw * 2, g.depth, 80, 80).rotateX(-Math.PI / 2).translate(0, floorY, (z0 + z1) / 2), CONCRETE, { gloss: 0.5 });
+  gb(new THREE.PlaneGeometry(gw * 2, g.depth, 8, 8).rotateX(Math.PI / 2).translate(0, gCeil, (z0 + z1) / 2), C(0.018, 0.018, 0.019));
+
+  // Walls (facing into the room), each with a black plinth and a brass line.
+  const wallPlane = (width, x, z, ry) => {
+    gb(at(new THREE.PlaneGeometry(width, g.height, Math.ceil(width / 0.25), 14).translate(0, g.height / 2, 0), x, floorY, z, ry), CHARCOAL);
+    gb(at(new THREE.BoxGeometry(width, 0.12, 0.02, Math.ceil(width / 0.25), 1, 1).translate(0, 0.06, 0.01), x, floorY, z, ry), PLINTH);
+    gb(at(new THREE.BoxGeometry(width, 0.008, 0.024).translate(0, 0.124, 0.012), x, floorY, z, ry), BRASS, { gloss: 1 });
+  };
+  wallPlane(g.depth, -gw, (z0 + z1) / 2, Math.PI / 2); // left, facing +x
+  wallPlane(g.depth, gw, (z0 + z1) / 2, -Math.PI / 2); // right, facing -x
+  wallPlane(gw * 2, 0, z1, Math.PI); // back, facing -z
+  // Front (the entrance wall's gallery side), facing +z, around the doorway.
+  const side = gw - OPEN_HW;
+  wallPlane(side, -(OPEN_HW + side / 2), z0, 0);
+  wallPlane(side, OPEN_HW + side / 2, z0, 0);
+  gb(new THREE.PlaneGeometry(OPEN_HW * 2, g.height - OPEN_H, 4, 3).translate(0, floorY + OPEN_H + (g.height - OPEN_H) / 2, z0), CHARCOAL);
+
+  // Ceiling tracks with spot cans aimed at the works and plinths.
+  for (const x of [-1.9, 1.9]) gb(new THREE.BoxGeometry(0.035, 0.03, g.depth - 0.6).translate(x, gCeil - 0.03, (z0 + z1) / 2), BRASS, { gloss: 1 });
+  for (const L of galleryLights.slice(0, -1)) {
+    gb(new THREE.CylinderGeometry(0.035, 0.045, 0.12, 16).translate(L.pos.x, gCeil - 0.08, L.pos.z), PLINTH, { gloss: 0.6 });
+    parts.push(bake(new THREE.CircleGeometry(0.03, 16).rotateX(Math.PI / 2).translate(L.pos.x, gCeil - 0.141, L.pos.z), null, { emissive: C(2.6, 2.1, 1.5) }));
+  }
+
+  // Plinths: black stone blocks with a thin brass band at the top edge.
+  for (const [x, z] of g.plinths) {
+    gb(new THREE.BoxGeometry(0.5, g.plinthHeight, 0.5, 4, 8, 4).translate(x, floorY + g.plinthHeight / 2, z), PLINTH, { gloss: 0.4 });
+    gb(new THREE.BoxGeometry(0.508, 0.012, 0.508).translate(x, floorY + g.plinthHeight + 0.006, z), BRASS, { gloss: 1 });
+    gb(new THREE.BoxGeometry(0.48, 0.004, 0.48, 4, 1, 4).translate(x, floorY + g.plinthHeight + 0.014, z), PLINTH, { gloss: 0.6 });
+  }
+  // A long bench of black leather on a brass base, to sit before the works.
+  {
+    const { position: [x, z], length, depth } = g.bench;
+    gb(new THREE.BoxGeometry(length, 0.1, depth, 8, 1, 3).translate(x, floorY + 0.4, z), C(0.03, 0.026, 0.024), { gloss: 0.5 });
+    gb(new THREE.BoxGeometry(length - 0.2, 0.34, depth - 0.12).translate(x, floorY + 0.17, z), BRASS, { gloss: 1 });
+  }
+}
 
 const geo = mergeGeometries(parts);
 

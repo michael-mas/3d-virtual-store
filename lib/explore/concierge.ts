@@ -1,4 +1,5 @@
-import { OBSTACLES, ROOM, type Vec2 } from "./layout";
+import { sideOfDoor, viaDoorway, walkObstacles } from "./door";
+import { WALK_BOUNDS, type Vec2 } from "./layout";
 import { isFree, resolveCollisions } from "./movement";
 
 /** The concierge's footprint on the floor plan (m). */
@@ -30,8 +31,8 @@ const FALLBACKS: readonly [number, number][] = [
 /**
  * The spot the concierge glides to: ahead of the player and to the right of the view (so it stays in frame
  * without hiding what the player walks toward), else the first free fallback around the player (the left side,
- * closer, behind), kept clear of pedestals, decor and walls. `forward` is the camera's view direction on the floor
- * (any length).
+ * closer, behind), kept clear of pedestals, decor and walls, and on the player's side of the gallery's entrance wall.
+ * `forward` is the camera's view direction on the floor (any length).
  */
 export function conciergeSpot(player: Vec2, forward: Vec2): Vec2 {
   const f = Math.hypot(forward[0], forward[1]) || 1;
@@ -43,13 +44,14 @@ export function conciergeSpot(player: Vec2, forward: Vec2): Vec2 {
     const spot = resolveCollisions(
       [player[0] + fx * AHEAD * ahead + rx * ASIDE * aside, player[1] + fz * AHEAD * ahead + rz * ASIDE * aside],
       CONCIERGE_RADIUS,
-      ROOM,
-      OBSTACLES,
+      WALK_BOUNDS,
+      walkObstacles(),
     );
+    if (sideOfDoor(spot) !== sideOfDoor(player)) continue;
     first ??= spot;
-    if (isFree(spot, CONCIERGE_RADIUS, ROOM, OBSTACLES)) return spot;
+    if (isFree(spot, CONCIERGE_RADIUS, WALK_BOUNDS, walkObstacles())) return spot;
   }
-  return first!;
+  return first ?? resolveCollisions([player[0] - fx, player[1] - fz], CONCIERGE_RADIUS, WALK_BOUNDS, walkObstacles());
 }
 
 /** Yaw (about +y) that turns +z toward `to`, from `from`. */
@@ -59,10 +61,11 @@ export const headingTo = (from: Vec2, to: Vec2) => Math.atan2(to[0] - from[0], t
 export const angleDelta = (a: number, b: number) => Math.atan2(Math.sin(b - a), Math.cos(b - a));
 
 /**
- * One step of the concierge's glide toward `spot` (damped spring, speed-capped, kept out of obstacles), turning
- * smoothly toward `face`.
+ * One step of the concierge's glide toward `spot` (damped spring, speed-capped, kept out of obstacles; through the
+ * doorway when the spot is on the other side of the entrance wall), turning smoothly toward `face`.
  */
-export function stepConcierge(c: Concierge, spot: Vec2, face: Vec2, dt: number): Concierge {
+export function stepConcierge(c: Concierge, target: Vec2, face: Vec2, dt: number): Concierge {
+  const spot = viaDoorway(c.position, target, CONCIERGE_RADIUS);
   let vx = c.velocity[0] + ((spot[0] - c.position[0]) * STIFFNESS - c.velocity[0] * DAMPING) * dt;
   let vz = c.velocity[1] + ((spot[1] - c.position[1]) * STIFFNESS - c.velocity[1] * DAMPING) * dt;
   const speed = Math.hypot(vx, vz);
@@ -70,7 +73,7 @@ export function stepConcierge(c: Concierge, spot: Vec2, face: Vec2, dt: number):
     vx *= MAX_SPEED / speed;
     vz *= MAX_SPEED / speed;
   }
-  const position = resolveCollisions([c.position[0] + vx * dt, c.position[1] + vz * dt], CONCIERGE_RADIUS, ROOM, OBSTACLES);
+  const position = resolveCollisions([c.position[0] + vx * dt, c.position[1] + vz * dt], CONCIERGE_RADIUS, WALK_BOUNDS, walkObstacles());
   const turn = 1 - Math.exp(-5 * dt);
   const heading = c.heading + angleDelta(c.heading, headingTo(position, face)) * turn;
   return { position, velocity: [vx, vz], heading };
