@@ -40,6 +40,14 @@ export const FR: Readonly<Record<string, string>> = {
     "Bienvenue à la Maison Miroir. Approchez-vous d'une pièce, je vous la présente.",
   "Next piece: {name}": "Pièce suivante : {name}",
   "Begin the tour": "Commencer la visite",
+  Talk: "Discuter",
+  "Talk with the concierge": "Discuter avec le concierge",
+  "Conversation with the concierge": "Conversation avec le concierge",
+  "Ask the concierge…": "Posez votre question…",
+  Send: "Envoyer",
+  "Voice on": "Voix activée",
+  "Voice off": "Voix coupée",
+  "Close the conversation": "Fermer la conversation",
   "L'Aviateur suits nearly every face. Gold metal with clear lenses is the daytime classic.":
     "L'Aviateur va à presque tous les visages. Le métal or aux verres transparents est le classique de jour.",
   "Atelier 03's square line balances round and oval faces. Matte black never fails.":

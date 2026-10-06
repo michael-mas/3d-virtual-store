@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useT } from "@/hooks/useT";
 import { setAmbientMusic } from "@/lib/ambient";
+import { useAppStore } from "@/store/useAppStore";
 
 /** Ambient music on/off, next to the cart. Off by default; the bars move while it plays. */
 export default function AmbientToggle() {
-  const [on, setOn] = useState(false);
+  const on = useAppStore((s) => s.musicOn);
+  const setOn = useAppStore((s) => s.setMusicOn);
   const t = useT();
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export default function AmbientToggle() {
       aria-pressed={on}
       aria-label={t(on ? "Ambient music on" : "Ambient music off")}
       title={t(on ? "Mute the music" : "Play ambient music")}
-      onClick={() => setOn((v) => !v)}
+      onClick={() => setOn(!on)}
       className="chip flex h-[2.875rem] items-center gap-2 rounded-full px-[0.95rem] sm:px-4"
     >
       <span aria-hidden className="flex h-3.5 items-end gap-[3px]">

@@ -93,8 +93,15 @@ Maison Miroir is a fictional house, designed like a luxury boutique at night:
   engine). It walks beside the visitor with a procedural gait driven by its speed (arms swinging in opposition,
   breathing at rest), keeps them in its gaze, and in front of a pedestal turns to the piece, presents it with an
   open hand and gives its advice (bilingual, from the registry's `tip`); "Next piece" walks the visitor along a
-  guided tour. Its head is MediaPipe's canonical face, the space every face product is authored in. No model file;
-  its own chunk, mounted once the salon is shown.
+  guided tour. Its head is MediaPipe's canonical face, the space every face product is authored in, cut open at the
+  eyes and the mouth (`lib/concierge/face.ts`): black-glass eyeballs with brass irises and glowing pupils that follow
+  the visitor and blink under porcelain lids, brass brows, and a jaw opened in the vertex shader (TSL) by a viseme-like
+  envelope of what it says (`lib/concierge/speech.ts`). No model file; its own chunk, mounted once the salon is shown.
+- **Conversation.** "Talk" opens a chat with the concierge, in English or French, with no model and no server: a
+  dialogue engine (`lib/concierge/dialogue.ts`) normalizes the question, finds its intent from both languages'
+  keywords and the piece it names, and answers with quick replies and actions it carries out (walk to a piece, try
+  it on, open the cart, try the whole look, start the tour, music, language). Advice includes the frame for a face
+  shape and prices "from" the cheapest options. An optional voice uses only the browser's local voices.
 - **Threshold.** A welcome screen holds the house's wordmark over the blurred salon until "Enter the Maison"
   lifts the veil.
 - **Music.** Optional ambient music (off by default, toggle next to the cart), synthesized live with Web Audio:

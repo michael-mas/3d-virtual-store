@@ -25,6 +25,9 @@ export type WorldSlice = {
   /** The visitor passed the welcome screen ("Enter the Maison"). */
   entered: boolean;
   setEntered: () => void;
+  /** Ambient music (off by default; started from a user gesture). */
+  musicOn: boolean;
+  setMusicOn: (on: boolean) => void;
   /** Fatal rendering problem (no WebGPU/WebGL2, GPU device lost); shown instead of a blank canvas. */
   rendererError: string | null;
   setRendererError: (message: string | null) => void;
@@ -50,6 +53,8 @@ export const createWorldSlice: Slice<WorldSlice> = (set, get) => ({
   setSceneReady: () => set({ sceneReady: true }),
   entered: false,
   setEntered: () => set({ entered: true }),
+  musicOn: false,
+  setMusicOn: (musicOn) => set({ musicOn }),
   rendererError: null,
   setRendererError: (rendererError) => set({ rendererError }),
   postFx: true,

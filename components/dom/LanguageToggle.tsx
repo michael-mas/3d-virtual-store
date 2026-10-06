@@ -32,19 +32,20 @@ export function LocaleSync() {
   return null;
 }
 
+/** Applies and remembers a language choice (the switch below, the concierge on request). */
+export function chooseLocale(next: Locale) {
+  useAppStore.getState().setLocale(next);
+  try {
+    localStorage.setItem(LOCALE_STORAGE_KEY, next);
+  } catch {
+    // Storage unavailable: the choice lasts until reload.
+  }
+}
+
 /** EN | FR switch; remembers a manual choice. */
 export default function LanguageToggle() {
   const locale = useAppStore((s) => s.locale);
-  const setLocale = useAppStore((s) => s.setLocale);
-
-  const choose = (next: Locale) => {
-    setLocale(next);
-    try {
-      localStorage.setItem(LOCALE_STORAGE_KEY, next);
-    } catch {
-      // Storage unavailable: the choice lasts until reload.
-    }
-  };
+  const choose = chooseLocale;
 
   return (
     <div role="group" aria-label="Language / Langue" className="chip flex h-[2.875rem] items-center rounded-full px-1.5">
