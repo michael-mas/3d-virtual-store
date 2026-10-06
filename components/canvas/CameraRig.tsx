@@ -3,8 +3,9 @@
 import { CameraControls, PerspectiveCamera } from "@react-three/drei";
 import type CameraControlsImpl from "camera-controls";
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useRef } from "react";
-import { FLOOR_Y, PEDESTALS, productPosition } from "@/lib/explore/layout";
+import { useEffect, useMemo, useRef } from "react";
+import { BackSide, BoxGeometry, CylinderGeometry, Mesh, MeshBasicMaterial } from "three/webgpu";
+import { FLOOR_Y, OBSTACLES, PEDESTAL, PEDESTALS, ROOM, productPosition } from "@/lib/explore/layout";
 import { player } from "@/lib/explore/player";
 import { previewFraming } from "@/lib/preview";
 import { isTryOnMode } from "@/lib/modes";
@@ -20,6 +21,54 @@ type Pose = { position: Vec3; target: Vec3 };
 const LOOK_HEIGHT = 0.9;
 const FOLLOW_DISTANCE = 1.5;
 const FOLLOW_HEIGHT = 0.3;
+
+/**
+ * The camera keeps this far from the walls (m): clear of the door handles and plaques, and less than the player's
+ * own clearance, so the follow target is always inside the room collider.
+ */
+const WALL_CLEARANCE = 0.28;
+/** Side-wall vitrines and artwork stick out further: their own boxes (depth from the wall, m). */
+const VITRINE = { depth: 0.34, width: 1.7, bottom: 0.4, top: 2.4, z: [-2.4, 0, 2.4] };
+/** Decor collider height (plants, benches, consoles), above anything the camera could pass over. */
+const DECOR_HEIGHT = 2.2;
+
+/**
+ * Invisible volumes the third-person camera may not enter (camera-controls' colliders: when one comes between the
+ * player and the camera, the camera moves in front of it, like a spring arm). Without them the camera, 1.5 m behind
+ * the player, ends up inside the entrance door, a vitrine or a plant, and the view is filled with a dark surface.
+ * The room is a box seen from inside, inset from the walls; every obstacle the player walks around is a cylinder;
+ * the side-wall vitrines are boxes.
+ */
+function createColliders(): Mesh[] {
+  const material = new MeshBasicMaterial({ side: BackSide });
+  const roomHeight = ROOM.height;
+  const room = new Mesh(
+    new BoxGeometry((ROOM.halfWidth - WALL_CLEARANCE) * 2, roomHeight, (ROOM.halfDepth - WALL_CLEARANCE) * 2),
+    material,
+  );
+  room.position.y = FLOOR_Y + roomHeight / 2;
+  const solid = new MeshBasicMaterial();
+  const pedestalHeight = PEDESTAL.top - FLOOR_Y;
+  const obstacles = OBSTACLES.map((o, i) => {
+    const height = i < PEDESTALS.length ? pedestalHeight : DECOR_HEIGHT;
+    const mesh = new Mesh(new CylinderGeometry(o.radius, o.radius, height, 12), solid);
+    mesh.position.set(o.position[0], FLOOR_Y + height / 2, o.position[1]);
+    return mesh;
+  });
+  const vitrines = [-1, 1].flatMap((side) =>
+    VITRINE.z.map((z) => {
+      const mesh = new Mesh(new BoxGeometry(VITRINE.depth * 2, VITRINE.top - VITRINE.bottom, VITRINE.width), solid);
+      mesh.position.set(side * ROOM.halfWidth, FLOOR_Y + (VITRINE.top + VITRINE.bottom) / 2, z);
+      return mesh;
+    }),
+  );
+  const colliders = [room, ...obstacles, ...vitrines];
+  for (const c of colliders) {
+    c.visible = false;
+    c.updateMatrixWorld(true);
+  }
+  return colliders;
+}
 
 /** Behind the player, facing the nearest pedestal (or -Z at spawn). */
 function explorePose(): Pose {
@@ -67,6 +116,15 @@ export default function CameraRig() {
   const productId = useAppStore((s) => s.activeProductId);
   const reducedMotion = useReducedMotion();
   const lastPlayer = useRef<[number, number]>([...player.position]);
+  const colliders = useMemo(() => createColliders(), []);
+  useEffect(
+    () => () => {
+      for (const c of colliders) c.geometry.dispose();
+      (colliders[0].material as MeshBasicMaterial).dispose();
+      (colliders[1]?.material as MeshBasicMaterial | undefined)?.dispose();
+    },
+    [colliders],
+  );
 
   useEffect(() => {
     const c = controls.current;
@@ -74,6 +132,8 @@ export default function CameraRig() {
     // EXPLORE: drag (or one finger) looks around the player; wheel/right-drag/pinch are not camera controls
     // (the wheel walks, see Player). CUSTOMIZE: regular orbit + dolly + truck around the product.
     const { ACTION } = c.constructor as typeof CameraControlsImpl;
+    // Colliders only while walking: in CUSTOMIZE the camera is close to the product, above its pedestal.
+    c.colliderMeshes = mode === "EXPLORE" ? colliders : [];
     if (mode === "EXPLORE") {
       c.mouseButtons = { left: ACTION.ROTATE, middle: ACTION.NONE, right: ACTION.NONE, wheel: ACTION.NONE };
       c.touches = { one: ACTION.TOUCH_ROTATE, two: ACTION.NONE, three: ACTION.NONE };
@@ -86,7 +146,7 @@ export default function CameraRig() {
     const pose = mode === "EXPLORE" ? explorePose() : mode === "CUSTOMIZE" ? customizePose(productId) : null;
     if (pose) void c.setLookAt(...pose.position, ...pose.target, true);
     lastPlayer.current = [...player.position];
-  }, [mode, productId]);
+  }, [mode, productId, colliders]);
 
   // EXPLORE: the camera follows the player (target and camera move together; drag still orbits).
   useFrame(() => {

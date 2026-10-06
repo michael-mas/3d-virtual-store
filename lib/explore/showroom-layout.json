@@ -35,7 +35,7 @@
     "console": { "length": 1.2, "height": 0.82, "depth": 0.4 },
     "plantCollisionRadius": 0.35
   },
-  "spawn": [0, 3],
+  "spawn": [0, 2.6],
   "playerRadius": 0.3,
   "interactRadius": 1.3
 }
