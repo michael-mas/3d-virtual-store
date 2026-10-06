@@ -8,6 +8,7 @@ import { GALLERY, PEDESTALS } from "@/lib/explore/layout";
 import { approachPoint } from "@/lib/explore/movement";
 import { player, walkTo } from "@/lib/explore/player";
 import { ARTWORKS, getArtwork } from "@/lib/gallery/artworks";
+import { startShow } from "@/lib/gallery/stage";
 import { getProduct } from "@/lib/products";
 import { useAppStore } from "@/store/useAppStore";
 import { chooseLocale } from "./LanguageToggle";
@@ -62,8 +63,11 @@ function run(action: Action) {
       walkTo(approachPoint(PEDESTALS[0], player.position, 0.9));
       break;
     case "gallery":
-      // Just inside the doors (they open on the way).
-      walkTo([0, GALLERY.zStart + 1.4]);
+      // Just inside the doors (they open on the way), before any work.
+      walkTo([0, GALLERY.zStart + 0.6]);
+      break;
+    case "show":
+      startShow();
       break;
     case "visit": {
       const work = getArtwork(action.artworkId);
@@ -92,6 +96,7 @@ export default function ConciergePanel() {
   const near = useAppStore((s) => (s.mode === "EXPLORE" ? s.nearPedestal : null));
   const nearWork = useAppStore((s) => (s.mode === "EXPLORE" ? s.nearArtwork : null));
   const inGallery = useAppStore((s) => s.mode === "EXPLORE" && s.inGallery);
+  const showPlaying = useAppStore((s) => s.showPlaying);
   const locale = useAppStore((s) => s.locale);
   const t = useT();
   const [welcome, setWelcome] = useState(true);
@@ -117,7 +122,7 @@ export default function ConciergePanel() {
   const line = work
     ? t(work.note)
     : inGallery
-      ? t("Welcome to the gallery: ten works on light and matter. Walk up to one and I will tell you its story.")
+      ? t("Welcome to the gallery. Touch the works, walk beneath the rain of gold, and at the back, three automatons wait for you to take a seat.")
       : greeting
         ? t("Welcome to Maison Miroir. Walk up to any piece and I will present it.")
         : product?.tip
@@ -131,7 +136,7 @@ export default function ConciergePanel() {
     list.current?.lastElementChild?.scrollIntoView({ block: "end" });
   }, [messages]);
 
-  if (mode !== "EXPLORE" || !ready) return null;
+  if (mode !== "EXPLORE" || !ready || showPlaying) return null;
 
   const push = (...added: Omit<Message, "id">[]) =>
     setMessages((m) => [...m, ...added.map((a) => ({ ...a, id: nextId.current++ }))].slice(-HISTORY));

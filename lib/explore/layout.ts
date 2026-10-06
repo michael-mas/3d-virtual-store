@@ -87,9 +87,30 @@ function galleryWalls(): Obstacle[] {
 /** Walls on the floor plan (the salon's outer walls are the walk bounds). */
 export const WALL_OBSTACLES: readonly Obstacle[] = galleryWalls();
 
+/**
+ * The theatre's stage, on the floor plan: a capsule along its width, as deep as the stage, and the wings either side
+ * of it up to the walls (the capsule's rounded ends would leave pockets there).
+ */
+export const STAGE_OBSTACLES: readonly Obstacle[] = (() => {
+  const { minX, maxX, minZ, maxZ } = layout.gallery.stage;
+  const radius = (maxZ - minZ) / 2;
+  const z = (minZ + maxZ) / 2;
+  const hw = layout.gallery.halfWidth;
+  const wing = (hw - maxX) / 2 + 0.35;
+  return [
+    { a: [minX + radius - 0.05, z], b: [maxX - radius + 0.05, z], radius },
+    ...[-1, 1].map((side): Obstacle => ({ a: [side * (hw - wing + 0.3), minZ + wing], b: [side * (hw - wing + 0.3), GALLERY.zEnd], radius: wing })),
+  ];
+})();
+
 function galleryObstacles(): Obstacle[] {
   const { plinths, plinthRadius, bench } = layout.gallery;
-  return [...WALL_OBSTACLES, ...plinths.map((p) => circle(p, plinthRadius)), lengthwise(bench.position, bench.length, bench.depth, 0)];
+  return [
+    ...WALL_OBSTACLES,
+    ...plinths.map((p) => circle(p, plinthRadius)),
+    lengthwise(bench.position, bench.length, bench.depth, 0),
+    ...STAGE_OBSTACLES,
+  ];
 }
 
 /** Everything the player walks around: pedestals, decor, the gallery's walls and plinths (the door aside). */

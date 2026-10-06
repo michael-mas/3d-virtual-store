@@ -11,6 +11,7 @@ import CustomizerPanel from "@/components/dom/CustomizerPanel";
 import DevPanel from "@/components/dom/DevPanel";
 import LoadingScreen from "@/components/dom/LoadingScreen";
 import PhotoModal from "@/components/dom/PhotoModal";
+import ShowOverlay from "@/components/dom/ShowOverlay";
 import StatusOverlays from "@/components/dom/StatusOverlays";
 import TopBar from "@/components/dom/TopBar";
 import TryOnPanel from "@/components/dom/TryOnPanel";
@@ -78,6 +79,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="pointer-events-none relative h-full">{children}</div>
         <ConciergePanel />
         <ArtworkLabel />
+        <ShowOverlay />
         <CustomizerPanel />
         <TryOnPanel />
         <PhotoModal />

@@ -26,7 +26,10 @@ describe("concierge dialogue", () => {
   it("leads to the gallery and tells about its works", () => {
     expect(respond("Montre-moi la galerie", fr).actions).toEqual([{ kind: "gallery" }]);
     expect(respond("Where can I see contemporary art?", en).actions).toEqual([{ kind: "gallery" }]);
-    expect(respond("Parlez-moi de Lumière lente", fr).text).toMatch(/^Lumière lente, Ondine Berthelot, 2024\. /);
+    expect(respond("Parlez-moi de Pluie d'or", fr).text).toMatch(/^Pluie d'or, Studio Kaze, 2025\. /);
+    expect(respond("Lance le spectacle", fr).actions).toEqual([{ kind: "show" }]);
+    expect(respond("Start the performance", en).actions).toEqual([{ kind: "show" }]);
+    expect(respond("Tell me about the Three Automatons", en).text).toContain("A mechanical ballet in five acts");
     expect(respond("Tell me about the knot", en).text).toContain("trefoil knot");
     expect(respond("Emmenez-moi vers Monolithe", fr).actions).toEqual([{ kind: "visit", artworkId: "monolithe" }]);
     expect(respond("Montre-moi la montre", fr).actions).toEqual([{ kind: "walk", productId: "chrono" }]);

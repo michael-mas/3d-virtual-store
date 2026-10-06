@@ -249,9 +249,7 @@ export const FR: Readonly<Record<string, string>> = {
   "Museum label": "Cartel",
   "The Gallery": "La Galerie",
   "Contemporary art · {count} works": "Art contemporain · {count} œuvres",
-  "Welcome to the gallery: ten works on light and matter. Walk up to one and I will tell you its story.":
-    "Bienvenue dans la galerie : dix œuvres sur la lumière et la matière. Approchez-vous de l'une d'elles, je vous raconterai son histoire.",
-  "Next work: {title}": "Œuvre suivante : {title}",
+    "Next work: {title}": "Œuvre suivante : {title}",
   "Gold leaf on panel": "Feuille d'or sur panneau",
   "Twelve hundred squares of gold leaf, laid by hand. Each one catches the light at its own angle, so the field changes as you walk past it.":
     "Mille deux cents carrés de feuille d'or, posés à la main. Chacun prend la lumière sous son propre angle : le champ change à mesure que vous passez devant.",
@@ -264,24 +262,50 @@ export const FR: Readonly<Record<string, string>> = {
   "Cut canvas": "Toile fendue",
   "A single cut, made in one gesture. What matters is the space behind it.":
     "Une seule entaille, d'un seul geste. Ce qui compte, c'est l'espace derrière.",
-  "Light installation": "Installation lumineuse",
-  "The field drifts from dawn amber to night blue over four minutes. Sit on the bench and let your eyes adjust.":
-    "Le champ glisse de l'ambre de l'aube au bleu de la nuit en quatre minutes. Asseyez-vous sur le banc, laissez vos yeux s'accorder.",
   "Polished obsidian, brass": "Obsidienne polie, laiton",
-  "The house's emblem: a black mirror, which painters once used to judge their values. It gives the room back, only quieter.":
-    "L'emblème de la maison : un miroir noir, dont les peintres se servaient pour juger leurs valeurs. Il rend la salle, en plus calme.",
   "Polished brass": "Laiton poli",
   "One strip of brass with a single twist: it has only one side. Follow its edge with your eyes and you come back reversed.":
     "Une seule bande de laiton, vrillée une fois : elle n'a qu'une face. Suivez son bord du regard, vous revenez à l'envers.",
   "Carrara marble, brass": "Marbre de Carrare, laiton",
-  "A marble sphere resting on a brass point a few millimetres wide. It has not moved since it was set down.":
-    "Une sphère de marbre posée sur une pointe de laiton de quelques millimètres. Elle n'a pas bougé depuis qu'on l'y a posée.",
   "Mirror-polished steel": "Acier poli miroir",
-  "A trefoil knot, the simplest knot that cannot be undone. It turns once a minute.":
-    "Un nœud de trèfle, le plus simple des nœuds qu'on ne peut défaire. Il fait un tour par minute.",
   "Basalt and gold": "Basalte et or",
   "A basalt slab, split and mended with gold, after the Japanese art of kintsugi.":
     "Une dalle de basalte, fendue puis réparée à l'or, selon l'art japonais du kintsugi.",
+
+  "Welcome to the gallery. Touch the works, walk beneath the rain of gold, and at the back, three automatons wait for you to take a seat.":
+    "Bienvenue dans la galerie. Touchez les œuvres, passez sous la pluie d'or, et au fond, trois automates attendent que vous preniez place.",
+  Act: "Acte",
+  "Free camera": "Caméra libre",
+  "Director's camera": "Caméra du réalisateur",
+  "Leave the performance": "Quitter le spectacle",
+  "Touch the gold": "Toucher l'or",
+  "Touch the sea": "Toucher la mer",
+  "Wake the stars": "Réveiller les étoiles",
+  "Open the cut": "Ouvrir l'entaille",
+  "The house's emblem: a black mirror, which painters once used to judge their values. Come closer: the emblem surfaces from its depth.":
+    "L'emblème de la maison : un miroir noir, dont les peintres se servaient pour juger leurs valeurs. Approchez : l'emblème remonte de sa profondeur.",
+  "Light the emblem": "Allumer l'emblème",
+  "Turn the ribbon": "Faire tourner le ruban",
+  "A marble sphere resting on a brass point a few millimetres wide. Nudge it: it always finds its balance again.":
+    "Une sphère de marbre posée sur une pointe de laiton de quelques millimètres. Effleurez-la : elle retrouve toujours son équilibre.",
+  "Nudge the sphere": "Effleurer la sphère",
+  "A trefoil knot, the simplest knot that cannot be undone. Touch it and it ties itself anew, with five lobes.":
+    "Un nœud de trèfle, le plus simple des nœuds qu'on ne peut défaire. Touchez-le : il se renoue, à cinq boucles.",
+  "Retie the knot": "Renouer le nœud",
+  "Let the gold flow": "Faire couler l'or",
+  "Kinetic installation, 96 brass drops": "Installation cinétique, 96 gouttes de laiton",
+  "Ninety-six brass drops trace waves, ripples and domes in the air. Walk beneath them: they rise to let you pass.":
+    "Quatre-vingt-seize gouttes de laiton dessinent dans l'air des vagues, des ondes et des dômes. Passez dessous : elles s'élèvent pour vous laisser passer.",
+  "Mechanical ballet for three automatons, light and sound, 1 min 24": "Ballet mécanique pour trois automates, lumière et son, 1 min 24",
+  "A mechanical ballet in five acts. Sit facing the stage: the light will go down, and in the third act, they will follow you. Contains flashing lights.":
+    "Un ballet mécanique en cinq actes. Installez-vous face à la scène : la lumière va baisser, et au troisième acte, ils vous suivront. Contient des flashs lumineux.",
+  "Begin the performance": "Lancer le spectacle",
+  "In the dark, three figures wait.": "Dans le noir, trois silhouettes attendent.",
+  "Light touches them, one after the other.": "La lumière les touche, l'une après l'autre.",
+  "The pulse takes hold: unison, canon, mirror.": "La pulsation s'empare d'eux : unisson, canon, miroir.",
+  "Now they follow you. Move.": "Maintenant, ils vous suivent. Bougez.",
+  "Everything rises toward the light.": "Tout s'élève vers la lumière.",
+  "Thank you.": "Merci.",
 
   // ---------------------------------------------------------------- colors
   Amber: "Ambre",

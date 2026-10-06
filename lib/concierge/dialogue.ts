@@ -20,6 +20,7 @@ export type Action =
   | { kind: "tour" }
   | { kind: "gallery" }
   | { kind: "visit"; artworkId: ArtworkId }
+  | { kind: "show" }
   | { kind: "music"; on: boolean }
   | { kind: "locale"; locale: Locale };
 
@@ -62,13 +63,16 @@ const ARTWORK_WORDS: Record<ArtworkId, readonly string[]> = {
   maree: ["maree", "tide", "la mer", "the sea", "seascape"],
   constellation: ["constellation", "etoiles", "stars"],
   fragment: ["fragment", "la toile fendue", "the cut", "slash"],
-  "lumiere-lente": ["lumiere lente", "slow light", "le champ de lumiere", "the light"],
   "miroir-noir": ["miroir noir", "black mirror", "obsidienne", "obsidian"],
   ruban: ["ruban", "ribbon", "moebius", "mobius"],
   equilibre: ["equilibre", "balance", "la sphere", "the sphere", "marbre", "marble"],
   noeud: ["noeud", "knot", "trefle", "trefoil"],
   monolithe: ["monolithe", "monolith", "kintsugi", "basalte", "basalt"],
+  "pluie-d-or": ["pluie d or", "golden rain", "rain of gold", "gouttes", "drops", "installation cinetique", "kinetic"],
+  automates: ["automates", "trois automates", "automatons", "three automatons", "ballet mecanique", "mechanical ballet"],
 };
+/** Starting the performance. */
+const SHOW_WORDS = ["spectacle", "performance", "the show", "le show", "ballet", "danse", "dance", "theatre", "theater", "robots qui dansent", "dancing robots"];
 const GALLERY_WORDS = ["galerie", "gallery", "art", "art contemporain", "contemporary art", "oeuvre", "oeuvres", "artwork", "artworks", "exposition", "expo", "exhibition", "musee", "museum", "porte", "door", "sculpture", "sculptures", "tableau", "tableaux", "painting", "paintings"];
 
 /** The work the text names, if any. */
@@ -137,7 +141,7 @@ const DEFAULT_SUGGESTIONS = (locale: Locale): Suggestion[] =>
   ].map((t) => ({ label: pick(t, locale), send: pick(t, locale) }));
 
 const GALLERY_SUGGESTIONS = (locale: Locale): Suggestion[] =>
-  (["lumiere-lente", "champ-d-or", "noeud"] as const).map((id) => {
+  (["automates", "pluie-d-or", "fragment"] as const).map((id) => {
     const a = ARTWORKS.find((w) => w.id === id)!;
     return { label: a.title, send: pick(L(`Tell me about ${a.title}`, `Parlez-moi de ${a.title}`), locale) };
   });
@@ -170,6 +174,17 @@ export function respond(input: string, ctx: Context): Reply {
   // The gallery, and its works.
   const artwork = product ? undefined : artworkIn(text);
   const goPhrases = ["take me", "emmenez moi", "emmene moi", "ou est", "where is", "aller", "go to", "show me", "montrez moi", "montre moi", "voir", "see", "visit", "visiter"];
+  if (!product && has(text, SHOW_WORDS) && !has(text, ["tell me", "parlez moi", "parle moi", "about", "c est quoi", "what is"])) {
+    return reply(
+      L(
+        "Take a seat facing the stage: the lights are going down. « Les Trois Automates », a mechanical ballet in five acts.",
+        "Installez-vous face à la scène : la lumière baisse. « Les Trois Automates », un ballet mécanique en cinq actes.",
+      ),
+      locale,
+      [{ kind: "show" }],
+      GALLERY_SUGGESTIONS(locale),
+    );
+  }
   if (artwork) {
     const notice = `${artwork.title}, ${artwork.artist}, ${artwork.year}. ${translate(locale, artwork.note)}`;
     const visit: Suggestion = { label: pick(L("Take me there", "Emmenez-moi"), locale), send: pick(L(`Take me to ${artwork.title}`, `Emmenez-moi vers ${artwork.title}`), locale) };
@@ -181,8 +196,8 @@ export function respond(input: string, ctx: Context): Reply {
   if (!product && has(text, GALLERY_WORDS)) {
     return reply(
       L(
-        "Behind the entrance doors, our gallery shows ten works on light and matter. The doors open as you come near. Follow me.",
-        "Derrière les portes d'entrée, notre galerie présente dix œuvres sur la lumière et la matière. Les portes s'ouvrent à votre approche. Suivez-moi.",
+        "Behind the entrance doors, our gallery: works you can touch, a kinetic rain of gold and a theatre where three automatons dance. The doors open as you come near. Follow me.",
+        "Derrière les portes d'entrée, notre galerie : des œuvres à toucher, une pluie d'or cinétique et un théâtre où dansent trois automates. Les portes s'ouvrent à votre approche. Suivez-moi.",
       ),
       locale,
       [{ kind: "gallery" }],

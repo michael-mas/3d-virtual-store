@@ -3,11 +3,12 @@
 import { useGLTF } from "@react-three/drei";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useMemo } from "react";
-import { reflector } from "three/tsl";
+import { float, mix, positionWorld, reflector, smoothstep, vec3 } from "three/tsl";
 import { AdditiveBlending, DoubleSide, Mesh, MeshBasicNodeMaterial, PlaneGeometry, type Camera } from "three/webgpu";
 import { DRACO_DECODER_PATH, SHOWROOM_MODEL_PATH } from "@/lib/assets";
 import { DOOR_CENTER, FLOOR_Y, GALLERY, ROOM, WALK_BOUNDS } from "@/lib/explore/layout";
 import { walkTo } from "@/lib/explore/player";
+import { stageUniforms } from "@/lib/gallery/stage";
 import { NO_REFLECTION_LAYER } from "@/lib/layers";
 import { isTryOnMode } from "@/lib/modes";
 import { useAppStore } from "@/store/useAppStore";
@@ -33,6 +34,9 @@ export default function Showroom() {
 
   const room = useMemo(() => {
     const material = new MeshBasicNodeMaterial({ name: "showroom-baked", vertexColors: true });
+    // The gallery's lights dim for the performance (the salon's stay as they are).
+    const gallery = smoothstep(GALLERY.zStart - 0.3, GALLERY.zStart + 0.3, positionWorld.z);
+    material.colorNode = vec3(mix(float(1), stageUniforms.house, gallery));
     scene.traverse((o) => {
       if (o instanceof Mesh) o.material = material;
     });

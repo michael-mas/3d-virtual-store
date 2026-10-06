@@ -268,7 +268,7 @@ export type PoseInput = {
 };
 
 /** Curls a digit's three joints (0 = straight, 1 = closed), the thumb crossing toward the palm. */
-function curl(chain: [Group, Group, Group], amount: number, thumb: boolean, side: 1 | -1) {
+export function curl(chain: [Group, Group, Group], amount: number, thumb: boolean, side: 1 | -1) {
   const [a, b, c] = chain;
   if (thumb) {
     a.rotation.x = amount * 0.5;

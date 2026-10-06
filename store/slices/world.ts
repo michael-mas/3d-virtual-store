@@ -45,6 +45,10 @@ export type WorldSlice = {
   /** The player is in the gallery (past the entrance wall) in EXPLORE. */
   inGallery: boolean;
   setInGallery: (inGallery: boolean) => void;
+  /** The gallery's performance is playing, and whether the director's camera has the view. */
+  showPlaying: boolean;
+  showCinema: boolean;
+  setShow: (state: Partial<{ showPlaying: boolean; showCinema: boolean }>) => void;
   /** Selects the product and fires INTERACT (EXPLORE → CUSTOMIZE). */
   interactWith: (productId: string) => boolean;
   /** Applies a mode event via the transition table. Returns false (and ignores it) if invalid. */
@@ -75,6 +79,9 @@ export const createWorldSlice: Slice<WorldSlice> = (set, get) => ({
   setNearArtwork: (nearArtwork) => {
     if (get().nearArtwork !== nearArtwork) set({ nearArtwork });
   },
+  showPlaying: false,
+  showCinema: false,
+  setShow: (state) => set(state),
   inGallery: false,
   setInGallery: (inGallery) => {
     if (get().inGallery !== inGallery) set({ inGallery });

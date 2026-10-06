@@ -97,22 +97,37 @@ Maison Miroir is a fictional house, designed like a luxury boutique at night:
   eyes and the mouth (`lib/concierge/face.ts`): black-glass eyeballs with brass irises and glowing pupils that follow
   the visitor and blink under porcelain lids, brass brows, and a jaw opened in the vertex shader (TSL) by a viseme-like
   envelope of what it says (`lib/concierge/speech.ts`). No model file; its own chunk, mounted once the salon is shown.
-- **Gallery.** Behind the entrance wall, a contemporary art room of 8 × 8 m (waxed black concrete, charcoal walls,
-  brass tracks, a spot on every work, baked like the salon). Its glazed doors slide into the wall as the visitor or the
+- **Gallery.** Behind the entrance wall, a 14 m contemporary art hall (waxed black concrete, charcoal walls, brass
+  tracks, a spot on every work, baked like the salon). Its glazed doors slide into the wall as the visitor or the
   concierge comes near, or as a walk leads through them (`lib/explore/door.ts`; closed, they block the walk and the
-  camera). Exhibition "Matière & Lumière", by fictional artists: six wall works drawn in TSL with no textures
-  (`lib/gallery/materials.ts`): a field of 1,200 hand-tilted gold leaves that flickers as you pass, a breathing
-  seascape, brass stars on black lacquer, a single cut in an ivory canvas, a Ganzfeld-like light field drifting from
-  amber to night blue over four minutes, and an obsidian black mirror; and four sculptures built in code
-  (`lib/gallery/sculptures.ts`): a brass Möbius band, a Carrara sphere balanced on a brass point, a turning trefoil
-  knot in polished steel, and a basalt monolith mended with gold. Before a work, a museum label gives its title,
-  artist, year and medium, and the concierge, who follows the visitor through the doors, turns to it and tells its
-  story; "Next work" leads a tour. Its own chunk, mounted once the salon is shown.
+  camera). Exhibition "Matière & Lumière", by fictional artists, everything procedural (TSL, no textures), and every
+  work answers a touch (a click on it, or its label's button; `lib/gallery/interactions.ts`):
+  - five wall works (`lib/gallery/materials.ts`): 1,200 tilted gold leaves a touch sends a wave through; a breathing
+    seascape that ripples where it is touched; brass stars on black lacquer and a meteor shower; an ivory canvas whose
+    single cut opens on a golden light; a black mirror where the house's emblem surfaces as the visitor comes near;
+  - four sculptures (`lib/gallery/sculptures.ts`): a brass Möbius band that spins, a Carrara sphere balanced on a
+    brass point that sways and settles, a steel trefoil knot that reties itself as a cinquefoil (a vertex-shader
+    morph), a basalt monolith whose kintsugi seam carries a flow of light;
+  - « Pluie d'or » (`lib/gallery/kinetic.ts`): 96 brass drops on wires tracing waves, ripples and domes, computed in
+    the vertex shader, which part and glow above the visitor walking beneath them;
+  - a theatre: « Les Trois Automates », a mechanical ballet in five acts (1 min 24) for three faceless automatons in
+    ivory porcelain, chrome and onyx (the concierge's rig). The score is pure functions of one clock
+    (`lib/gallery/show.ts`): choreography (awakening in turn, then unison, canon and mirror on a 120 bpm pulse, a
+    finale, a bow), lighting cues (house lights down, six moving heads with volumetric beams and pools, a cyclorama,
+    colored rim light on the bodies, « Nuée », a stateless GPU swarm of 1,400 motes that the conductor's hand draws),
+    and a director's shot list (push-ins, a crane, low angles, profile tracking, the view from behind the automatons,
+    an overhead, a climbing orbit) framed by cinema bars and surtitles. In the third act the camera is the visitor's:
+    the automatons lean, look and reach toward them and two beams find them in the dark. The music is synthesized live
+    and scheduled on the same timeline (`lib/gallery/score.ts`): a bell for each automaton waking, panned where it
+    stands, metallic clanks as their joints lock on the beat. "Free camera" hands the view back; Escape leaves.
+  Before each work, a museum label gives its title, artist, year and medium, and the concierge, who follows the
+  visitor through the doors, turns to it and tells its story; "Next work" leads a tour. Its own chunk, compiled in
+  the background before it first shows.
 - **Conversation.** "Talk" opens a chat with the concierge, in English or French, with no model and no server: a
   dialogue engine (`lib/concierge/dialogue.ts`) normalizes the question, finds its intent from both languages'
   keywords and the piece it names, and answers with quick replies and actions it carries out (walk to a piece, try
-  it on, open the cart, try the whole look, start the tour, lead to the gallery or one of its works, music,
-  language). Advice includes the frame for a face
+  it on, open the cart, try the whole look, start the tour, lead to the gallery or one of its works, start the
+  performance, music, language). Advice includes the frame for a face
   shape and prices "from" the cheapest options. An optional voice uses only the browser's local voices.
 - **Threshold.** A welcome screen holds the house's wordmark over the blurred salon until "Enter the Maison"
   lifts the veil.

@@ -6,8 +6,10 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { BackSide, BoxGeometry, CylinderGeometry, Mesh, MeshBasicMaterial } from "three/webgpu";
 import { door, DOOR_PASSABLE } from "@/lib/explore/door";
-import { DOOR_OBSTACLE, FLOOR_Y, GALLERY, OBSTACLES, PEDESTAL, PEDESTALS, ROOM, WALK_BOUNDS, WALL_OBSTACLES, productPosition, type Obstacle } from "@/lib/explore/layout";
+import { DOOR_OBSTACLE, FLOOR_Y, GALLERY, OBSTACLES, PEDESTAL, PEDESTALS, ROOM, STAGE_OBSTACLES, WALK_BOUNDS, WALL_OBSTACLES, productPosition, type Obstacle } from "@/lib/explore/layout";
 import { player } from "@/lib/explore/player";
+import { shotAt } from "@/lib/gallery/show";
+import { show, showTime } from "@/lib/gallery/stage";
 import { previewFraming } from "@/lib/preview";
 import { isTryOnMode } from "@/lib/modes";
 import { MEDIAPIPE_VERTICAL_FOV_DEG, TRY_ON_FAR, TRY_ON_NEAR } from "@/lib/tryon/constants";
@@ -73,7 +75,7 @@ function createColliders(): { fixed: Mesh[]; door: Mesh[] } {
   const obstacles = OBSTACLES.flatMap((o, i) =>
     WALL_OBSTACLES.includes(o)
       ? extrude(o, GALLERY.height, solid, WALL_CAMERA_CLEARANCE)
-      : extrude(o, i < PEDESTALS.length ? pedestalHeight : DECOR_HEIGHT, solid),
+      : extrude(o, i < PEDESTALS.length ? pedestalHeight : STAGE_OBSTACLES.includes(o) ? GALLERY.stage.height : DECOR_HEIGHT, solid),
   );
   const vitrines = [-1, 1].flatMap((side) =>
     VITRINE.z.map((z) => {
@@ -147,6 +149,8 @@ export default function CameraRig() {
   const colliders = useMemo(() => createColliders(), []);
   const withDoor = useMemo(() => [...colliders.fixed, ...colliders.door], [colliders]);
   const doorClosed = useRef(true);
+  const directed = useRef(false);
+  const showCinema = useAppStore((s) => s.showPlaying && s.showCinema);
 
   useEffect(() => {
     const c = controls.current;
@@ -175,8 +179,27 @@ export default function CameraRig() {
   useFrame(() => {
     const c = controls.current;
     if (!c || mode !== "EXPLORE") return;
-    // The closed gallery door stops the camera too.
     const closed = door.amount < DOOR_PASSABLE;
+    // The performance: the director's shot list has the camera (no colliders: it goes on the stage, behind it…).
+    const shot = show.playing && show.cinema ? shotAt(showTime()) : null;
+    if (shot) {
+      if (!directed.current) c.colliderMeshes = [];
+      directed.current = true;
+      void c.setLookAt(...shot.position, ...shot.target, false);
+      lastPlayer.current = [...player.position];
+      return;
+    }
+    if (directed.current) {
+      // Back to the visitor: behind them, facing the stage.
+      directed.current = false;
+      doorClosed.current = closed;
+      c.colliderMeshes = closed ? withDoor : colliders.fixed;
+      const [px, pz] = player.position;
+      void c.setLookAt(px, FLOOR_Y + LOOK_HEIGHT + 0.45, pz - 1.7, px, FLOOR_Y + LOOK_HEIGHT, pz + 0.5, true);
+      lastPlayer.current = [px, pz];
+      return;
+    }
+    // The closed gallery door stops the camera too.
     if (closed !== doorClosed.current) {
       doorClosed.current = closed;
       c.colliderMeshes = closed ? withDoor : colliders.fixed;
@@ -209,10 +232,11 @@ export default function CameraRig() {
       makeDefault
       // Reduced motion: near-instant camera moves instead of 0.5 s glides.
       smoothTime={reducedMotion ? 0.08 : 0.5}
-      minDistance={customize ? 0.18 : 0.9}
-      maxDistance={customize ? 0.6 : 3}
-      minPolarAngle={customize ? 0 : Math.PI * 0.2}
-      maxPolarAngle={customize ? Math.PI * 0.55 : Math.PI * 0.47}
+      // The director's shots go further, lower and higher than a visitor's camera.
+      minDistance={customize ? 0.18 : showCinema ? 0.1 : 0.9}
+      maxDistance={customize ? 0.6 : showCinema ? 12 : 3}
+      minPolarAngle={customize ? 0 : showCinema ? 0.02 : Math.PI * 0.2}
+      maxPolarAngle={customize ? Math.PI * 0.55 : showCinema ? Math.PI * 0.8 : Math.PI * 0.47}
     />
   );
 }

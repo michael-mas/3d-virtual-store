@@ -10,14 +10,16 @@ export type ArtworkId =
   | "maree"
   | "constellation"
   | "fragment"
-  | "lumiere-lente"
   | "miroir-noir"
   | "ruban"
   | "equilibre"
   | "noeud"
-  | "monolithe";
+  | "monolithe"
+  | "pluie-d-or"
+  | "automates";
 
-type Notice = { title: string; artist: string; year: number; medium: string; note: string };
+/** `gesture`: what touching the work does (the label's button; a click on the work does the same). */
+type Notice = { title: string; artist: string; year: number; medium: string; note: string; gesture?: string };
 
 const NOTICES: Record<ArtworkId, Notice> = {
   "champ-d-or": {
@@ -26,6 +28,7 @@ const NOTICES: Record<ArtworkId, Notice> = {
     year: 2021,
     medium: "Gold leaf on panel",
     note: "Twelve hundred squares of gold leaf, laid by hand. Each one catches the light at its own angle, so the field changes as you walk past it.",
+    gesture: "Touch the gold",
   },
   maree: {
     title: "Marée",
@@ -33,6 +36,7 @@ const NOTICES: Record<ArtworkId, Notice> = {
     year: 2019,
     medium: "Light and pigment, endless loop",
     note: "A horizon that never settles: the sea breathes at the pace of a sleeping tide, one wave every eleven seconds.",
+    gesture: "Touch the sea",
   },
   constellation: {
     title: "Constellation",
@@ -40,6 +44,7 @@ const NOTICES: Record<ArtworkId, Notice> = {
     year: 2023,
     medium: "Brass points on black lacquer",
     note: "Brass points set where the stars stood above Paris on the night the house opened. A few of them still flicker.",
+    gesture: "Wake the stars",
   },
   fragment: {
     title: "Fragment",
@@ -47,20 +52,15 @@ const NOTICES: Record<ArtworkId, Notice> = {
     year: 2018,
     medium: "Cut canvas",
     note: "A single cut, made in one gesture. What matters is the space behind it.",
-  },
-  "lumiere-lente": {
-    title: "Lumière lente",
-    artist: "Ondine Berthelot",
-    year: 2024,
-    medium: "Light installation",
-    note: "The field drifts from dawn amber to night blue over four minutes. Sit on the bench and let your eyes adjust.",
+    gesture: "Open the cut",
   },
   "miroir-noir": {
     title: "Miroir noir",
     artist: "Atelier Maison Miroir",
     year: 2025,
     medium: "Polished obsidian, brass",
-    note: "The house's emblem: a black mirror, which painters once used to judge their values. It gives the room back, only quieter.",
+    note: "The house's emblem: a black mirror, which painters once used to judge their values. Come closer: the emblem surfaces from its depth.",
+    gesture: "Light the emblem",
   },
   ruban: {
     title: "Ruban",
@@ -68,20 +68,23 @@ const NOTICES: Record<ArtworkId, Notice> = {
     year: 2022,
     medium: "Polished brass",
     note: "One strip of brass with a single twist: it has only one side. Follow its edge with your eyes and you come back reversed.",
+    gesture: "Turn the ribbon",
   },
   equilibre: {
     title: "Équilibre",
     artist: "Lucia Ferrante",
     year: 2020,
     medium: "Carrara marble, brass",
-    note: "A marble sphere resting on a brass point a few millimetres wide. It has not moved since it was set down.",
+    note: "A marble sphere resting on a brass point a few millimetres wide. Nudge it: it always finds its balance again.",
+    gesture: "Nudge the sphere",
   },
   noeud: {
     title: "Nœud",
     artist: "Elias Morel",
     year: 2021,
     medium: "Mirror-polished steel",
-    note: "A trefoil knot, the simplest knot that cannot be undone. It turns once a minute.",
+    note: "A trefoil knot, the simplest knot that cannot be undone. Touch it and it ties itself anew, with five lobes.",
+    gesture: "Retie the knot",
   },
   monolithe: {
     title: "Monolithe",
@@ -89,6 +92,22 @@ const NOTICES: Record<ArtworkId, Notice> = {
     year: 2024,
     medium: "Basalt and gold",
     note: "A basalt slab, split and mended with gold, after the Japanese art of kintsugi.",
+    gesture: "Let the gold flow",
+  },
+  "pluie-d-or": {
+    title: "Pluie d'or",
+    artist: "Studio Kaze",
+    year: 2025,
+    medium: "Kinetic installation, 96 brass drops",
+    note: "Ninety-six brass drops trace waves, ripples and domes in the air. Walk beneath them: they rise to let you pass.",
+  },
+  automates: {
+    title: "Les Trois Automates",
+    artist: "Compagnie Atlas",
+    year: 2026,
+    medium: "Mechanical ballet for three automatons, light and sound, 1 min 24",
+    note: "A mechanical ballet in five acts. Sit facing the stage: the light will go down, and in the third act, they will follow you. Contains flashing lights.",
+    gesture: "Begin the performance",
   },
 };
 
@@ -96,7 +115,7 @@ export type WallSide = "left" | "right" | "back" | "front";
 
 export type Artwork = Notice & {
   id: ArtworkId;
-  kind: "wall" | "sculpture";
+  kind: "wall" | "sculpture" | "installation" | "performance";
   /** Center of the work (wall works: on the wall's face; sculptures: on the plinth top), world meters. */
   center: [number, number, number];
   /** Direction the work faces, on the floor plan (unit). */
@@ -154,6 +173,24 @@ export const ARTWORKS: readonly Artwork[] = [
       viewpoint: [x, z],
     };
   }),
+  {
+    ...NOTICES["pluie-d-or"],
+    id: "pluie-d-or",
+    kind: "installation",
+    center: [GALLERY.rain.center[0], FLOOR_Y + 2.8, GALLERY.rain.center[1]],
+    facing: [0, -1],
+    size: [GALLERY.rain.cols * GALLERY.rain.spacing[0], GALLERY.rain.rows * GALLERY.rain.spacing[1]],
+    viewpoint: [GALLERY.rain.center[0], GALLERY.rain.center[1]],
+  },
+  {
+    ...NOTICES.automates,
+    id: "automates",
+    kind: "performance",
+    center: [(GALLERY.stage.minX + GALLERY.stage.maxX) / 2, FLOOR_Y + GALLERY.stage.height, (GALLERY.stage.minZ + GALLERY.stage.maxZ) / 2],
+    facing: [0, -1],
+    size: [GALLERY.stage.maxX - GALLERY.stage.minX, GALLERY.stage.maxZ - GALLERY.stage.minZ],
+    viewpoint: [GALLERY.audience[0], GALLERY.audience[1]],
+  },
 ];
 
 export const getArtwork = (id: string): Artwork | undefined => ARTWORKS.find((a) => a.id === id);

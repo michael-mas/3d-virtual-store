@@ -2,6 +2,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ARTWORKS } from "@/lib/gallery/artworks";
+import { ACTS } from "@/lib/gallery/show";
 import { CATEGORY_LABELS, PRODUCTS, TRY_ON_ZONES } from "@/lib/products";
 import { ERROR_COPY } from "@/lib/tryon/errors";
 import { ALL_HINTS, STATUS_TEXT } from "@/lib/tryon/hints";
@@ -44,7 +45,11 @@ function schemaKeys(): string[] {
   TRY_ON_ZONES.forEach((z) => keys.add(z.label));
   Object.values(CATEGORY_LABELS).forEach((c) => keys.add(c));
   // The gallery's labels and the concierge's stories (titles and artists are proper names).
-  ARTWORKS.forEach((a) => keys.add(a.medium).add(a.note));
+  ARTWORKS.forEach((a) => {
+    keys.add(a.medium).add(a.note);
+    if (a.gesture) keys.add(a.gesture);
+  });
+  ACTS.forEach((a) => keys.add(a.line));
   return [...keys];
 }
 

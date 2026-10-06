@@ -11,6 +11,8 @@ import { FLOOR_Y, INTERACT_RADIUS, PEDESTALS, PLAYER_RADIUS, WALK_BOUNDS, type V
 import { cameraRelative, nearestPedestal, resolveCollisions, stepMotion, WALK } from "@/lib/explore/movement";
 import { advancePath, player, walkGoal, walkTo } from "@/lib/explore/player";
 import { inGallery, nearestArtwork } from "@/lib/gallery/artworks";
+import { shotAt } from "@/lib/gallery/show";
+import { setCinema, show, showTime } from "@/lib/gallery/stage";
 import { useAppStore } from "@/store/useAppStore";
 
 const RUN_MULTIPLIER = 1.8;
@@ -73,7 +75,10 @@ export default function Player() {
     const explore = useAppStore.getState().mode === "EXPLORE";
     if (explore) {
       camera.getWorldDirection(forward);
-      const input: Vec2 = cameraRelative([forward.x, forward.z], moveAxes());
+      const axes = moveAxes();
+      // Walking during a directed part of the performance takes the camera back from the director.
+      if (show.playing && show.cinema && (axes[0] !== 0 || axes[1] !== 0) && shotAt(showTime())) setCinema(false);
+      const input: Vec2 = cameraRelative([forward.x, forward.z], axes);
       advancePath();
       const next = stepMotion(player, input, Math.min(delta, 0.1), WALK, isRunning() ? RUN_MULTIPLIER : 1, {
         radius: PLAYER_RADIUS,

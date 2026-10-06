@@ -2,18 +2,23 @@
 
 import { useT } from "@/hooks/useT";
 import { ARTWORKS, getArtwork } from "@/lib/gallery/artworks";
+import { touchArtwork } from "@/lib/gallery/interactions";
+import { startShow } from "@/lib/gallery/stage";
 import { useAppStore } from "@/store/useAppStore";
 
 /**
  * The gallery's museum label (cartel), in EXPLORE: before a work, its title, artist, year and medium (the
- * concierge tells its story); elsewhere in the gallery, the exhibition's title. Announced to screen readers.
+ * concierge tells its story) and what touching it does (the same as a click on the work; before the stage, it starts
+ * the performance); elsewhere in the gallery, the exhibition's title. Hidden during the performance. Announced to
+ * screen readers.
  */
 export default function ArtworkLabel() {
   const explore = useAppStore((s) => s.mode === "EXPLORE" && s.sceneReady && s.entered);
   const near = useAppStore((s) => s.nearArtwork);
   const inGallery = useAppStore((s) => s.inGallery);
+  const showPlaying = useAppStore((s) => s.showPlaying);
   const t = useT();
-  if (!explore || (!near && !inGallery)) return null;
+  if (!explore || showPlaying || (!near && !inGallery)) return null;
   const work = near ? getArtwork(near) : undefined;
 
   return (
@@ -30,6 +35,15 @@ export default function ArtworkLabel() {
             {work.artist}, {work.year}
           </p>
           <p className="mt-0.5 text-[0.75rem] text-taupe">{t(work.medium)}</p>
+          {work.gesture && (
+            <button
+              type="button"
+              onClick={() => (work.kind === "performance" ? startShow() : touchArtwork(work.id))}
+              className={`pointer-events-auto mt-3 rounded-sm px-3 py-1.5 text-[0.6rem] ${work.kind === "performance" ? "btn-gold" : "eyebrow text-gold-light ring-1 ring-gold/40 hover:ring-gold/80"}`}
+            >
+              {t(work.gesture)}
+            </button>
+          )}
         </div>
       ) : (
         <div role="status">
