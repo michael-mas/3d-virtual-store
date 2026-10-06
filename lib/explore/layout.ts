@@ -18,7 +18,7 @@ export const SPAWN: Vec2 = [layout.spawn[0], layout.spawn[1]];
 
 export type Obstacle = { position: Vec2; radius: number };
 
-/** Benches as a row of circles along their length, plants as one circle (collisions are circle push-outs). */
+/** Benches and consoles as rows of circles along their length, plants as one circle (collisions are circle push-outs). */
 function decorObstacles(): Obstacle[] {
   const { benches, bench, plants, plantCollisionRadius } = layout.decor;
   const out: Obstacle[] = [];
@@ -33,6 +33,13 @@ function decorObstacles(): Obstacle[] {
     }
   }
   for (const [x, z] of plants) out.push({ position: [x, z], radius: plantCollisionRadius });
+  // Consoles against the entrance wall: a row of circles along x.
+  const { consoles, console: table } = layout.decor;
+  const r = table.depth / 2 + 0.025;
+  const n = Math.ceil(table.length / (r * 2));
+  for (const [x, z] of consoles) {
+    for (let i = 0; i < n; i++) out.push({ position: [x + (i / (n - 1) - 0.5) * (table.length - r * 2), z], radius: r });
+  }
   return out;
 }
 

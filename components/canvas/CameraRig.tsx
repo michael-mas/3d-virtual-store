@@ -10,6 +10,7 @@ import { previewFraming } from "@/lib/preview";
 import { isTryOnMode } from "@/lib/modes";
 import { MEDIAPIPE_VERTICAL_FOV_DEG, TRY_ON_FAR, TRY_ON_NEAR } from "@/lib/tryon/constants";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { isDebugEnabled } from "@/lib/debug";
 import { useAppStore } from "@/store/useAppStore";
 
 type Vec3 = [number, number, number];
@@ -80,6 +81,8 @@ export default function CameraRig() {
       c.mouseButtons = { left: ACTION.ROTATE, middle: ACTION.DOLLY, right: ACTION.TRUCK, wheel: ACTION.DOLLY };
       c.touches = { one: ACTION.TOUCH_ROTATE, two: ACTION.TOUCH_DOLLY_TRUCK, three: ACTION.TOUCH_TRUCK };
     }
+    // Debug-only handle for scripted views (screenshots, demo GIF).
+    if (isDebugEnabled()) Object.assign(window, { __cameraControls: c });
     const pose = mode === "EXPLORE" ? explorePose() : mode === "CUSTOMIZE" ? customizePose(productId) : null;
     if (pose) void c.setLookAt(...pose.position, ...pose.target, true);
     lastPlayer.current = [...player.position];

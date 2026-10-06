@@ -162,3 +162,30 @@ describe("walking around obstacles", () => {
     expect(vz).toBeCloseTo(0, 6);
   });
 });
+
+describe("pedestal footprint", () => {
+  /** Holds a direction key for `seconds` (60 fps), as the Player component does. */
+  function hold(from: [number, number], dir: [number, number], seconds: number): [number, number] {
+    let m: Motion = { position: from, velocity: [0, 0], target: null };
+    for (let i = 0; i < seconds * 60; i++) {
+      const next = stepMotion(m, dir, 1 / 60, WALK, 1, { radius: PLAYER_RADIUS, obstacles });
+      m = { ...next, position: resolveCollisions(next.position, PLAYER_RADIUS, ROOM, obstacles) };
+    }
+    return m.position;
+  }
+
+  it("blocks only close to the slender column, so the player walks past it freely", () => {
+    // Pedestals are thin columns now: the collision circle stays close to them.
+    expect(PEDESTAL.collisionRadius).toBeLessThan(0.3);
+    const [x, z] = hold([0.6, 2.5], [0, -1], 2.5);
+    expect(x).toBeCloseTo(0.6, 1);
+    expect(z).toBeLessThan(-1);
+  });
+
+  it("walking head-on into a pedestal, then sideways, moves on", () => {
+    const blocked = hold([0, 2.5], [0, -1], 2);
+    expect(blocked[1]).toBeCloseTo(PLAYER_RADIUS + PEDESTAL.collisionRadius, 2);
+    const after = hold(blocked, [1, 0], 1);
+    expect(after[0]).toBeGreaterThan(1);
+  });
+});

@@ -11,7 +11,7 @@
     "radiusBottom": 0.13,
     "top": -0.024,
     "productOffsetY": 0.024,
-    "collisionRadius": 0.45
+    "collisionRadius": 0.22
   },
   "slots": [
     { "position": [0, 0], "accent": [1.0, 0.78, 0.45] },
@@ -31,6 +31,8 @@
     ],
     "bench": { "length": 1.4, "height": 0.42, "depth": 0.45 },
     "plants": [[-4.3, -3.8], [4.3, -3.8], [-4.3, 3.8], [4.3, 3.8]],
+    "consoles": [[-3.05, 4.28], [3.05, 4.28]],
+    "console": { "length": 1.2, "height": 0.82, "depth": 0.4 },
     "plantCollisionRadius": 0.35
   },
   "spawn": [0, 3],

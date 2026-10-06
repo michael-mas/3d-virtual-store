@@ -51,6 +51,7 @@ const lights = [
   ...pedestals.map((p) => spot(p.position[0], CEIL - 0.05, p.position[1], 3.2, 2.2, 0.975, 0.9)),
   // Wall washers: scallops of light grazing the fluted walls.
   ...[-4, -2.4, -0.8, 0.8, 2.4, 4].map((x) => spot(x, CEIL - 0.05, -HD + 0.45, 2.2, 2.4, 0.96, 0.8, new THREE.Vector3(0, -1, -0.32))),
+  ...[-4, -2.4, 2.4, 4].map((x) => spot(x, CEIL - 0.05, HD - 0.45, 2.2, 2.4, 0.96, 0.8, new THREE.Vector3(0, -1, 0.32))),
   ...[-3.2, -1.6, 0, 1.6, 3.2].flatMap((z) => [
     spot(-HW + 0.45, CEIL - 0.05, z, 2.0, 2.4, 0.96, 0.8, new THREE.Vector3(-0.32, -1, 0)),
     spot(HW - 0.45, CEIL - 0.05, z, 2.0, 2.4, 0.96, 0.8, new THREE.Vector3(0.32, -1, 0)),
@@ -191,6 +192,7 @@ const downlight = (x, z, r = 0.07) => {
 };
 for (const p of pedestals) downlight(p.position[0], p.position[1]);
 for (const x of [-4, -2.4, -0.8, 0.8, 2.4, 4]) downlight(x, -HD + 0.45, 0.05);
+for (const x of [-4, -2.4, 2.4, 4]) downlight(x, HD - 0.45, 0.05);
 for (const z of [-3.2, -1.6, 0, 1.6, 3.2]) {
   downlight(-HW + 0.45, z, 0.05);
   downlight(HW - 0.45, z, 0.05);
@@ -228,14 +230,158 @@ for (const x of [-3.7, -1.85, 0, 1.85, 3.7]) {
   parts.push(bake(at(new THREE.BoxGeometry(ARCH_W + 0.12, 0.025, 0.14), x, floorY + ARCH_BOTTOM - 0.05, -HD + 0.1), BRASS, { gloss: 1 }));
 }
 
-// ---------------------------------------------------------------- side walls: tall brass-framed panels
+// ---------------------------------------------------------------- entrance wall: doors, monograms, consoles
+// Everything faces -z (into the salon): built in the XY plane, turned half a turn, placed against the wall.
+const front = (geo, x, y, depth) => at(geo, x, y, HD - depth, Math.PI);
+// Arched double doors, glazed, onto the night street.
+const DOOR_W = 1.7;
+const DOOR_H = 2.75;
+parts.push(bake(front(new THREE.ShapeGeometry(archShape(DOOR_W / 2 + 0.06, 0, DOOR_H + 0.06), 32), 0, floorY, 0.05), BRASS, { gloss: 1 }));
+parts.push(
+  bake(front(new THREE.ShapeGeometry(archShape(DOOR_W / 2, 0, DOOR_H), 32), 0, floorY, 0.055), null, {
+    emissive: (p) => {
+      // Night outside: deep blue sky above, the warm glow of the street lamps low.
+      const t = Math.min(Math.max((p.y - floorY) / DOOR_H, 0), 1);
+      return C(0.09, 0.06, 0.035).lerp(C(0.012, 0.018, 0.04), Math.sqrt(t));
+    },
+  }),
+);
+// Mullions: center stile, transom, and two pull handles.
+parts.push(bake(front(new THREE.BoxGeometry(0.035, DOOR_H - DOOR_W / 2, 0.03), 0, floorY + (DOOR_H - DOOR_W / 2) / 2, 0.075), BRASS, { gloss: 1 }));
+parts.push(bake(front(new THREE.BoxGeometry(DOOR_W, 0.03, 0.03), 0, floorY + DOOR_H - DOOR_W / 2, 0.075), BRASS, { gloss: 1 }));
+for (const x of [-0.09, 0.09]) {
+  parts.push(bake(front(new THREE.CylinderGeometry(0.012, 0.012, 0.55, 12), x, floorY + 1.05, 0.12), BRASS, { gloss: 1 }));
+}
+// Monogram plaques either side: an M inside an arch, in brass on black lacquer (the house mark, as in the icon).
+function monogram(x) {
+  const cy = 1.55;
+  parts.push(bake(front(new THREE.BoxGeometry(0.86, 1.3, 0.02), x, floorY + cy, 0.03), BRASS, { gloss: 1 }));
+  parts.push(bake(front(new THREE.BoxGeometry(0.82, 1.26, 0.02), x, floorY + cy, 0.04), C(0.02, 0.018, 0.017), { gloss: 0.8 }));
+  const stroke = (a, b, w = 0.022) => {
+    const dx = b[0] - a[0];
+    const dy = b[1] - a[1];
+    const g = new THREE.BoxGeometry(Math.hypot(dx, dy) + w, w, 0.012).rotateZ(Math.atan2(dy, dx));
+    g.translate((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, 0);
+    parts.push(bake(front(g, x, floorY + cy, 0.055), BRASS, { gloss: 1 }));
+  };
+  // Arch: two uprights and a half-circle.
+  const r = 0.27;
+  const top = 0.18;
+  stroke([-r, -0.5], [-r, top]);
+  stroke([r, -0.5], [r, top]);
+  const arc = new THREE.TorusGeometry(r, 0.011, 8, 40, Math.PI).translate(0, top, 0);
+  parts.push(bake(front(arc, x, floorY + cy, 0.055), BRASS, { gloss: 1 }));
+  // M.
+  const m = 0.15;
+  stroke([-m, -0.32], [-m, 0.08], 0.026);
+  stroke([-m, 0.08], [0, -0.14], 0.026);
+  stroke([0, -0.14], [m, 0.08], 0.026);
+  stroke([m, 0.08], [m, -0.32], 0.026);
+}
+monogram(-1.75);
+monogram(1.75);
+// Consoles: black marble top on brass legs, with a ceramic vase and a branch of foliage.
+{
+  const { consoles, console: table } = layout.decor;
+  for (const [x, z] of consoles) {
+    const top = floorY + table.height;
+    parts.push(bake(at(new THREE.BoxGeometry(table.length, 0.05, table.depth), x, top - 0.025, z), MARBLE, { gloss: 0.8 }));
+    parts.push(bake(at(new THREE.BoxGeometry(table.length - 0.02, 0.012, table.depth - 0.02), x, top - 0.056, z), BRASS, { gloss: 1 }));
+    for (const sx of [-1, 1]) {
+      for (const sz of [-1, 1]) {
+        const leg = new THREE.CylinderGeometry(0.012, 0.012, table.height - 0.06, 8);
+        parts.push(bake(at(leg, x + sx * (table.length / 2 - 0.06), floorY + (table.height - 0.06) / 2, z + sz * (table.depth / 2 - 0.05)), BRASS, { gloss: 1 }));
+      }
+    }
+    const vase = [
+      [0, 0],
+      [0.06, 0],
+      [0.1, 0.08],
+      [0.08, 0.22],
+      [0.04, 0.3],
+      [0.05, 0.34],
+      [0, 0.34],
+    ].map(([r, h]) => new THREE.Vector2(r, h));
+    parts.push(bake(at(new THREE.LatheGeometry(vase, 18), x + 0.3, top, z), C(0.5, 0.45, 0.38), { gloss: 0.6 }));
+    for (const [dx, dy, r] of [
+      [0.28, 0.55, 0.13],
+      [0.38, 0.5, 0.09],
+      [0.22, 0.48, 0.08],
+    ]) {
+      parts.push(bake(at(new THREE.IcosahedronGeometry(r, 1), x + dx, top + dy, z - 0.02), FOLIAGE));
+    }
+    // A stack of house boxes.
+    parts.push(bake(at(new THREE.BoxGeometry(0.3, 0.08, 0.22), x - 0.3, top + 0.04, z), C(0.03, 0.028, 0.026)));
+    parts.push(bake(at(new THREE.BoxGeometry(0.22, 0.06, 0.16), x - 0.3, top + 0.11, z), C(0.6, 0.48, 0.3), { gloss: 0.4 }));
+    shadowCasters.push({ x, z, r: 0.35, strength: 0.4, falloff: 0.3 });
+  }
+}
+
+// ---------------------------------------------------------------- side walls: backlit vitrines around an artwork
+// Built in a wall-local frame (x along the wall, y up from the floor, z out of the wall into the salon).
 for (const side of [-1, 1]) {
-  for (const z of [-2.4, 0, 2.4]) {
-    const frame = new THREE.BoxGeometry(1.6, 1.9, 0.012).translate(0, 1.4, 0.05);
-    const inner = new THREE.BoxGeometry(1.56, 1.86, 0.012).translate(0, 1.4, 0.058);
-    const ry = side < 0 ? Math.PI / 2 : -Math.PI / 2;
-    parts.push(bake(at(frame, side * HW, floorY, z, ry), BRASS, { gloss: 1 }));
-    parts.push(bake(at(inner, side * HW, floorY, z, ry), C(0.035, 0.03, 0.028), { gloss: 0.6 }));
+  const ry = side < 0 ? Math.PI / 2 : -Math.PI / 2;
+  const place = (geo, z) => at(geo, side * HW, floorY, z, ry);
+  for (const z of [-2.4, 2.4]) {
+    // Vitrine: brass frame, warm backlit back, three glass shelves with brass nosings, and a still life on each.
+    parts.push(bake(place(new THREE.BoxGeometry(1.6, 1.9, 0.012).translate(0, 1.4, 0.05), z), BRASS, { gloss: 1 }));
+    parts.push(
+      bake(place(new THREE.PlaneGeometry(1.54, 1.84, 1, 12).translate(0, 1.4, 0.058), z), null, {
+        emissive: (p) => {
+          const t = Math.min(Math.max((p.y - floorY - 0.48) / 1.84, 0), 1);
+          return C(0.06, 0.04, 0.022).lerp(C(0.4, 0.28, 0.15), Math.sin(t * Math.PI) ** 0.7);
+        },
+      }),
+    );
+    let seed = z * 7 + side * 3 + 11;
+    const rand = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+    for (const y of [0.85, 1.4, 1.95]) {
+      parts.push(bake(place(new THREE.BoxGeometry(1.5, 0.012, 0.22).translate(0, y, 0.17), z), C(0.08, 0.075, 0.07), { gloss: 1 }));
+      parts.push(bake(place(new THREE.BoxGeometry(1.5, 0.018, 0.008).translate(0, y, 0.28), z), BRASS, { gloss: 1 }));
+      // Still life: perfume flacons, a box, a sphere; dark silhouettes against the glow.
+      let x = -0.6 + rand() * 0.1;
+      while (x < 0.6) {
+        const kind = Math.floor(rand() * 3);
+        const base = y + 0.006;
+        if (kind === 0) {
+          const h = 0.12 + rand() * 0.1;
+          const r = 0.035 + rand() * 0.02;
+          const flacon = [
+            [0, 0],
+            [r, 0],
+            [r, h * 0.7],
+            [r * 0.35, h * 0.8],
+            [r * 0.35, h],
+            [0, h],
+          ].map(([a, b]) => new THREE.Vector2(a, b));
+          parts.push(bake(place(new THREE.LatheGeometry(flacon, 12).translate(x, base, 0.16), z), C(0.04, 0.035, 0.03), { gloss: 1 }));
+          parts.push(bake(place(new THREE.CylinderGeometry(r * 0.5, r * 0.5, 0.025, 10).translate(x, base + h + 0.012, 0.16), z), BRASS, { gloss: 1 }));
+          x += r * 2 + 0.08 + rand() * 0.1;
+        } else if (kind === 1) {
+          const w = 0.12 + rand() * 0.08;
+          const h = 0.06 + rand() * 0.08;
+          parts.push(bake(place(new THREE.BoxGeometry(w, h, 0.12).translate(x + w / 2, base + h / 2, 0.16), z), rand() > 0.5 ? C(0.03, 0.028, 0.026) : C(0.55, 0.42, 0.25), { gloss: 0.4 }));
+          x += w + 0.1 + rand() * 0.1;
+        } else {
+          const r = 0.04 + rand() * 0.03;
+          parts.push(bake(place(new THREE.IcosahedronGeometry(r, 2).translate(x + r, base + r, 0.16), z), BRASS, { gloss: 1 }));
+          x += r * 2 + 0.1 + rand() * 0.1;
+        }
+      }
+    }
+  }
+  // Center: a framed artwork, concentric brass arcs and a gilded disc on black lacquer.
+  parts.push(bake(place(new THREE.BoxGeometry(1.6, 1.9, 0.012).translate(0, 1.4, 0.05), 0), BRASS, { gloss: 1 }));
+  parts.push(bake(place(new THREE.BoxGeometry(1.54, 1.84, 0.012).translate(0, 1.4, 0.058), 0), C(0.018, 0.016, 0.015), { gloss: 0.8 }));
+  parts.push(bake(place(new THREE.CircleGeometry(0.2, 40).translate(0.18, 1.62, 0.066), 0), BRASS, { gloss: 1 }));
+  for (const [r, start, len] of [
+    [0.34, 0.2, 2.2],
+    [0.46, 2.6, 2.4],
+    [0.58, 0.9, 1.6],
+    [0.7, 3.8, 1.9],
+  ]) {
+    const arc = new THREE.TorusGeometry(r, 0.006, 6, 64, len).rotateZ(start).translate(-0.08, 1.3, 0.066);
+    parts.push(bake(place(arc, 0), BRASS, { gloss: 1 }));
   }
 }
 
