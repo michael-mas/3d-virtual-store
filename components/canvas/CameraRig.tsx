@@ -2,7 +2,7 @@
 
 import { CameraControls, PerspectiveCamera } from "@react-three/drei";
 import type CameraControlsImpl from "camera-controls";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { BackSide, BoxGeometry, CylinderGeometry, Mesh, MeshBasicMaterial } from "three/webgpu";
 import { FLOOR_Y, OBSTACLES, PEDESTAL, PEDESTALS, ROOM, productPosition } from "@/lib/explore/layout";
@@ -12,6 +12,7 @@ import { isTryOnMode } from "@/lib/modes";
 import { MEDIAPIPE_VERTICAL_FOV_DEG, TRY_ON_FAR, TRY_ON_NEAR } from "@/lib/tryon/constants";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { isDebugEnabled } from "@/lib/debug";
+import { NO_REFLECTION_LAYER } from "@/lib/layers";
 import { useAppStore } from "@/store/useAppStore";
 
 type Vec3 = [number, number, number];
@@ -120,6 +121,12 @@ function customizePose(productId: string): Pose {
 }
 
 export default function CameraRig() {
+  // Every view camera (explore/customize, try-on) sees the transmissive layer; only the floor reflection skips it.
+  const viewCamera = useThree((s) => s.camera);
+  useEffect(() => {
+    viewCamera.layers.enable(NO_REFLECTION_LAYER);
+  }, [viewCamera]);
+
   const controls = useRef<CameraControls>(null);
   const mode = useAppStore((s) => s.mode);
   const productId = useAppStore((s) => s.activeProductId);

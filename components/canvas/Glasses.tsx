@@ -2,6 +2,7 @@
 
 import { useGLTF } from "@react-three/drei";
 import { useEffect, useMemo } from "react";
+import { NO_REFLECTION_LAYER } from "@/lib/layers";
 import { Box3, Group, Mesh, Vector3, type Object3D } from "three/webgpu";
 import { DRACO_DECODER_PATH } from "@/lib/assets";
 import { PEDESTAL } from "@/lib/explore/layout";
@@ -62,6 +63,8 @@ export default function Glasses({ productId }: { productId: string }) {
       (isLens(o) || isLens(o.parent ?? o) ? lenses : frames).push(o);
       // Always drawn, even off-screen: see the keep-alive note below.
       o.frustumCulled = false;
+      // Transmissive: kept out of the half-resolution floor reflection (lib/layers.ts).
+      o.layers.set(NO_REFLECTION_LAYER);
     });
     return { frames, lenses };
   }, [scene]);
@@ -90,6 +93,7 @@ export default function Glasses({ productId }: { productId: string }) {
         for (const mat of Object.values(mats)) {
           const m = new Mesh(source.geometry, mat);
           m.frustumCulled = false;
+          m.layers.set(NO_REFLECTION_LAYER);
           group.add(m);
         }
       }

@@ -1,13 +1,14 @@
 "use client";
 
 import { useGLTF } from "@react-three/drei";
-import type { ThreeEvent } from "@react-three/fiber";
+import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useMemo } from "react";
 import { reflector } from "three/tsl";
-import { AdditiveBlending, Mesh, MeshBasicNodeMaterial, PlaneGeometry } from "three/webgpu";
+import { AdditiveBlending, Mesh, MeshBasicNodeMaterial, PlaneGeometry, type Camera } from "three/webgpu";
 import { DRACO_DECODER_PATH, SHOWROOM_MODEL_PATH } from "@/lib/assets";
 import { FLOOR_Y, ROOM } from "@/lib/explore/layout";
 import { walkTo } from "@/lib/explore/player";
+import { NO_REFLECTION_LAYER } from "@/lib/layers";
 import { isTryOnMode } from "@/lib/modes";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -46,13 +47,20 @@ export default function Showroom() {
     mesh.position.y = FLOOR_Y + 0.001;
     mesh.add(reflection.target);
     mesh.raycast = () => {};
-    return mesh;
+    return { mesh, reflection };
   }, []);
+
+  // The reflection's camera is a clone of the view camera, made on first use: take the transmissive layer off it
+  // (glass at half resolution would free the screen copy the main pass samples; see lib/layers.ts).
+  useFrame(({ camera }) => {
+    const { reflector } = mirror.reflection as unknown as { reflector: { getVirtualCamera(camera: Camera): Camera } };
+    reflector.getVirtualCamera(camera).layers.disable(NO_REFLECTION_LAYER);
+  });
 
   useEffect(
     () => () => {
-      mirror.geometry.dispose();
-      (mirror.material as MeshBasicNodeMaterial).dispose();
+      mirror.mesh.geometry.dispose();
+      (mirror.mesh.material as MeshBasicNodeMaterial).dispose();
     },
     [mirror],
   );
@@ -66,7 +74,7 @@ export default function Showroom() {
   return (
     <group visible={!hidden}>
       <primitive object={room} />
-      {postFx && <primitive object={mirror} />}
+      {postFx && <primitive object={mirror.mesh} />}
       <mesh visible={false} rotation={[-Math.PI / 2, 0, 0]} position={[0, FLOOR_Y, 0]} onClick={onGroundClick}>
         <planeGeometry args={[ROOM.halfWidth * 2, ROOM.halfDepth * 2]} />
       </mesh>

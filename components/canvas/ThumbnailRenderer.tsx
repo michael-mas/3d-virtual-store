@@ -18,6 +18,7 @@ import {
   type WebGPURenderer,
 } from "three/webgpu";
 import { getProductModel, setThumbnailRenderer } from "@/lib/cart/registry";
+import { NO_REFLECTION_LAYER } from "@/lib/layers";
 import { useAppStore } from "@/store/useAppStore";
 
 const SIZE = 256;
@@ -35,6 +36,7 @@ export default function ThumbnailRenderer() {
   const { target, camera, scene } = useMemo(() => {
     const target = new RenderTarget(SIZE, SIZE, { samples: 4 });
     const camera = new PerspectiveCamera(30, 1, 0.005, 10);
+    camera.layers.enable(NO_REFLECTION_LAYER);
     const scene = new Scene();
     scene.background = new Color("#3a3633");
     const key = new DirectionalLight("#ffffff", 1.6);
