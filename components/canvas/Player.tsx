@@ -73,7 +73,10 @@ export default function Player() {
       camera.getWorldDirection(forward);
       const input: Vec2 = cameraRelative([forward.x, forward.z], moveAxes());
       if (player.target) player.target = resolveCollisions(player.target, PLAYER_RADIUS, ROOM, OBSTACLES);
-      const next = stepMotion(player, input, Math.min(delta, 0.1), WALK, isRunning() ? RUN_MULTIPLIER : 1);
+      const next = stepMotion(player, input, Math.min(delta, 0.1), WALK, isRunning() ? RUN_MULTIPLIER : 1, {
+        radius: PLAYER_RADIUS,
+        obstacles: OBSTACLES,
+      });
       const resolved = resolveCollisions(next.position, PLAYER_RADIUS, ROOM, OBSTACLES);
       player.position = resolved;
       player.velocity = next.velocity;

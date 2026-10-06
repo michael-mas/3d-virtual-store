@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { INTERACT_RADIUS, OBSTACLES, PEDESTAL, PEDESTALS, PLAYER_RADIUS, ROOM, SPAWN } from "./layout";
-import { approachPoint, cameraRelative, nearestPedestal, resolveCollisions, stepMotion, WALK, type Motion } from "./movement";
+import { approachPoint, cameraRelative, nearestPedestal, resolveCollisions, steerAround, stepMotion, WALK, type Motion } from "./movement";
 
 const obstacles = OBSTACLES;
 
@@ -122,5 +122,43 @@ describe("cameraRelative", () => {
     const r2 = cameraRelative([1, 0], [1, 0]);
     expect(r2[0]).toBeCloseTo(0);
     expect(r2[1]).toBeCloseTo(1);
+  });
+});
+
+/** Walks to `target` for `seconds` at 60 fps with the same steps as the Player component. */
+function walk(from: [number, number], target: [number, number], seconds: number, avoid = true): Motion {
+  let m: Motion = { position: from, velocity: [0, 0], target: resolveCollisions(target, PLAYER_RADIUS, ROOM, obstacles) };
+  for (let i = 0; i < seconds * 60; i++) {
+    const next = stepMotion(m, [0, 0], 1 / 60, WALK, 1, avoid ? { radius: PLAYER_RADIUS, obstacles } : undefined);
+    m = { ...next, position: resolveCollisions(next.position, PLAYER_RADIUS, ROOM, obstacles) };
+  }
+  return m;
+}
+
+describe("walking around obstacles", () => {
+  it("a point behind a pedestal is reached by going around it (push-out alone gets stuck against it)", () => {
+    const behind: [number, number] = [0, -1.2];
+    const stuck = walk([0, 3], behind, 10, false);
+    expect(Math.hypot(stuck.position[0] - behind[0], stuck.position[1] - behind[1])).toBeGreaterThan(1);
+    const around = walk([0, 3], behind, 10);
+    expect(Math.hypot(around.position[0] - behind[0], around.position[1] - behind[1])).toBeLessThan(0.1);
+  });
+
+  it("every pedestal's front is reachable from every other pedestal's front", () => {
+    const fronts = PEDESTALS.map((p) => approachPoint(p, [p.position[0], p.position[1] + 1], 0.9));
+    for (const a of fronts) {
+      for (const b of fronts) {
+        const m = walk(a, b, 15);
+        expect(Math.hypot(m.position[0] - b[0], m.position[1] - b[1]), `${a} → ${b}`).toBeLessThan(0.15);
+      }
+    }
+  });
+
+  it("keyboard walking slides along an obstacle instead of turning", () => {
+    // Touching the central pedestal from the front, pushing diagonally into it: only the sideways part remains.
+    const at: [number, number] = [0, PLAYER_RADIUS + PEDESTAL.collisionRadius];
+    const [vx, vz] = steerAround(at, [1, -1], PLAYER_RADIUS, obstacles, false);
+    expect(vx).toBeCloseTo(1, 6);
+    expect(vz).toBeCloseTo(0, 6);
   });
 });

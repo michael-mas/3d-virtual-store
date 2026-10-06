@@ -114,26 +114,32 @@ export default function Ring({ productId }: { productId: string }) {
     occluder.renderOrder = -1;
     occluder.frustumCulled = false;
 
-    return { model, band, head, stone, box, occluder, stoneColor, materials: { metalMat, stoneMat, boxMat, occluderMat }, geometries };
+    type Size = { r: number; band: BufferGeometry; finger: BufferGeometry };
+    const sizes = {} as Record<Finger, Size>;
+    for (const finger of Object.keys(FINGER_RADIUS) as Finger[]) {
+      const r = FINGER_RADIUS[finger];
+      sizes[finger] = {
+        r,
+        band: keep(new TorusGeometry(r + TUBE, TUBE, 16, 64).rotateX(Math.PI / 2)),
+        finger: keep(new CylinderGeometry(r * 0.96, r * 0.96, 0.05, 24).translate(0, 0.012, 0)),
+      };
+    }
+    band.geometry = sizes.ring.band;
+    occluder.geometry = sizes.ring.finger;
+    head.position.z = sizes.ring.r + TUBE * 1.6;
+
+    return { model, band, head, stone, box, occluder, sizes, stoneColor, materials: { metalMat, stoneMat, boxMat, occluderMat }, geometries };
   }, []);
 
-  // Band and finger occluder sized for the chosen finger.
-  const sized = useMemo(() => {
-    const r = FINGER_RADIUS[config.finger];
-    const band = new TorusGeometry(r + TUBE, TUBE, 16, 64).rotateX(Math.PI / 2);
-    const finger = new CylinderGeometry(r * 0.96, r * 0.96, 0.05, 24).translate(0, 0.012, 0);
-    return { r, band, finger };
-  }, [config.finger]);
-
+  // Band and finger occluder sized for the chosen finger: switched between sizes built once with the parts (and
+  // disposed with them). Rebuilding on change and disposing in an effect cleanup could leave the band on a
+  // disposed geometry when React re-runs the effect without the memo (remount, re-shown Suspense tree).
   useEffect(() => {
-    parts.band.geometry = sized.band;
-    parts.occluder.geometry = sized.finger;
-    parts.head.position.z = sized.r + TUBE * 1.6;
-    return () => {
-      sized.band.dispose();
-      sized.finger.dispose();
-    };
-  }, [parts, sized]);
+    const size = parts.sizes[config.finger];
+    parts.band.geometry = size.band;
+    parts.occluder.geometry = size.finger;
+    parts.head.position.z = size.r + TUBE * 1.6;
+  }, [parts, config.finger]);
 
   const layout = useMemo(() => {
     // Measured on a throwaway copy laid out like the JSX display below (largest band).

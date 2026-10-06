@@ -53,6 +53,49 @@ export function approachPoint(pedestal: Pedestal, from: Vec2, distance: number):
   return [pedestal.position[0] + (dx / d) * distance, pedestal.position[1] + (dz / d) * distance];
 }
 
+type Obstacle = { position: Vec2; radius: number };
+
+/** Extra distance at which an obstacle starts deflecting the walk (m). */
+const STEER_MARGIN = 0.06;
+
+/**
+ * Deflects a desired velocity around the obstacles the player is touching, so walking into a pedestal slides along
+ * it instead of pushing against it (push-out alone exactly cancels a head-on walk). The inward part of the
+ * velocity is removed; when `goAround` (walking to a clicked point), a near head-on approach turns into a full-speed
+ * walk along the obstacle, on the side of the target, so a point behind a pedestal is reached by going around it.
+ */
+export function steerAround(
+  position: Vec2,
+  desired: Vec2,
+  radius: number,
+  obstacles: readonly Obstacle[],
+  goAround: boolean,
+): Vec2 {
+  let [vx, vz] = desired;
+  const speed = Math.hypot(vx, vz);
+  if (speed < 1e-6) return desired;
+  for (const o of obstacles) {
+    const dx = position[0] - o.position[0];
+    const dz = position[1] - o.position[1];
+    const d = Math.hypot(dx, dz);
+    if (d > radius + o.radius + STEER_MARGIN || d < 1e-6) continue;
+    const nx = dx / d;
+    const nz = dz / d;
+    const inward = vx * nx + vz * nz;
+    if (inward >= 0) continue;
+    // Slide: drop the component into the obstacle.
+    vx -= inward * nx;
+    vz -= inward * nz;
+    if (goAround) {
+      // Tangent on the side the velocity already leans to (a dead-on approach picks one side consistently).
+      const side = vx * -nz + vz * nx >= 0 ? 1 : -1;
+      vx = -nz * side * speed;
+      vz = nx * side * speed;
+    }
+  }
+  return [vx, vz];
+}
+
 export type Motion = {
   position: Vec2;
   velocity: Vec2;
@@ -76,7 +119,14 @@ export const WALK: MotionParams = { speed: 1.6, acceleration: 9, arriveRadius: 0
  * the camera); it overrides and cancels any target. Otherwise the player "arrives" at the target, slowing
  * down as it gets close. Velocity eases toward the desired velocity, so starts and stops are smooth.
  */
-export function stepMotion(m: Motion, input: Vec2, dt: number, params: MotionParams, speedScale = 1): Motion {
+export function stepMotion(
+  m: Motion,
+  input: Vec2,
+  dt: number,
+  params: MotionParams,
+  speedScale = 1,
+  avoid?: { radius: number; obstacles: readonly Obstacle[] },
+): Motion {
   const speed = params.speed * speedScale;
   let desired: Vec2 = [0, 0];
   let target = m.target;
@@ -98,6 +148,8 @@ export function stepMotion(m: Motion, input: Vec2, dt: number, params: MotionPar
       desired = [(dx / d) * s, (dz / d) * s];
     }
   }
+
+  if (avoid) desired = steerAround(m.position, desired, avoid.radius, avoid.obstacles, inputLength <= 1e-3);
 
   const a = 1 - Math.exp(-params.acceleration * dt);
   const velocity: Vec2 = [m.velocity[0] + (desired[0] - m.velocity[0]) * a, m.velocity[1] + (desired[1] - m.velocity[1]) * a];
