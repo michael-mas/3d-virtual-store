@@ -184,7 +184,7 @@ export const FR: Readonly<Record<string, string>> = {
   "A single stone, raised on four claws.": "Une pierre unique, sertie sur quatre griffes.",
   "Color for your own hair, strand by strand, without a single drop.":
     "La couleur sur vos propres cheveux, mèche par mèche, sans une goutte.",
-  "A cap, a beanie or a bucket hat, cut to the head.": "Une casquette, un bonnet ou un bob, taillés pour la tête.",
+  "A felt fedora, a beanie or a bucket hat, sized to your hair.": "Un feutre, un bonnet ou un bob, ajustés à votre chevelure.",
 
   // ---------------------------------------------------------------- option labels
   "Frame finish": "Finition de la monture",
@@ -241,7 +241,7 @@ export const FR: Readonly<Record<string, string>> = {
   Natural: "Naturel",
   Vivid: "Intense",
   Pastel: "Pastel",
-  Cap: "Casquette",
+  Fedora: "Feutre",
   Beanie: "Bonnet",
   "Bucket hat": "Bob",
 

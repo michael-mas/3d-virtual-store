@@ -55,7 +55,16 @@ export function wornProductIds(state: { look: Look | null; items: readonly Item[
   return state.look ? lookItems(state.look, state.items).map((i) => i.productId) : [state.activeProductId];
 }
 
-/** The trackers the worn products need (face, hand): only those run during try-on. */
+/**
+ * The trackers the worn products need (face, hand, hair): only those run during try-on. A hat also needs the hair
+ * segmenter: it is sized to cover the hair.
+ */
 export function wornTrackers(state: Parameters<typeof wornProductIds>[0]): Set<Tracker> {
-  return new Set(wornProductIds(state).flatMap((id) => productTracker(id) ?? []));
+  return new Set(
+    wornProductIds(state).flatMap((id): Tracker[] => {
+      const tracker = productTracker(id);
+      if (!tracker) return [];
+      return zoneOf(id) === "head" ? [tracker, "hair"] : [tracker];
+    }),
+  );
 }

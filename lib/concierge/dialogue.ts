@@ -55,7 +55,7 @@ const PRODUCT_WORDS: Record<string, readonly string[]> = {
   chrono: ["montre", "montres", "watch", "watches", "chrono", "chrono nuit", "horlogerie"],
   solitaire: ["bague", "bagues", "ring", "rings", "solitaire", "diamant", "diamond", "joaillerie", "jewelry", "bijou"],
   "prism-dye": ["prisme", "cheveux", "hair", "coloration", "couleur de cheveux", "hair color", "teinture", "dye"],
-  topper: ["chapeau", "chapeaux", "hat", "hats", "le chapeau", "casquette", "cap", "bonnet", "beanie", "bob", "bucket"],
+  topper: ["chapeau", "chapeaux", "hat", "hats", "le chapeau", "casquette", "cap", "feutre", "fedora", "borsalino", "bonnet", "beanie", "bob", "bucket"],
 };
 /** The gallery's works, by title (normalized). */
 const ARTWORK_WORDS: Record<ArtworkId, readonly string[]> = {

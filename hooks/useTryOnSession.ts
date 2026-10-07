@@ -15,7 +15,8 @@ import {
 } from "@/lib/tryon/errors";
 import { onTryOnAssetsProgress } from "@/lib/tryon/assets";
 import { MEDIAPIPE_VERTICAL_FOV_DEG } from "@/lib/tryon/constants";
-import { resampleMask } from "@/lib/tryon/hairMask";
+import { measureHair } from "@/lib/tryon/hairFit";
+import { HAIR_MASK_HEIGHT, HAIR_MASK_WIDTH, resampleMask } from "@/lib/tryon/hairMask";
 import { HAND_LANDMARK_COUNT, handToCamera, type Handedness } from "@/lib/tryon/handPose";
 import { getLandmarker } from "@/lib/tryon/landmarkers";
 import { OneEuroVector, type OneEuroParams } from "@/lib/tryon/oneEuro";
@@ -281,6 +282,14 @@ export function useTryOnSession(
             const coverage = resampleMask(mask.getAsFloat32Array(), mask.width, mask.height, hairMaskData);
             hairMaskUpdated();
             if (coverage >= MIN_HAIR_COVERAGE) lastHairAt = now;
+            // How far the hair extends around the face (hats are sized to it), smoothed over ~0.3 s.
+            if (now - lastFaceAt <= FACE_LOST_GRACE_MS) {
+              const extent = measureHair(hairMaskData, HAIR_MASK_WIDTH, HAIR_MASK_HEIGHT, tracking.landmarks, video.videoWidth / video.videoHeight);
+              if (extent) {
+                tracking.hair.above += (extent.above - tracking.hair.above) * 0.25;
+                tracking.hair.width += (extent.width - tracking.hair.width) * 0.25;
+              }
+            }
           } finally {
             result.close();
           }

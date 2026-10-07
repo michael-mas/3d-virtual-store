@@ -34,3 +34,16 @@ describe("headwear geometry", () => {
     expect(new Vector3().fromBufferAttribute(n, i).dot(radial)).toBeGreaterThan(0);
   });
 });
+
+describe("fedora", () => {
+  it("rises well above the skull (room for the hair) and its brim reaches out past the crown", async () => {
+    const { fedoraGeometries, FEDORA_FIT } = await import("./fedora");
+    const f = fedoraGeometries();
+    f.crown.computeBoundingBox();
+    f.brim.computeBoundingBox();
+    const skullTop = SKULL.center.y + SKULL.radii.y;
+    expect(f.crown.boundingBox!.max.y).toBeGreaterThan(skullTop + 0.03);
+    expect(f.crown.boundingBox!.max.y).toBeLessThanOrEqual(FEDORA_FIT.top + 0.002);
+    expect(f.brim.boundingBox!.max.x).toBeGreaterThan(f.crown.boundingBox!.max.x + 0.04);
+  });
+});

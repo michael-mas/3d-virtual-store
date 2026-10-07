@@ -1,6 +1,6 @@
 import type { OptionSchema, Product } from "./types";
 
-export const HEADWEAR_STYLES = ["cap", "beanie", "bucket"] as const;
+export const HEADWEAR_STYLES = ["fedora", "beanie", "bucket"] as const;
 export type HeadwearStyle = (typeof HEADWEAR_STYLES)[number];
 
 /** Customization schema shared by every headwear product. The style changes the shape. */
@@ -9,9 +9,9 @@ export const HEADWEAR_OPTIONS: readonly OptionSchema[] = [
     kind: "choice",
     id: "style",
     label: "Style",
-    default: "cap",
+    default: "fedora",
     values: [
-      { value: "cap", label: "Cap" },
+      { value: "fedora", label: "Fedora", priceDelta: 20 },
       { value: "beanie", label: "Beanie" },
       { value: "bucket", label: "Bucket hat", priceDelta: 5 },
     ],
@@ -35,7 +35,7 @@ export const HEADWEAR_OPTIONS: readonly OptionSchema[] = [
     kind: "color",
     id: "accent",
     label: "Accent",
-    default: "#f2f2f2",
+    default: "#151515",
     allowCustom: true,
     presets: [
       { value: "#f2f2f2", label: "White" },

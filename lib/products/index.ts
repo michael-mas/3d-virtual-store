@@ -76,7 +76,7 @@ export const PRODUCTS: readonly Product[] = [
   },
   {
     ...headwearProduct({ id: "topper", name: "Le Chapeau", basePrice: 39 }),
-    tagline: "A cap, a beanie or a bucket hat, cut to the head.",
+    tagline: "A felt fedora, a beanie or a bucket hat, sized to your hair.",
     tip: "A cream beanie with L'Aviateur is a house favorite. Try them together from your selection.",
   },
 ];

@@ -31,8 +31,11 @@ export const tracking = {
     /** MediaPipe's label, with hysteresis (a one-frame flip would turn the watch over). */
     handedness: "Right" as Handedness,
   },
-  /** Hair segmented in the frame (mask in lib/tryon/videoLayer.ts), when a hair color is worn. */
-  hair: { present: false },
+  /**
+   * Hair segmented in the frame (mask in lib/tryon/videoLayer.ts), when a hair color or a hat is worn; and its
+   * smoothed extent around the face (lib/tryon/hairFit.ts), which hats are sized to.
+   */
+  hair: { present: false, above: 0, width: 0 },
 };
 
 /** Reads one blendshape score by name; caches its index (the category order is fixed by the model). */

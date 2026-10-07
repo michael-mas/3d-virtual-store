@@ -116,8 +116,9 @@ export default function TryOnPanel() {
         ? t("Opening photo…")
         : t(STATUS_TEXT[status === "error" || status === "running" ? "idle" : status]);
   // What the worn products need in view; the photo is possible as soon as one of them is tracked.
-  // Hair color needs the head in view too: it asks for the face like face products.
-  const missingFace = (needs.includes("face") && !faceDetected) || (needs.includes("hair") && !hairDetected);
+  // Hair color needs the head in view too: it asks for the face like face products. (With a face product too, the
+  // face decides: a hat also runs the hair segmenter, and a shaved head has no hair to find.)
+  const missingFace = (needs.includes("face") && !faceDetected) || (needs.includes("hair") && !needs.includes("face") && !hairDetected);
   const missingHand = needs.includes("hand") && !handDetected;
   const tracked =
     (needs.includes("face") && faceDetected) ||
