@@ -8,6 +8,8 @@ import { BackSide, BoxGeometry, CylinderGeometry, Mesh, MeshBasicMaterial } from
 import { door, DOOR_PASSABLE } from "@/lib/explore/door";
 import { DOOR_OBSTACLE, FLOOR_Y, GALLERY, OBSTACLES, PEDESTAL, PEDESTALS, ROOM, STAGE_OBSTACLES, WALK_BOUNDS, WALL_OBSTACLES, productPosition, type Obstacle } from "@/lib/explore/layout";
 import { player } from "@/lib/explore/player";
+import { getArtwork } from "@/lib/gallery/artworks";
+import { cameraFocus } from "@/lib/gallery/interactions";
 import { shotAt } from "@/lib/gallery/show";
 import { show, showTime } from "@/lib/gallery/stage";
 import { previewFraming } from "@/lib/preview";
@@ -198,6 +200,29 @@ export default function CameraRig() {
       void c.setLookAt(px, FLOOR_Y + LOOK_HEIGHT + 0.45, pz - 1.7, px, FLOOR_Y + LOOK_HEIGHT, pz + 0.5, true);
       lastPlayer.current = [px, pz];
       return;
+    }
+    // A label's button was used: turn to the work (from behind the visitor), so its answer is seen.
+    const focus = cameraFocus.id ? getArtwork(cameraFocus.id) : undefined;
+    if (cameraFocus.id) {
+      cameraFocus.id = null;
+      if (focus) {
+        const [px, pz] = player.position;
+        let [dx, dz] = [px - focus.center[0], pz - focus.center[2]];
+        const d = Math.hypot(dx, dz);
+        // Under (or at) the work: look from the entrance side.
+        [dx, dz] = d > 0.6 ? [dx / d, dz / d] : [0, -1];
+        if (focus.kind === "installation") {
+          // The rain hangs overhead and the explore camera cannot look up: stand back at its height instead.
+          const [cx, , cz] = focus.center;
+          void c.setLookAt(cx + dx * 2.8, FLOOR_Y + 2.0, cz + dz * 2.8, cx, FLOOR_Y + 2.35, cz, true);
+        } else {
+          const lift = focus.kind === "sculpture" ? 0.35 : focus.kind === "performance" ? 1.4 : 0;
+          // Close works from a little further back, so the whole work is in view.
+          const back = Math.min(Math.max(2.4 - d, 0.6), 1.4);
+          void c.setLookAt(px + dx * back, FLOOR_Y + 1.55, pz + dz * back, focus.center[0], focus.center[1] + lift, focus.center[2], true);
+        }
+        lastPlayer.current = [px, pz];
+      }
     }
     // The closed gallery door stops the camera too.
     if (closed !== doorClosed.current) {

@@ -169,54 +169,58 @@ export default function ConciergePanel() {
   };
 
   if (!open) {
-    if (!line) {
-      return (
-        <button
-          type="button"
-          onClick={openChat}
-          data-testid="concierge-open"
-          className="chip fixed bottom-16 left-4 z-30 rounded-full px-4 py-2.5 sm:bottom-20 sm:left-6"
-        >
-          {t("Talk with the concierge")}
-        </button>
-      );
-    }
+    const chip = (className = "") => (
+      <button
+        type="button"
+        onClick={openChat}
+        data-testid="concierge-open"
+        className={`chip fixed bottom-16 left-4 z-30 rounded-full px-4 py-2.5 sm:bottom-20 sm:left-6 ${className}`}
+      >
+        {t("Talk with the concierge")}
+      </button>
+    );
+    if (!line) return chip();
+    // Phones, in the gallery: no card over the works (the label carries each work's story); the chip, away from them.
+    const phoneChip = inGallery && !nearWork ? chip("sm:hidden") : null;
     const index = near ? PEDESTALS.findIndex((p) => p.productId === near) : -1;
     const next = PEDESTALS[(index + 1) % PEDESTALS.length];
     const nextWork = ARTWORKS[(work ? ARTWORKS.indexOf(work) + 1 : 0) % ARTWORKS.length];
     return (
-      <aside
-        aria-label={t("Your concierge")}
-        data-testid="concierge"
-        className="panel fixed bottom-16 left-4 z-30 w-[min(20rem,calc(100vw-2rem))] rounded-sm px-4 py-3 sm:bottom-20 sm:left-6"
-      >
-        <p className="eyebrow mb-1 text-[0.55rem] text-gold">{t("Your concierge")}</p>
-        <p role="status" className="font-display text-[0.95rem] leading-snug text-ivory italic">
-          {line}
-        </p>
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-          {inGallery ? (
-            <button
-              type="button"
-              onClick={() => walkTo(nextWork.viewpoint)}
-              className="eyebrow text-[0.6rem] text-gold-light underline-offset-4 hover:underline"
-            >
-              {t("Next work: {title}", { title: nextWork.title })} →
+      <>
+        {phoneChip}
+        <aside
+          aria-label={t("Your concierge")}
+          data-testid="concierge"
+          className={`panel fixed bottom-16 left-3 z-30 w-[min(20rem,calc(100vw-1.5rem))] rounded-sm px-3 py-2 sm:bottom-20 sm:left-6 sm:px-4 sm:py-3 ${inGallery ? "max-sm:hidden" : ""}`}
+        >
+          <p className="eyebrow mb-1 hidden text-[0.55rem] text-gold sm:block">{t("Your concierge")}</p>
+          <p role="status" className="line-clamp-3 font-display text-[0.85rem] leading-snug text-ivory italic sm:line-clamp-none sm:text-[0.95rem]">
+            {line}
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+            {inGallery ? (
+              <button
+                type="button"
+                onClick={() => walkTo(nextWork.viewpoint)}
+                className="eyebrow text-[0.6rem] text-gold-light underline-offset-4 hover:underline"
+              >
+                {t("Next work: {title}", { title: nextWork.title })} →
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => walkTo(approachPoint(greeting ? PEDESTALS[0] : next, player.position, 0.9))}
+                className="eyebrow text-[0.6rem] text-gold-light underline-offset-4 hover:underline"
+              >
+                {greeting ? t("Begin the tour") : t("Next piece: {name}", { name: getProduct(next.productId)?.name ?? "" })} →
+              </button>
+            )}
+            <button type="button" onClick={openChat} className="eyebrow text-[0.6rem] underline-offset-4 hover:text-ivory hover:underline">
+              {t("Talk")}
             </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => walkTo(approachPoint(greeting ? PEDESTALS[0] : next, player.position, 0.9))}
-              className="eyebrow text-[0.6rem] text-gold-light underline-offset-4 hover:underline"
-            >
-              {greeting ? t("Begin the tour") : t("Next piece: {name}", { name: getProduct(next.productId)?.name ?? "" })} →
-            </button>
-          )}
-          <button type="button" onClick={openChat} className="eyebrow text-[0.6rem] underline-offset-4 hover:text-ivory hover:underline">
-            {t("Talk")}
-          </button>
-        </div>
-      </aside>
+          </div>
+        </aside>
+      </>
     );
   }
 

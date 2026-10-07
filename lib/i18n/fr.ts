@@ -293,6 +293,8 @@ export const FR: Readonly<Record<string, string>> = {
     "Un nœud de trèfle, le plus simple des nœuds qu'on ne peut défaire. Touchez-le : il se renoue, à cinq boucles.",
   "Retie the knot": "Renouer le nœud",
   "Let the gold flow": "Faire couler l'or",
+  "Make it rain": "Faire pleuvoir l'or",
+  "Its story": "Son histoire",
   "Kinetic installation, 96 brass drops": "Installation cinétique, 96 gouttes de laiton",
   "Ninety-six brass drops trace waves, ripples and domes in the air. Walk beneath them: they rise to let you pass.":
     "Quatre-vingt-seize gouttes de laiton dessinent dans l'air des vagues, des ondes et des dômes. Passez dessous : elles s'élèvent pour vous laisser passer.",

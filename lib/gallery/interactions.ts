@@ -34,7 +34,12 @@ export const art = {
   wobble: { x: 0, z: 0, vx: 0, vz: 0 },
   /** Ruban: extra spin (rad/s), decaying. */
   ribbonSpin: 0,
+  /** Pluie d'or: the start of a cascade (a ring of falling, glowing drops spreading from the center). */
+  rainBurst: uniform(never),
 };
+
+/** A work the camera should turn to (set when a label's button is used: the effect must be seen). */
+export const cameraFocus: { id: string | null } = { id: null };
 
 const clock = () => stageUniforms.clock.value;
 
@@ -75,9 +80,18 @@ export function touchArtwork(id: string, uv: [number, number] = [0.5, 0.5]): boo
     case "ruban":
       art.ribbonSpin = 7;
       return true;
+    case "pluie-d-or":
+      art.rainBurst.value = t;
+      return true;
     default:
       return false;
   }
+}
+
+/** The label's button: touches the work and turns the camera to it, so the visitor sees what it does. */
+export function presentArtwork(id: string): boolean {
+  cameraFocus.id = id;
+  return touchArtwork(id);
 }
 
 /** Eases the interactive motion one frame. */

@@ -100,6 +100,7 @@ const NOTICES: Record<ArtworkId, Notice> = {
     year: 2025,
     medium: "Kinetic installation, 96 brass drops",
     note: "Ninety-six brass drops trace waves, ripples and domes in the air. Walk beneath them: they rise to let you pass.",
+    gesture: "Make it rain",
   },
   automates: {
     title: "Les Trois Automates",

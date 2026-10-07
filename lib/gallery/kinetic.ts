@@ -1,13 +1,15 @@
-import { abs, exp, float, floor, instanceIndex, length, max, mix, mod, positionLocal, sin, cos, smoothstep, vec2, vec3 } from "three/tsl";
+import { abs, cos, exp, float, floor, instanceIndex, length, max, mix, mod, positionLocal, sin, smoothstep, step, vec2, vec3 } from "three/tsl";
 import { CylinderGeometry, InstancedMesh, MeshBasicNodeMaterial, MeshPhysicalNodeMaterial, SphereGeometry } from "three/webgpu";
 import { FLOOR_Y, GALLERY } from "@/lib/explore/layout";
+import { art } from "./interactions";
 import { stageUniforms as u } from "./stage";
 
 /**
  * « Pluie d'or »: a kinetic installation of brass drops hanging from the ceiling on fine wires (after the kinetic
  * sculptures of museums and airports). Their heights are computed in the vertex shader from the clock: four
  * figures that melt into one another (a travelling wave, a ripple from the center, a hanging dome, a twist), and
- * the drops part above the visitor walking beneath them, glowing as they rise. Two instanced draws.
+ * the drops part above the visitor walking beneath them, glowing as they rise; touched, a cascade of falling,
+ * glowing drops spreads from the center. Two instanced draws.
  */
 
 const { center, cols, rows, spacing } = GALLERY.rain;
@@ -41,8 +43,12 @@ function dropPlace() {
   // The drops part above the visitor.
   const dv = length(vec2(gx, gz).sub(u.visitor));
   const lift = exp(dv.div(0.95).pow(2).negate()).mul(0.6);
-  const y = shape.add(lift).add(FLOOR_Y + BASE);
-  return { gx, gz, y, lift };
+  // The cascade: a ring that spreads from the center, each drop falling as it passes, then rising back.
+  const age = t.sub(art.rainBurst);
+  const front = r.sub(age.mul(1.3));
+  const fall = exp(front.mul(front).mul(-2.2)).mul(exp(age.mul(-0.22))).mul(step(0, age));
+  const y = shape.add(lift).sub(fall.mul(0.85)).add(FLOOR_Y + BASE);
+  return { gx, gz, y, lift: lift.add(fall.mul(1.4)) };
 }
 
 export function buildKineticRain(): InstancedMesh[] {
