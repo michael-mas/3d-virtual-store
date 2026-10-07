@@ -123,6 +123,19 @@ Maison Prisma Aurum is a fictional house, designed like a luxury boutique at nig
   Before each work, a museum label gives its title, artist, year and medium, and the concierge, who follows the
   visitor through the doors, turns to it and tells its story; "Next work" leads a tour. Its own chunk, compiled in
   the background before it first shows.
+- **Passport and collections.** Every work touched in the gallery (or the performance, watched) stamps the
+  visitor's passport (kept in this browser). Six stamps unlock the Gold collection, every work the Mirror collection,
+  on every piece of the boutique: a Collection option in every product's schema (`lib/products/collections.ts`),
+  priced from the piece, which gives each category its reading of gold or of the mirror; the customizer shows the
+  options it sets and the locked collections. A souvenir photo of the gallery or the performance, in a gold frame.
+- **Le Miroir vivant.** On the gallery's entrance wall, 900 brass tiles tilt to draw the visitor in light, from the
+  front camera (only when they lend their reflection; nothing recorded, the camera stops when they walk away).
+- **Theatre ritual.** A velvet curtain, the three knocks of the French theatre, applause (three claps bring the
+  automatons back for an encore), end credits; a flash warning before the start. The score is written to be easy
+  on the ear (one key, sine and soft triangle voices, harmonic bells and tuned mallets, linear cross-fades, a dark
+  hall), and can be rendered offline in debug mode to measure it.
+- **Headwear.** A felt fedora, a beanie or a bucket hat; worn, the hat is sized to the visitor's hair (measured by
+  the hair segmenter against the face landmarks, `lib/tryon/hairFit.ts`) so it stays under it.
 - **Conversation.** "Talk" opens a chat with the concierge, in English or French, with no model and no server: a
   dialogue engine (`lib/concierge/dialogue.ts`) normalizes the question, finds its intent from both languages'
   keywords and the piece it names, and answers with quick replies and actions it carries out (walk to a piece, try
