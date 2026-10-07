@@ -64,6 +64,7 @@ const ARTWORK_WORDS: Record<ArtworkId, readonly string[]> = {
   constellation: ["constellation", "etoiles", "stars"],
   fragment: ["fragment", "la toile fendue", "the cut", "slash"],
   "miroir-noir": ["miroir noir", "black mirror", "obsidienne", "obsidian"],
+  "miroir-vivant": ["miroir vivant", "living mirror", "reflet", "reflection", "tuiles", "tiles"],
   ruban: ["ruban", "ribbon", "moebius", "mobius"],
   equilibre: ["equilibre", "balance", "la sphere", "the sphere", "marbre", "marble"],
   noeud: ["noeud", "knot", "trefle", "trefoil"],
@@ -264,8 +265,8 @@ export function respond(input: string, ctx: Context): Reply {
   if (has(text, ["passeport", "passport", "collection or", "collection miroir", "gold collection", "mirror collection", "tampon", "tampons", "stamp", "stamps", "debloquer", "unlock"])) {
     return reply(
       L(
-        "Every work you touch in the gallery stamps your passport. Six stamps unlock the Gold collection, all eleven the Mirror collection, on every piece of the boutique.",
-        "Chaque œuvre que vous touchez dans la galerie tamponne votre passeport. Six tampons débloquent la collection Or, les onze la collection Miroir, sur toutes les pièces de la boutique.",
+        "Every work you touch in the gallery stamps your passport. Six stamps unlock the Gold collection, every work the Mirror collection, on every piece of the boutique.",
+        "Chaque œuvre que vous touchez dans la galerie tamponne votre passeport. Six tampons débloquent la collection Or, toutes les œuvres la collection Miroir, sur toutes les pièces de la boutique.",
       ),
       locale,
       [],

@@ -11,6 +11,7 @@ export type ArtworkId =
   | "constellation"
   | "fragment"
   | "miroir-noir"
+  | "miroir-vivant"
   | "ruban"
   | "equilibre"
   | "noeud"
@@ -61,6 +62,14 @@ const NOTICES: Record<ArtworkId, Notice> = {
     medium: "Polished obsidian, brass",
     note: "The house's emblem: a black mirror, which painters once used to judge their values. Come closer: the emblem surfaces from its depth.",
     gesture: "Light the emblem",
+  },
+  "miroir-vivant": {
+    title: "Le Miroir vivant",
+    artist: "Mira Solane",
+    year: 2026,
+    medium: "900 brass tiles and a camera that keeps nothing",
+    note: "Lend it your reflection: nine hundred brass tiles tilt to draw you in light. Nothing is recorded, and the image never leaves your device.",
+    gesture: "Lend your reflection",
   },
   ruban: {
     title: "Ruban",

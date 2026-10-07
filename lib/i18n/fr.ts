@@ -309,6 +309,12 @@ export const FR: Readonly<Record<string, string>> = {
   "Everything rises toward the light.": "Tout s'élève vers la lumière.",
   "Thank you.": "Merci.",
 
+  // ---------------------------------------------------------------- the living mirror
+  "900 brass tiles and a camera that keeps nothing": "900 tuiles de laiton et une caméra qui ne garde rien",
+  "Lend it your reflection: nine hundred brass tiles tilt to draw you in light. Nothing is recorded, and the image never leaves your device.":
+    "Prêtez-lui votre reflet : neuf cents tuiles de laiton s'inclinent pour vous dessiner en lumière. Rien n'est enregistré, l'image ne quitte jamais votre appareil.",
+  "Lend your reflection": "Prêter son reflet",
+
   // ---------------------------------------------------------------- the theatre's ritual
   Applaud: "Applaudir",
   Choreography: "Chorégraphie",

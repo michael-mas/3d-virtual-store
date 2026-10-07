@@ -13,6 +13,7 @@ import { player } from "@/lib/explore/player";
 import { ARTWORKS, inGallery, type Artwork } from "@/lib/gallery/artworks";
 import { art, stepInteractions, touchArtwork } from "@/lib/gallery/interactions";
 import { buildKineticRain } from "@/lib/gallery/kinetic";
+import { buildLivingMirror, reflectionLent, stepLivingMirror, withdrawReflection } from "@/lib/gallery/livingMirror";
 import { createGalleryMaterials, type GalleryMaterials, type WallWorkId } from "@/lib/gallery/materials";
 import { SCULPTURES, type Sculpture } from "@/lib/gallery/sculptures";
 import { show, stageUniforms } from "@/lib/gallery/stage";
@@ -140,11 +141,23 @@ export default function Gallery() {
     const labelGeometry = new PlaneGeometry(0.15, 0.1);
     for (const a of ARTWORKS) {
       if (a.kind !== "wall") continue;
-      const id = a.id as WallWorkId;
       const g = new Group();
       g.position.set(...a.center);
       g.rotation.y = yawOf(a);
       const [w, h] = a.size;
+      if (a.id === "miroir-vivant") {
+        // The tiles on a black panel in a brass frame.
+        const backing = new Mesh(new BoxGeometry(w + 0.12, h + 0.12, 0.02), m.brass);
+        backing.position.z = 0.01;
+        const panel = new Mesh(new BoxGeometry(w + 0.06, h + 0.06, 0.012), m.frame);
+        panel.position.z = 0.024;
+        const tiles = buildLivingMirror(w, h);
+        tiles.position.z = 0.03;
+        g.add(backing, panel, tiles);
+        content.add(g);
+        continue;
+      }
+      const id = a.id as WallWorkId;
       const canvas = new Mesh(new BoxGeometry(w, h, CANVAS_DEPTH), [m.frame, m.frame, m.frame, m.frame, m.works[id], m.frame]);
       canvas.position.z = GAP + CANVAS_DEPTH / 2 + 0.004;
       const backing = new Mesh(new BoxGeometry(w + GAP * 2, h + GAP * 2, GAP), id === "miroir-noir" ? m.brass : m.frame);
@@ -236,6 +249,13 @@ export default function Gallery() {
     const dm = Math.hypot(player.position[0] - mirror.viewpoint[0], player.position[1] - mirror.viewpoint[1]);
     art.mirrorNear.value = Math.max(0, Math.min(1, (2.6 - dm) / 1.6));
     stepInteractions(dt);
+    // The living mirror's camera stops as soon as the visitor walks away from it (or leaves the gallery's view).
+    stepLivingMirror(dt);
+    if (reflectionLent()) {
+      const lm = ARTWORKS.find((a) => a.id === "miroir-vivant")!;
+      const away = Math.hypot(player.position[0] - lm.viewpoint[0], player.position[1] - lm.viewpoint[1]) > 3.2;
+      if (away || !explore) withdrawReflection();
+    }
     const { ruban, noeud, equilibre } = scene.sculptures;
     const still = reducedMotion ? 0 : 1;
     if (ruban?.spin) ruban.spin.rotation.y += ((Math.PI * 2) / 90 + art.ribbonSpin) * dt * still;

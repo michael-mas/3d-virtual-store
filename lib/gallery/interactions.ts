@@ -1,6 +1,7 @@
 import { uniform } from "three/tsl";
 import { Vector3 } from "three/webgpu";
 import { useAppStore } from "@/store/useAppStore";
+import { lendReflection } from "./livingMirror";
 import { stageUniforms } from "./stage";
 
 /**
@@ -90,6 +91,10 @@ function answer(id: string, uv: [number, number]): boolean {
       return true;
     case "pluie-d-or":
       art.rainBurst.value = t;
+      return true;
+    case "miroir-vivant":
+      // The camera, only on the visitor's request (this click), and only while they stay before the work.
+      void lendReflection();
       return true;
     default:
       return false;
