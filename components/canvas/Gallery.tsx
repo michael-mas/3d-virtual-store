@@ -2,8 +2,8 @@
 
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useMemo, useState } from "react";
-import { float, floor, fract, hash, mix, step, uv, vec3 } from "three/tsl";
-import { BoxGeometry, Group, Mesh, MeshBasicNodeMaterial, PlaneGeometry, type Material, type WebGPURenderer } from "three/webgpu";
+import { float, mix, sin, texture, uniform, vec3 } from "three/tsl";
+import { AdditiveBlending, BoxGeometry, CanvasTexture, Group, Mesh, MeshBasicNodeMaterial, PlaneGeometry, RingGeometry, SRGBColorSpace, type Material, type WebGPURenderer } from "three/webgpu";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { isDebugEnabled } from "@/lib/debug";
 import { concierge } from "@/lib/explore/concierge";
@@ -32,16 +32,27 @@ const CLOCK_START = performance.now() / 1000;
 /** Pointer travel (px) above which a click is a camera drag. */
 const DRAG_THRESHOLD = 6;
 
-/** A museum label's card: ivory, with lines of "print" (a bolder title, then the notice), drawn in TSL. */
-function labelMaterial(): Material {
+/** A museum label's card: ivory, printed with the work's title, artist and year (drawn once in a canvas). */
+function labelMaterial(a: Artwork): Material {
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 340;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#d9d1c1";
+  ctx.fillRect(0, 0, 512, 340);
+  ctx.fillStyle = "#1a1714";
+  ctx.font = 'italic 46px Georgia, "Times New Roman", serif';
+  ctx.fillText(a.title, 36, 96, 440);
+  ctx.font = '30px Georgia, "Times New Roman", serif';
+  ctx.fillText(`${a.artist}, ${a.year}`, 36, 158, 440);
+  ctx.fillStyle = "#7a6a52";
+  ctx.font = "22px Georgia, serif";
+  ctx.fillText("MAISON PRISMA AURUM", 36, 292);
+  const map = new CanvasTexture(canvas);
+  map.colorSpace = SRGBColorSpace;
+  map.anisotropy = 4;
   const m = new MeshBasicNodeMaterial({ name: "gallery-label" });
-  const u = uv();
-  const row = floor(u.y.mul(9));
-  const inRow = fract(u.y.mul(9));
-  const length = mix(0.45, 0.85, hash(row.add(3)));
-  const bold = step(7, row).mul(step(row, 7));
-  const ink = step(0.35, inRow).mul(step(inRow, mix(0.62, 0.8, bold))).mul(step(u.x, length)).mul(step(0.1, u.x)).mul(step(row, 7)).mul(step(2, row));
-  m.colorNode = mix(vec3(0.4, 0.38, 0.34), vec3(0.06, 0.055, 0.05), ink.mul(float(0.85))).mul(stageUniforms.house.mul(0.8).add(0.2));
+  m.colorNode = texture(map).rgb.mul(0.62).mul(stageUniforms.house.mul(0.8).add(0.2));
   return m;
 }
 
@@ -137,7 +148,6 @@ export default function Gallery() {
     root.add(content);
 
     // Wall works: canvas (the work on its face) on a recessed frame, and a label to the right.
-    const label = labelMaterial();
     const labelGeometry = new PlaneGeometry(0.15, 0.1);
     for (const a of ARTWORKS) {
       if (a.kind !== "wall") continue;
@@ -162,7 +172,7 @@ export default function Gallery() {
       canvas.position.z = GAP + CANVAS_DEPTH / 2 + 0.004;
       const backing = new Mesh(new BoxGeometry(w + GAP * 2, h + GAP * 2, GAP), id === "miroir-noir" ? m.brass : m.frame);
       backing.position.z = GAP / 2 + 0.002;
-      const card = new Mesh(labelGeometry, label);
+      const card = new Mesh(labelGeometry, labelMaterial(a));
       card.position.set(w / 2 + 0.22, FLOOR_Y + 1.42 - a.center[1], 0.004);
       g.add(backing, canvas, card);
       content.add(g);
@@ -200,12 +210,27 @@ export default function Gallery() {
     // Pluie d'or.
     content.add(...buildKineticRain());
 
+    // A gold ring on the floor before each work, where to stand: it breathes until the work is stamped in the
+    // passport, and brightens as the visitor steps in.
+    const rings = ARTWORKS.map((a) => {
+      const near = uniform(0);
+      const stamped = uniform(0);
+      const material = new MeshBasicNodeMaterial({ name: "work-ring", transparent: true, depthWrite: false, blending: AdditiveBlending });
+      const breath = sin(stageUniforms.clock.mul(2.2)).mul(0.5).add(0.5);
+      material.colorNode = vec3(1, 0.74, 0.36).mul(mix(breath.mul(0.25).add(0.12), float(0.08), stamped).add(near.mul(0.5))).mul(stageUniforms.house);
+      const r = a.kind === "sculpture" ? 0.62 : a.kind === "installation" ? 1.1 : 0.42;
+      const ring = new Mesh(new RingGeometry(r, r + 0.025, 64).rotateX(-Math.PI / 2), material);
+      ring.position.set(a.viewpoint[0], FLOOR_Y + 0.004, a.viewpoint[1]);
+      content.add(ring);
+      return { id: a.id, near, stamped };
+    });
+
     root.add(...leaves.map((l) => l.leaf));
     root.traverse((o) => {
       if (o instanceof Mesh) o.raycast = () => {};
     });
     // Mounted once for the app's lifetime (like the salon): its GPU resources are never disposed.
-    return { root, content, leaves, sculptures };
+    return { root, content, leaves, sculptures, rings };
   }, []);
 
   // Compile every material in the background before the gallery joins the scene (no stall when it first shows).
@@ -244,6 +269,11 @@ export default function Gallery() {
     const nearGlass = Math.hypot(player.position[0] - DOOR_CENTER[0], player.position[1] - DOOR_CENTER[1]) < DOOR_SENSOR + 2.5;
     scene.content.visible = door.amount > 0.01 || inGallery(player.position) || nearGlass;
 
+    const { nearArtwork, stamps } = useAppStore.getState();
+    for (const r of scene.rings) {
+      r.near.value += ((nearArtwork === r.id ? 1 : 0) - r.near.value) * (1 - Math.exp(-dt * 6));
+      r.stamped.value = stamps.includes(r.id) ? 1 : 0;
+    }
     // Interactions: the mirror's emblem surfaces with nearness; the sphere sways; the ribbon and knot turn.
     const mirror = ARTWORKS.find((a) => a.id === "miroir-noir")!;
     const dm = Math.hypot(player.position[0] - mirror.viewpoint[0], player.position[1] - mirror.viewpoint[1]);

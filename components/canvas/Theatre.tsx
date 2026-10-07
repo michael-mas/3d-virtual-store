@@ -7,7 +7,7 @@ import { door } from "@/lib/explore/door";
 import { player } from "@/lib/explore/player";
 import { inGallery } from "@/lib/gallery/artworks";
 import { aimFixture, buildFixtures } from "@/lib/gallery/beams";
-import { applyPose, buildPerformers } from "@/lib/gallery/performers";
+import { applyPose, buildPerformers, PoseSpring } from "@/lib/gallery/performers";
 import { renderScore } from "@/lib/gallery/score";
 import { cueAt, curtainAt, FIXTURES, MARKS, poseAt, POSES, SHOW_DURATION, STAGE_CENTER, STAGE_TOP, type Cue } from "@/lib/gallery/show";
 import { show, showTime, stageUniforms as u, stopShow } from "@/lib/gallery/stage";
@@ -60,7 +60,9 @@ export default function Theatre() {
     const swarm = buildSwarm();
     const curtain = buildCurtain();
     root.add(swarm, curtain.group);
-    return { root, performers, fixtures, curtain };
+    // Follow-through on every joint while performing (not between performances: rest is still).
+    const springs = performers.map(() => new PoseSpring());
+    return { root, performers, fixtures, curtain, springs };
   }, []);
 
   useEffect(() => {
@@ -80,7 +82,7 @@ export default function Theatre() {
     if (isDebugEnabled()) Object.assign(window, { __show: show, __renderScore: renderScore });
   }, []);
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (show.playing && showTime() > SHOW_DURATION) stopShow();
     // Drawn only when the gallery can be seen.
     stage.root.visible = show.playing || inGallery(player.position) || door.amount > 0.01;
@@ -90,8 +92,9 @@ export default function Theatre() {
     const t = showTime();
     const cue = playing ? cueAt(t, visitor) : idleCue(visitor);
 
+    if (!playing) for (const s of stage.springs) s.reset();
     stage.performers.forEach((p, i) => {
-      const pose = playing ? poseAt(t, i, visitor, show.encore) : { ...POSES.rest, lumbarX: POSES.rest.lumbarX + Math.sin(u.clock.value * 0.8 + i) * 0.015 };
+      const pose = playing ? stage.springs[i].step(poseAt(t, i, visitor, show.encore), Math.min(delta, 0.1)) : { ...POSES.rest, lumbarX: POSES.rest.lumbarX + Math.sin(u.clock.value * 0.8 + i) * 0.015 };
       applyPose(p.rig, pose, MARKS[i], STAGE_TOP);
     });
     // The conductor's open hand, which the swarm flows to (between performances, the visitor draws it).
@@ -117,6 +120,7 @@ export default function Theatre() {
     u.swarmIntensity.value = cue.swarm.intensity;
     u.swarmColor.value.setRGB(...cue.swarm.color);
     u.swarmAttract.value = cue.swarm.attract;
+    u.swarmClock.value += Math.min(delta, 0.1) * (cue.swarm.speed ?? 1);
   });
 
   return compiled ? <primitive object={stage.root} /> : null;

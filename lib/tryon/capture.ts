@@ -17,6 +17,49 @@ export function setCaptureStage(el: HTMLElement | null) {
 }
 
 /**
+ * A souvenir of the visit (the gallery, the performance): the 3D view as it is on screen, in a thin gold frame with
+ * the house's name and a caption underneath. Render + drawImage run synchronously in the caller's task (a click).
+ */
+export function captureSouvenir(caption: string): Promise<Blob> {
+  const glCanvas = stage?.querySelector("canvas");
+  if (!glCanvas || !renderFrame) return Promise.reject(new Error("The 3D view is not ready"));
+  renderFrame();
+  const W = glCanvas.width;
+  const H = glCanvas.height;
+  const pad = Math.round(W * 0.03);
+  const band = Math.round(W * 0.07);
+  const out = document.createElement("canvas");
+  out.width = W + pad * 2;
+  out.height = H + pad * 2 + band;
+  const ctx = out.getContext("2d");
+  if (!ctx) return Promise.reject(new Error("2D canvas unavailable"));
+  ctx.fillStyle = "#0b0a09";
+  ctx.fillRect(0, 0, out.width, out.height);
+  ctx.drawImage(glCanvas, pad, pad, W, H);
+  ctx.strokeStyle = "#c8a96a";
+  ctx.lineWidth = Math.max(1, W * 0.0015);
+  ctx.strokeRect(pad - ctx.lineWidth * 2, pad - ctx.lineWidth * 2, W + ctx.lineWidth * 4, H + ctx.lineWidth * 4);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#efe6d6";
+  ctx.font = `500 ${Math.round(band * 0.34)}px Georgia, "Times New Roman", serif`;
+  ctx.fillText("MAISON PRISMA AURUM", out.width / 2, H + pad + band * 0.55);
+  ctx.fillStyle = "#c8a96a";
+  ctx.font = `italic ${Math.round(band * 0.22)}px Georgia, serif`;
+  ctx.fillText(caption, out.width / 2, H + pad + band * 0.9);
+  return new Promise((resolve, reject) => out.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("PNG encoding failed"))), "image/png"));
+}
+
+/** Saves a blob as a file (an anchor click). */
+export function downloadBlob(blob: Blob, name: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+/**
  * Composites the try-on view into a PNG that matches the screen: video frame, then the 3D canvas,
  * with the stage's mirroring (when `mirrored`), cropped to the part of the stage visible in the viewport.
  * Render + drawImage happen synchronously in the caller's task; only the PNG encode is async.

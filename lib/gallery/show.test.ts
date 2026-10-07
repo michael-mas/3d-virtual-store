@@ -107,3 +107,20 @@ describe("Les Trois Automates", () => {
     }
   });
 });
+
+describe("follow-through", () => {
+  it("overshoots a snapped move a little and settles on it", async () => {
+    const { PoseSpring } = await import("./performers");
+    const spring = new PoseSpring();
+    spring.step(POSES.neutral, 1 / 60);
+    let peak = -Infinity;
+    let last = 0;
+    for (let i = 0; i < 120; i++) {
+      last = spring.step(POSES.vUp, 1 / 60).lShZ;
+      peak = Math.max(peak, last);
+    }
+    expect(peak).toBeGreaterThan(POSES.vUp.lShZ);
+    expect(peak).toBeLessThan(POSES.vUp.lShZ + (POSES.vUp.lShZ - POSES.neutral.lShZ) * 0.15);
+    expect(last).toBeCloseTo(POSES.vUp.lShZ, 2);
+  });
+});

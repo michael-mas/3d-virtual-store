@@ -48,8 +48,11 @@ const clock = () => stageUniforms.clock.value;
 /** The visitor touches a work (`uv`: where, on a wall work's face, 0..1). Returns whether it reacts to touch. */
 export function touchArtwork(id: string, uv: [number, number] = [0.5, 0.5]): boolean {
   const answered = answer(id, uv);
-  // The passport's stamp.
-  if (answered) useAppStore.getState().addStamp(id);
+  // The passport's stamp, and a light tap on phones that can vibrate.
+  if (answered) {
+    useAppStore.getState().addStamp(id);
+    navigator.vibrate?.(12);
+  }
   return answered;
 }
 

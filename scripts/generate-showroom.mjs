@@ -476,7 +476,8 @@ parts.push(...floorParts());
       return { pos: from, color: SPOT.clone().multiplyScalar(3.4), range: 3.2, dir: p.clone().sub(from).normalize(), inner: 0.97, outer: 0.88 };
     }),
     // A downlight on every plinth.
-    ...g.plinths.map(([x, z]) => ({ pos: new THREE.Vector3(x, gCeil - 0.05, z), color: SPOT.clone().multiplyScalar(3.2), range: 3.2, dir: down, inner: 0.985, outer: 0.94 })),
+    // Soft-edged, so the pools blend into the concrete instead of drawing hard blotches.
+    ...g.plinths.map(([x, z]) => ({ pos: new THREE.Vector3(x, gCeil - 0.05, z), color: SPOT.clone().multiplyScalar(2.6), range: 3.2, dir: down, inner: 0.96, outer: 0.84 })),
     // Under the rain: a soft gold wash.
     ...[-1.6, 0, 1.6].map((x) => ({ pos: new THREE.Vector3(x, gCeil - 0.05, g.rain.center[1]), color: C(1, 0.78, 0.45).multiplyScalar(0.8), range: 3.0, dir: down, inner: 0.96, outer: 0.82 })),
     // Low fill, and a faint glow on the audience.

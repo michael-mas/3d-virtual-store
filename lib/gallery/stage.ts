@@ -32,6 +32,8 @@ export const stageUniforms = {
   swarmIntensity: uniform(0.25),
   swarmColor: uniform(new Color(1, 0.72, 0.32)),
   swarmAttract: uniform(0),
+  /** The swarm's own clock: it runs slower in the finale's slow-motion beat. */
+  swarmClock: uniform(0),
   swarmAttractor: uniform(new Vector3()),
 };
 

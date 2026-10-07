@@ -317,6 +317,8 @@ export const FR: Readonly<Record<string, string>> = {
 
   // ---------------------------------------------------------------- the theatre's ritual
   Applaud: "Applaudir",
+  Souvenir: "Souvenir",
+  "The Gallery · Matière & Lumière": "La Galerie · Matière & Lumière",
   Choreography: "Chorégraphie",
   Light: "Lumière",
   Automatons: "Automates",

@@ -19,7 +19,7 @@ export function buildSwarm(): InstancedMesh {
   const h2 = hash(i.add(7919));
   const h3 = hash(i.add(104729));
   const h4 = hash(i.add(31337));
-  const t = u.clock;
+  const t = u.swarmClock;
   const [cx, , cz] = STAGE_CENTER;
   const tau = Math.PI * 2;
 

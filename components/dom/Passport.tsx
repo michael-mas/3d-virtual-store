@@ -4,9 +4,17 @@ import { useEffect, useRef, useState } from "react";
 import { useT } from "@/hooks/useT";
 import { ARTWORKS, getArtwork } from "@/lib/gallery/artworks";
 import { GOLD_AT, loadStamps, MIRROR_AT, saveStamps, unlockedCollections } from "@/lib/gallery/passport";
+import { captureSouvenir, downloadBlob } from "@/lib/tryon/capture";
 import { useAppStore } from "@/store/useAppStore";
 
 type Notice = { id: number; kind: "stamp" | "or" | "miroir"; title: string };
+
+/** A souvenir photo of the view, saved as a file (from the click: the frame is rendered and read in this task). */
+export function takeSouvenir(caption: string) {
+  captureSouvenir(caption)
+    .then((blob) => downloadBlob(blob, "prisma-aurum-souvenir.png"))
+    .catch((error: unknown) => console.warn("[souvenir]", error));
+}
 
 /**
  * The gallery passport. In the gallery: a chip with a dot per work (filled when stamped), which opens the passport
@@ -57,6 +65,7 @@ export default function Passport() {
     <>
       {visible && (
         <div className="fixed top-[4.75rem] left-3 z-30 sm:top-20 sm:left-6">
+          <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setOpen(!open)}
@@ -74,6 +83,15 @@ export default function Passport() {
               {count}/{MIRROR_AT}
             </span>
           </button>
+          <button
+            type="button"
+            onClick={() => takeSouvenir(t("The Gallery · Matière & Lumière"))}
+            data-testid="souvenir"
+            className="chip rounded-full px-3.5 py-2 text-[0.6rem] tracking-[0.18em] text-ivory/85 uppercase"
+          >
+            {t("Souvenir")}
+          </button>
+          </div>
           {open && (
             <div className="panel mt-2 w-[min(18rem,calc(100vw-1.5rem))] rounded-sm px-4 py-3">
               <p className="font-display text-[0.9rem] leading-snug text-ivory italic">

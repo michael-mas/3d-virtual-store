@@ -102,3 +102,45 @@ export function applyPose(rig: Rig, p: Pose, mark: readonly [number, number], fl
   poseLeg(rig.legs.left, 1, p.lHipX, p.lHipZ, p.lKnee);
   poseLeg(rig.legs.right, -1, p.rHipX, p.rHipZ, p.rKnee);
 }
+
+/**
+ * Follow-through for the automatons' joints: each joint chases its pose through a slightly under-damped spring, so a
+ * snapped move overshoots a touch and settles, and a body never jumps (what makes a marionette read as a performer).
+ */
+export class PoseSpring {
+  private value: Pose | null = null;
+  private velocity: Partial<Record<keyof Pose, number>> = {};
+
+  /** `omega`: stiffness (rad/s); `zeta`: damping ratio (< 1 overshoots). */
+  constructor(
+    private readonly omega = 24,
+    private readonly zeta = 0.6,
+  ) {}
+
+  reset() {
+    this.value = null;
+    this.velocity = {};
+  }
+
+  step(target: Pose, dt: number): Pose {
+    if (!this.value) {
+      this.value = { ...target };
+      return this.value;
+    }
+    const w = this.omega;
+    // Substeps keep the spring stable on long frames.
+    const steps = Math.max(1, Math.ceil(dt / (1 / 120)));
+    const h = Math.min(dt, 0.1) / steps;
+    for (let s = 0; s < steps; s++) {
+      for (const key of Object.keys(target) as (keyof Pose)[]) {
+        const x = this.value[key];
+        const v = this.velocity[key] ?? 0;
+        const a = w * w * (target[key] - x) - 2 * this.zeta * w * v;
+        const nv = v + a * h;
+        this.velocity[key] = nv;
+        this.value[key] = x + nv * h;
+      }
+    }
+    return this.value;
+  }
+}

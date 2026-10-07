@@ -294,7 +294,7 @@ export type Cue = {
   cyclo: { color: Vec3; level: number };
   beams: BeamCue[];
   /** Weights of the swarm's formations: cloud, ring, helix, sphere, rain; and its glow. */
-  swarm: { weights: [number, number, number, number, number]; intensity: number; color: Vec3; attract: number };
+  swarm: { weights: [number, number, number, number, number]; intensity: number; color: Vec3; attract: number; speed?: number };
   /** Colored rim light on the automatons' bodies, and their visors. */
   rim: { color: Vec3; level: number };
   visor: number;
@@ -391,7 +391,9 @@ export function cueAt(t: number, visitor: readonly [number, number]): Cue {
     cyclo = { color: GOLD, level: t < 74 ? 0.5 + 0.5 * ramp(t, 66, 72) : 0 };
     rim = { color: GOLD, level: t < 74 ? 1 : 0 };
     visor = t < 74 ? 1 : 0;
-    swarm = { weights: [0, 0, 0.2, ramp(t, 66, 70), ramp(t, 72, 74)], intensity: t < 74 ? 1 : lerp(1, 0, ramp(t, 74, 75)), color: GOLD, attract: 0 };
+    // The swarm slows almost to a stop at the top of the climb (a slow-motion beat before the hits).
+    const slow = ramp(t, 68.5, 70) * (1 - ramp(t, 71.4, 72));
+    swarm = { weights: [0, 0, 0.2, ramp(t, 66, 70), ramp(t, 72, 74)], intensity: t < 74 ? 1 : lerp(1, 0, ramp(t, 74, 75)), color: GOLD, attract: 0, speed: 1 - 0.85 * slow };
   } else {
     // The bow, in a warm front light.
     beams = FIXTURES.map((_, i) => ({ aim: mark3(Math.min(2, Math.floor(i / 2))), color: WHITE, intensity: ramp(t, 76, 77) * (1 - ramp(t, 86, 89)) * 0.7 }));
@@ -414,7 +416,10 @@ const between = (t: number, a: number, b: number, from: Shot, to: Shot): Shot =>
   return { position: lerp3(from.position, to.position, k), target: lerp3(from.target, to.target, k) };
 };
 
-/** Four-beat cuts through the mechanical act. */
+/** The mechanical act's cuts, in beats (44 in all). */
+const CUTS = [6, 4, 2, 2, 4, 8, 2, 2, 4, 6, 4];
+
+/** The shots cut through the mechanical act. */
 const MECHANICAL_SHOTS: readonly [Shot, Shot][] = [
   // Low and wide, looking up at the line of automatons.
   [{ position: [0, F + 0.25, 13.2], target: [0, F + 1.6, CZ] }, { position: [0.3, F + 0.3, 13.5], target: [0, F + 1.6, CZ] }],
@@ -441,9 +446,12 @@ export function shotAt(t: number): Shot | null {
   }
   if (t < 44) {
     const beats = (t - 22) / BEAT;
-    const cut = Math.floor(beats / 4);
-    const [from, to] = MECHANICAL_SHOTS[cut % MECHANICAL_SHOTS.length];
-    return between(beats - cut * 4, 0, 4, from, to);
+    // A phrase of cuts, not a metronome: long, then tighter and tighter, a breath, and tight again.
+    let start = 0;
+    let k = 0;
+    while (k < CUTS.length - 1 && beats >= start + CUTS[k]) start += CUTS[k++];
+    const [from, to] = MECHANICAL_SHOTS[k % MECHANICAL_SHOTS.length];
+    return between(beats - start, 0, CUTS[k], from, to);
   }
   if (t < 64) return null;
   if (t < 76) {

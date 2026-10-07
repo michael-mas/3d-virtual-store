@@ -9,6 +9,7 @@ import { quietThreeConsole } from "@/lib/quietConsole";
 import { getProduct, type ProductRenderer } from "@/lib/products";
 import { useAppStore } from "@/store/useAppStore";
 import { lazy, Suspense, useState, type ComponentType } from "react";
+import AutoQuality from "./AutoQuality";
 import CartParticles from "./CartParticles";
 import CameraRig from "./CameraRig";
 import FrameStats from "./FrameStats";
@@ -131,6 +132,7 @@ export default function Scene() {
       <LazySurfaceLayer />
       <PostFx />
       <FrameStats />
+      <AutoQuality />
       <IdlePrefetch />
     </Canvas>
   );

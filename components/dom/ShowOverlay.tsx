@@ -6,6 +6,7 @@ import { useT } from "@/hooks/useT";
 import { player } from "@/lib/explore/player";
 import { actAt, APPLAUSE, CREDITS, cueAt, INTERACTIVE_ACT, type Act } from "@/lib/gallery/show";
 import { clap, setCinema, showTime, stopShow } from "@/lib/gallery/stage";
+import { takeSouvenir } from "./Passport";
 import { useAppStore } from "@/store/useAppStore";
 
 /**
@@ -98,6 +99,11 @@ export default function ShowOverlay() {
           )}
         </div>
         <div className="pointer-events-auto flex shrink-0 items-center gap-3">
+          {ending.credits > 0 && (
+            <button type="button" onClick={() => takeSouvenir("Les Trois Automates")} className="eyebrow text-[0.55rem] text-ivory/80 hover:text-ivory">
+              {t("Souvenir")}
+            </button>
+          )}
           {ending.applause && (
             <button type="button" onClick={clap} className="btn-gold rounded-full px-4 py-2 text-[0.6rem]" data-testid="show-applaud">
               {t("Applaud")}
