@@ -35,6 +35,10 @@ describe("concierge dialogue", () => {
     expect(respond("Montre-moi la montre", fr).actions).toEqual([{ kind: "walk", productId: "chrono" }]);
   });
 
+  it("explains the house's name", () => {
+    expect(respond("Pourquoi ce nom, Prisma Aurum ?", fr).text).toContain("le prisme d'or");
+  });
+
   it("advises a frame from the face shape, and asks for it when missing", () => {
     expect(respond("J'ai un visage rond", fr).text).toContain("Atelier 03");
     expect(respond("my face is square", en).text).toContain("Cristal");

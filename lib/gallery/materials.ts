@@ -216,7 +216,7 @@ function lumiereLente(): { field: Material; halo: Material } {
 }
 
 /**
- * Miroir noir: polished black obsidian. As the visitor comes near, the house's emblem (the arch and the M) surfaces
+ * Miroir noir: polished black obsidian. As the visitor comes near, the house's emblem (the prism under the arch) surfaces
  * in gold from its depth; a touch makes it flare.
  */
 function miroirNoir(): Material {
@@ -233,11 +233,16 @@ function miroirNoir(): Material {
   const sides = select(p.y.lessThan(0.6), min(abs(p.x.sub(sx(0.24))), abs(p.x.sub(sx(0.76)))).add(max(float(0.14).sub(p.y), 0)), float(1));
   const top = select(p.y.greaterThanEqual(0.6), abs(length(p.sub(c)).sub(R)), float(1));
   const arch = min(sides, top);
-  const M = min(
-    min(segment(p, [sx(0.37), 0.2], [sx(0.37), 0.5]), segment(p, [sx(0.37), 0.5], [sx(0.5), 0.33])),
-    min(segment(p, [sx(0.5), 0.33], [sx(0.63), 0.5]), segment(p, [sx(0.63), 0.5], [sx(0.63), 0.2])),
+  // The house mark: a prism under the arch, a ray entering it, three leaving it.
+  const prism = min(
+    min(segment(p, [sx(0.38), 0.24], [sx(0.62), 0.24]), segment(p, [sx(0.62), 0.24], [sx(0.5), 0.45])),
+    segment(p, [sx(0.5), 0.45], [sx(0.38), 0.24]),
   );
-  const d = min(arch, M);
+  const rays = min(
+    min(segment(p, [sx(0.26), 0.32], [sx(0.44), 0.345]), segment(p, [sx(0.56), 0.345], [sx(0.74), 0.42])),
+    min(segment(p, [sx(0.56), 0.345], [sx(0.74), 0.345]), segment(p, [sx(0.56), 0.345], [sx(0.74), 0.27])),
+  );
+  const d = min(arch, min(prism, rays));
   const line = smoothstep(0.006, 0.0015, d).mul(0.8).add(exp(d.mul(-90)).mul(0.12));
   const flare = exp(since(art.mirrorFlare).mul(-1.4)).mul(step(0, since(art.mirrorFlare))).mul(2.5);
   const sheen = pow(oneMinus(facing), 3).mul(0.08).add(smoothstep(0.2, 1, u.y).mul(0.025));

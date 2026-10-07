@@ -18,7 +18,7 @@ function RendererError() {
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-noir p-6 text-ivory">
       <div role="alert" className="max-w-md space-y-4 text-center">
-        <p className="wordmark text-sm text-gold">Maison Miroir</p>
+        <p className="wordmark text-sm text-gold">Maison Prisma Aurum</p>
         <h1 className="font-display text-2xl">{t("3D view unavailable")}</h1>
         <p className="text-sm text-taupe">{message}</p>
         <button

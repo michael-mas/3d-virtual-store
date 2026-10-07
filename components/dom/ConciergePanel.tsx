@@ -124,7 +124,7 @@ export default function ConciergePanel() {
     : inGallery
       ? t("Welcome to the gallery. Touch the works, walk beneath the rain of gold, and at the back, three automatons wait for you to take a seat.")
       : greeting
-        ? t("Welcome to Maison Miroir. Walk up to any piece and I will present it.")
+        ? t("Welcome to Maison Prisma Aurum. Walk up to any piece and I will present it.")
         : product?.tip
           ? t(product.tip)
           : null;

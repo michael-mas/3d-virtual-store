@@ -1,6 +1,6 @@
 import localFont from "next/font/local";
 
-/** Display serif: the MAISON MIROIR wordmark, product names and prices. */
+/** Display serif: the MAISON PRISMA AURUM wordmark, product names and prices. */
 export const display = localFont({
   src: [
     { path: "./fonts/BodoniModa.woff2", style: "normal", weight: "400 900" },

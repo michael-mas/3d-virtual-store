@@ -36,8 +36,8 @@ export const FR: Readonly<Record<string, string>> = {
 
   // ---------------------------------------------------------------- concierge
   "Your concierge": "Votre concierge",
-  "Welcome to Maison Miroir. Walk up to any piece and I will present it.":
-    "Bienvenue à la Maison Miroir. Approchez-vous d'une pièce, je vous la présente.",
+  "Welcome to Maison Prisma Aurum. Walk up to any piece and I will present it.":
+    "Bienvenue à la Maison Prisma Aurum. Approchez-vous d'une pièce, je vous la présente.",
   "Next piece: {name}": "Pièce suivante : {name}",
   "Begin the tour": "Commencer la visite",
   Talk: "Discuter",

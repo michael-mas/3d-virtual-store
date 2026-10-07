@@ -56,7 +56,7 @@ const NOTICES: Record<ArtworkId, Notice> = {
   },
   "miroir-noir": {
     title: "Miroir noir",
-    artist: "Atelier Maison Miroir",
+    artist: "Atelier Prisma Aurum",
     year: 2025,
     medium: "Polished obsidian, brass",
     note: "The house's emblem: a black mirror, which painters once used to judge their values. Come closer: the emblem surfaces from its depth.",

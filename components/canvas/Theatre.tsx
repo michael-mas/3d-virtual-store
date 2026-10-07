@@ -8,6 +8,7 @@ import { player } from "@/lib/explore/player";
 import { inGallery } from "@/lib/gallery/artworks";
 import { aimFixture, buildFixtures } from "@/lib/gallery/beams";
 import { applyPose, buildPerformers } from "@/lib/gallery/performers";
+import { renderScore } from "@/lib/gallery/score";
 import { cueAt, FIXTURES, MARKS, poseAt, POSES, SHOW_DURATION, STAGE_CENTER, STAGE_TOP, type Cue } from "@/lib/gallery/show";
 import { show, showTime, stageUniforms as u, stopShow } from "@/lib/gallery/stage";
 import { buildSwarm } from "@/lib/gallery/swarm";
@@ -73,7 +74,8 @@ export default function Theatre() {
   }, [gl, camera, sceneRoot, stage]);
 
   useEffect(() => {
-    if (isDebugEnabled()) Object.assign(window, { __show: show });
+    // Debug-only: the show's state, and the score rendered offline (to listen to it and measure it).
+    if (isDebugEnabled()) Object.assign(window, { __show: show, __renderScore: renderScore });
   }, []);
 
   useFrame(() => {

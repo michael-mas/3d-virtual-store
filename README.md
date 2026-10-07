@@ -1,15 +1,15 @@
-# Maison Miroir — 3D luxury boutique & virtual try-on
+# Maison Prisma Aurum — 3D luxury boutique & virtual try-on
 
 [![CI](https://github.com/michael-mas/3d-virtual-store/actions/workflows/ci.yml/badge.svg)](https://github.com/michael-mas/3d-virtual-store/actions/workflows/ci.yml)
 
-A portfolio proof of concept for a fictional luxury house, **Maison Miroir**: walk through a dark 3D salon, pick a
+A portfolio proof of concept for a fictional luxury house, **Maison Prisma Aurum**: walk through a dark 3D salon, pick a
 product off a pedestal, customize it, try it
 on with your webcam (or on a photo from your device) and take a photo. It runs entirely in the browser, with WebGPU (plus an automatic WebGL 2
 fallback) for rendering and MediaPipe for face tracking.
 
 **Live demo: [3d-virtual-store-two.vercel.app](https://3d-virtual-store-two.vercel.app)** (desktop Chrome or Edge for WebGPU; any WebGL 2 browser works, including phones)
 
-![Demo: walking the Maison Miroir salon, then customizing glasses, a hair color, headwear, a watch, a ring and face paint (on the mannequin head)](docs/demo.gif)
+![Demo: walking the Maison Prisma Aurum salon, then customizing glasses, a hair color, headwear, a watch, a ring and face paint (on the mannequin head)](docs/demo.gif)
 
 ## Features
 
@@ -77,7 +77,7 @@ fallback) for rendering and MediaPipe for face tracking.
 
 ## Art direction
 
-Maison Miroir is a fictional house, designed like a luxury boutique at night:
+Maison Prisma Aurum is a fictional house, designed like a luxury boutique at night:
 
 - **Salon.** Black marble slabs with fine joints, smoked-walnut fluting under a brass cornice, five backlit arches
   framed in brass, black stone pedestals with brass bands and inlaid floor rings, velvet banquettes, backlit

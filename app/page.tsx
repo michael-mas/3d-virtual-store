@@ -12,7 +12,7 @@ export default function Home() {
       <Wordmark />
       <div className="sr-only">
         <p>{SITE_DESCRIPTION}</p>
-        <p>Maison Miroir is a fictional brand, built as a portfolio proof of concept.</p>
+        <p>Maison Prisma Aurum is a fictional brand, built as a portfolio proof of concept.</p>
         <h2>What you can do</h2>
         <ul>
           <li>Explore: walk a 3D showroom with three pairs of glasses, a lipstick, a face paint, a watch, a ring, a hair color and headwear on pedestals.</li>

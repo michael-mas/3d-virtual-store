@@ -5,7 +5,7 @@ test("the concierge welcomes the visitor and guides them to the first piece", as
   const { errors, external } = watchPage(page);
   await openApp(page);
   const card = page.getByTestId("concierge");
-  await expect(card).toContainText("Welcome to Maison Miroir", { timeout: 60_000 });
+  await expect(card).toContainText("Welcome to Maison Prisma Aurum", { timeout: 60_000 });
 
   // The tour walks the visitor to the first pedestal, where the concierge gives that piece's advice.
   await card.getByRole("button", { name: /Begin the tour/ }).click();
@@ -22,7 +22,7 @@ test("the visitor talks with the concierge, who answers and acts", async ({ page
   await openApp(page);
   await page.getByRole("button", { name: /^Talk/ }).first().click();
   const chat = page.getByTestId("concierge-chat");
-  await expect(chat).toContainText("welcome to Maison Miroir");
+  await expect(chat).toContainText("welcome to Maison Prisma Aurum");
 
   const ask = async (q: string) => {
     await chat.getByPlaceholder("Ask the concierge…").fill(q);

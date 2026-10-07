@@ -50,7 +50,7 @@ export default function PhotoModal() {
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
     >
       <div className="panel flex max-h-full w-full max-w-2xl flex-col gap-4 rounded-sm p-5">
-        <p className="wordmark text-center text-sm">Maison Miroir</p>
+        <p className="wordmark text-center text-sm">Maison Prisma Aurum</p>
         {/* Preview keeps the photo's own aspect (portrait on phones, landscape on desktop). */}
         <div className="flex min-h-48 min-w-0 flex-1 items-center justify-center overflow-hidden rounded-sm bg-black ring-1 ring-gold/20">
           {photoUrl ? (
@@ -78,7 +78,7 @@ export default function PhotoModal() {
           </button>
           <a
             href={photoUrl ?? undefined}
-            download="maison-miroir-try-on.png"
+            download="prisma-aurum-try-on.png"
             aria-disabled={!photoUrl}
             className={`btn-gold rounded-sm px-5 py-2.5 ${photoUrl ? "" : "pointer-events-none opacity-40"}`}
           >

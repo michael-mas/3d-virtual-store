@@ -4,6 +4,7 @@ import { useProgress } from "@react-three/drei";
 import { useEffect, useRef, useState } from "react";
 import { useT } from "@/hooks/useT";
 import { useAppStore } from "@/store/useAppStore";
+import Brand from "./Brand";
 import LanguageToggle from "./LanguageToggle";
 
 /**
@@ -48,7 +49,9 @@ export default function LoadingScreen() {
       </div>
       <div className="flex flex-col items-center gap-3 text-center">
         <p className="eyebrow text-gold">{t("Est. MMXXVI · Virtual boutique")}</p>
-        <p className="wordmark text-3xl sm:text-5xl">Maison Miroir</p>
+        <p>
+          <Brand size="text-3xl sm:text-5xl" small="text-xs sm:text-sm" />
+        </p>
         <p
           className={`max-w-sm font-display text-base text-ivory/70 italic transition-opacity duration-700 sm:text-lg ${
             ready ? "opacity-100" : "opacity-0"

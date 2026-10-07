@@ -255,7 +255,8 @@ const front = (geo, x, y, depth) => at(geo, x, y, HD - depth, Math.PI);
   // Threshold: a brass strip across the floor.
   parts.push(bake(at(new THREE.BoxGeometry(gallery.door.halfWidth * 2, 0.006, t), 0, floorY + 0.003, zMid), BRASS, { gloss: 1 }));
 }
-// Monogram plaques either side: an M inside an arch, in brass on black lacquer (the house mark, as in the icon).
+// Monogram plaques either side: the house mark, a prism under an arch (light enters white, leaves golden), in brass on
+// black lacquer, as in the icon.
 function monogram(x) {
   const cy = 1.55;
   parts.push(bake(front(new THREE.BoxGeometry(0.86, 1.3, 0.02), x, floorY + cy, 0.03), BRASS, { gloss: 1 }));
@@ -274,12 +275,17 @@ function monogram(x) {
   stroke([r, -0.5], [r, top]);
   const arc = new THREE.TorusGeometry(r, 0.011, 8, 40, Math.PI).translate(0, top, 0);
   parts.push(bake(front(arc, x, floorY + cy, 0.055), BRASS, { gloss: 1 }));
-  // M.
-  const m = 0.15;
-  stroke([-m, -0.32], [-m, 0.08], 0.026);
-  stroke([-m, 0.08], [0, -0.14], 0.026);
-  stroke([0, -0.14], [m, 0.08], 0.026);
-  stroke([m, 0.08], [m, -0.32], 0.026);
+  // The prism, the ray that enters it and the three that leave it.
+  const P = [
+    [-0.15, -0.27],
+    [0.15, -0.27],
+    [0, -0.01],
+  ];
+  stroke(P[0], P[1], 0.026);
+  stroke(P[1], P[2], 0.026);
+  stroke(P[2], P[0], 0.026);
+  stroke([-0.25, -0.17], [-0.075, -0.14], 0.014);
+  for (const y of [-0.06, -0.14, -0.22]) stroke([0.075, -0.14], [0.25, y], 0.012);
 }
 monogram(-1.75);
 monogram(1.75);

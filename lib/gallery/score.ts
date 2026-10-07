@@ -1,213 +1,384 @@
 import { BEAT } from "./show";
 
 /**
- * The performance's score, synthesized live with Web Audio and scheduled on the show's timeline (lib/gallery/show.ts):
- * a drone and wind in the dark, a bell for each automaton waking (panned where it stands), the mechanical act's
- * pulse (kick, hats, metallic clanks, a bass ostinato), a night arpeggio for the mirror, a riser and two hits for the
- * finale, then silence in the blackout and a warm chord for the bow. No audio file. Started from the click that
- * starts the show (browsers allow audio only after a user gesture).
+ * The performance's score, synthesized live with Web Audio and scheduled on the show's timeline (lib/gallery/show.ts).
+ * Written to be easy on the ear: one key (D major, its relative B minor), sine and soft triangle voices only (no raw
+ * sawtooth, no white noise in the music), harmonic bells and tuned mallets instead of metallic clanks, a warm low
+ * kick and a whisper of a shaker, filters that open slowly instead of noise risers, a dark hall, gentle bus
+ * compression and a shelf that tames the top end.
+ *
+ * - Prélude: the three knocks of the French theatre, then a low drone with a faint shimmer.
+ * - Éveil: a bell for each automaton as it wakes (panned where it stands), a pad that opens.
+ * - Mécanique: a soft pulse (kick, shaker, eighth-note bass) and a tuned mallet each time the automatons lock into a
+ *   move, spread into a three-voice canon in the second phrase.
+ * - Miroir: a night arpeggio with a ping-pong echo over a slow pad.
+ * - Finale: a swell that opens and accelerates, two deep strokes, then silence for the blackout.
+ * - Salut: a warm chord and descending bells. Applause (the visitor's) is a soft clap.
+ *
+ * No audio file. Started from the click that starts the show (browsers allow audio only after a user gesture).
  */
 
 const hz = (midi: number) => 440 * 2 ** ((midi - 69) / 12);
-const VOLUME = 0.5;
+const VOLUME = 0.75;
 
-type Score = { ctx: AudioContext; master: GainNode; dry: GainNode; hall: GainNode; noise: AudioBuffer };
-let score: Score | null = null;
+/** The chords (MIDI), voiced close and warm. */
+const CHORD = {
+  D: [50, 57, 61, 64, 66],
+  Bm: [47, 54, 57, 61, 62],
+  G: [43, 50, 54, 57, 61],
+  A: [45, 52, 54, 57, 62],
+  Dhigh: [62, 66, 69, 73, 76],
+};
+/** The mallet melody of the mechanical act: D major pentatonic. */
+const PENTA = [62, 64, 66, 69, 71, 74, 76, 78];
 
-function hallImpulse(ctx: AudioContext, seconds: number): AudioBuffer {
+export type Bus = { ctx: BaseAudioContext; dry: AudioNode; hall: AudioNode; echo: AudioNode; noise: AudioBuffer };
+
+/** A dark stereo hall: decaying noise, low-passed more and more as it fades. */
+function hallImpulse(ctx: BaseAudioContext, seconds: number): AudioBuffer {
   const length = Math.round(ctx.sampleRate * seconds);
   const buffer = ctx.createBuffer(2, length, ctx.sampleRate);
   for (let c = 0; c < 2; c++) {
     const data = buffer.getChannelData(c);
-    for (let i = 0; i < length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / length) ** 2.6;
+    let low = 0;
+    for (let i = 0; i < length; i++) {
+      const t = i / length;
+      low += (Math.random() * 2 - 1 - low) * (0.45 - 0.4 * t);
+      data[i] = low * (1 - t) ** 2.4;
+    }
   }
   return buffer;
 }
 
-function noiseBuffer(ctx: AudioContext): AudioBuffer {
-  const buffer = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+function noiseBuffer(ctx: BaseAudioContext): AudioBuffer {
+  const buffer = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
   const data = buffer.getChannelData(0);
   for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
   return buffer;
 }
 
-/** A gain envelope: 0 → peak over `attack`, held, then down to 0 by `end`. */
-function envelope(ctx: AudioContext, at: number, attack: number, peak: number, end: number, exponential = false): GainNode {
-  const g = ctx.createGain();
-  g.gain.setValueAtTime(0.0001, at);
-  g.gain.linearRampToValueAtTime(peak, at + attack);
-  if (exponential) g.gain.exponentialRampToValueAtTime(0.0001, end);
-  else g.gain.linearRampToValueAtTime(0, end);
-  return g;
+/** The mix: sources → (dry | hall | echo) → shelf → glue compressor → limiter → destination. */
+export function createBus(ctx: BaseAudioContext, destination: AudioNode, volume = VOLUME): { bus: Bus; master: GainNode } {
+  const master = ctx.createGain();
+  master.gain.value = volume;
+  // Tame the top end (where synthesized sound gets tiring), keep the warmth.
+  const shelf = ctx.createBiquadFilter();
+  shelf.type = "highshelf";
+  shelf.frequency.value = 5000;
+  shelf.gain.value = -8;
+  const glue = ctx.createDynamicsCompressor();
+  glue.threshold.value = -20;
+  glue.ratio.value = 2.5;
+  glue.attack.value = 0.02;
+  glue.release.value = 0.3;
+  const limiter = ctx.createDynamicsCompressor();
+  limiter.threshold.value = -3;
+  limiter.knee.value = 0;
+  limiter.ratio.value = 20;
+  limiter.attack.value = 0.002;
+  limiter.release.value = 0.1;
+  master.connect(shelf).connect(glue).connect(limiter).connect(destination);
+
+  const dry = ctx.createGain();
+  dry.connect(master);
+  const reverb = ctx.createConvolver();
+  reverb.buffer = hallImpulse(ctx, 3.4);
+  const hall = ctx.createGain();
+  hall.gain.value = 0.45;
+  hall.connect(reverb).connect(master);
+  // A dark ping-pong echo (dotted eighth), for the arpeggio.
+  const echo = ctx.createGain();
+  const merger = ctx.createChannelMerger(2);
+  const left = ctx.createDelay(1);
+  const right = ctx.createDelay(1);
+  left.delayTime.value = BEAT * 0.75;
+  right.delayTime.value = BEAT * 0.75;
+  const tone = ctx.createBiquadFilter();
+  tone.type = "lowpass";
+  tone.frequency.value = 2200;
+  const feedback = ctx.createGain();
+  feedback.gain.value = 0.32;
+  echo.connect(tone).connect(left);
+  left.connect(right);
+  right.connect(feedback).connect(left);
+  left.connect(merger, 0, 0);
+  right.connect(merger, 0, 1);
+  const echoOut = ctx.createGain();
+  echoOut.gain.value = 0.4;
+  merger.connect(echoOut).connect(master);
+  return { bus: { ctx, dry, hall, echo, noise: noiseBuffer(ctx) }, master };
 }
 
-function out(s: Score, node: AudioNode, pan: number, wet: number) {
-  const p = s.ctx.createStereoPanner();
+/** Routes a voice: panned, to the dry bus, the hall and (optionally) the echo. */
+function send(b: Bus, node: AudioNode, pan: number, wet: number, echo = 0) {
+  const p = b.ctx.createStereoPanner();
   p.pan.value = pan;
   node.connect(p);
-  const d = s.ctx.createGain();
-  d.gain.value = 1;
-  p.connect(d).connect(s.dry);
-  const w = s.ctx.createGain();
+  p.connect(b.dry);
+  const w = b.ctx.createGain();
   w.gain.value = wet;
-  p.connect(w).connect(s.hall);
+  p.connect(w).connect(b.hall);
+  if (echo) {
+    const e = b.ctx.createGain();
+    e.gain.value = echo;
+    p.connect(e).connect(b.echo);
+  }
 }
 
-function tone(s: Score, type: OscillatorType, freq: number, at: number, attack: number, peak: number, end: number, opts: { pan?: number; wet?: number; cutoff?: number; detune?: number; exp?: boolean } = {}) {
-  const { ctx } = s;
+type Voice = { type?: OscillatorType; pan?: number; wet?: number; echo?: number; cutoff?: number; cutoffTo?: number; detune?: number };
+
+/** One oscillator with an attack / hold / release envelope. */
+function voice(b: Bus, freq: number, at: number, attack: number, level: number, release: number, end: number, v: Voice = {}) {
+  const { ctx } = b;
   const o = ctx.createOscillator();
-  o.type = type;
+  o.type = v.type ?? "sine";
   o.frequency.value = freq;
-  o.detune.value = opts.detune ?? 0;
+  o.detune.value = v.detune ?? 0;
+  const g = ctx.createGain();
+  if (attack >= 0.05) {
+    // Swells (pads, drones): linear in and out, so overlapping chords cross-fade without a dip.
+    g.gain.setValueAtTime(0, at);
+    g.gain.linearRampToValueAtTime(level, at + attack);
+    g.gain.setValueAtTime(level, Math.max(at + attack, end - release));
+    g.gain.linearRampToValueAtTime(0, end);
+  } else {
+    // Struck tones: instant attack, natural (exponential) decay.
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.exponentialRampToValueAtTime(level, at + attack);
+    g.gain.setValueAtTime(level, Math.max(at + attack, end - release));
+    g.gain.exponentialRampToValueAtTime(0.0001, end);
+  }
   let node: AudioNode = o;
-  if (opts.cutoff) {
+  if (v.cutoff) {
     const f = ctx.createBiquadFilter();
     f.type = "lowpass";
-    f.frequency.value = opts.cutoff;
-    node = node.connect(f);
+    f.Q.value = 0.5;
+    f.frequency.setValueAtTime(v.cutoff, at);
+    if (v.cutoffTo) f.frequency.exponentialRampToValueAtTime(v.cutoffTo, end);
+    node = o.connect(f);
   }
-  const g = envelope(ctx, at, attack, peak, end, opts.exp);
   node.connect(g);
-  out(s, g, opts.pan ?? 0, opts.wet ?? 0.3);
+  send(b, g, v.pan ?? 0, v.wet ?? 0.3, v.echo ?? 0);
   o.start(at);
   o.stop(end + 0.05);
   return o;
 }
 
-function noise(s: Score, at: number, dur: number, peak: number, filter: BiquadFilterType, freq: number, opts: { pan?: number; wet?: number; to?: number; q?: number; attack?: number } = {}) {
-  const { ctx } = s;
-  const src = ctx.createBufferSource();
-  src.buffer = s.noise;
-  src.loop = true;
-  const f = ctx.createBiquadFilter();
-  f.type = filter;
-  f.frequency.setValueAtTime(freq, at);
-  if (opts.to) f.frequency.exponentialRampToValueAtTime(opts.to, at + dur);
-  f.Q.value = opts.q ?? 0.8;
-  const g = envelope(ctx, at, opts.attack ?? 0.002, peak, at + dur, !opts.attack);
-  src.connect(f).connect(g);
-  out(s, g, opts.pan ?? 0, opts.wet ?? 0.2);
-  src.start(at);
-  src.stop(at + dur + 0.05);
-}
+/** A struck tone: instant attack, exponential decay. */
+const strike = (b: Bus, freq: number, at: number, level: number, decay: number, v: Voice = {}) => voice(b, freq, at, 0.004, level, decay, at + decay, v);
 
-function kick(s: Score, at: number, level = 0.9) {
-  const o = tone(s, "sine", 120, at, 0.003, level, at + 0.35, { wet: 0.05, exp: true });
-  o.frequency.setValueAtTime(130, at);
-  o.frequency.exponentialRampToValueAtTime(42, at + 0.12);
-}
-
-/** A metallic hit: inharmonic partials, quick decay (an automaton's joint locking into place). */
-function clank(s: Score, at: number, pan: number, level = 0.22) {
-  for (const [ratio, l] of [
-    [1, 1],
-    [2.76, 0.6],
-    [5.4, 0.35],
-    [8.93, 0.2],
-  ]) {
-    tone(s, "sine", 420 * ratio, at, 0.001, level * l, at + 0.35 / ratio ** 0.3, { pan, wet: 0.35, exp: true });
-  }
-  noise(s, at, 0.05, level * 0.6, "highpass", 5000, { pan });
-}
-
-function bell(s: Score, midi: number, at: number, pan: number, level = 0.12) {
-  tone(s, "sine", hz(midi), at, 0.005, level, at + 4, { pan, wet: 0.7, exp: true });
-  tone(s, "sine", hz(midi) * 2.01, at, 0.005, level * 0.25, at + 2, { pan, wet: 0.7, exp: true });
-}
-
-function chord(s: Score, notes: number[], at: number, attack: number, end: number, level: number, cutoff = 1400, type: OscillatorType = "triangle") {
+/** A warm pad: soft triangles through a low-pass, two voices a few cents apart, slow in and out. */
+function pad(b: Bus, notes: number[], at: number, end: number, level: number, cutoff = 900, cutoffTo?: number) {
+  const each = level / notes.length;
   notes.forEach((n, i) => {
-    for (const detune of [-7, 7]) tone(s, type, hz(n), at, attack, level, end, { pan: (i / (notes.length - 1) - 0.5) * 0.8, wet: 0.55, cutoff, detune });
+    const pan = (i / Math.max(notes.length - 1, 1) - 0.5) * 0.7;
+    for (const detune of [-4, 4]) voice(b, hz(n), at, 2.5, each, 2.5, end, { type: "triangle", pan, wet: 0.55, cutoff, cutoffTo, detune });
   });
 }
 
-/** Schedules the whole score from `delay` seconds from now. */
-function schedule(s: Score, t0: number) {
-  // Prelude: a low drone and the wind.
-  tone(s, "sine", hz(26), t0, 5, 0.35, t0 + 22, { wet: 0.2 });
-  tone(s, "sine", hz(38), t0 + 1, 5, 0.18, t0 + 22, { wet: 0.3 });
-  noise(s, t0, 9, 0.12, "bandpass", 300, { to: 1400, attack: 5, wet: 0.6, q: 2 });
+/** A bell: harmonic partials only (fundamental, octave, twelfth), long decay. */
+function bell(b: Bus, note: number, at: number, pan: number, level: number) {
+  strike(b, hz(note), at, level, 3.2, { pan, wet: 0.6 });
+  strike(b, hz(note) * 2, at, level * 0.22, 1.6, { pan, wet: 0.6 });
+  strike(b, hz(note) * 3, at, level * 0.06, 0.8, { pan, wet: 0.6 });
+}
 
-  // Awakening: a bell as each automaton wakes (center, left, right), a pad that opens.
+/** A tuned mallet (marimba-like): a round body and a brief bright overtone. */
+function mallet(b: Bus, note: number, at: number, pan: number, level: number) {
+  strike(b, hz(note), at, level, 0.55, { pan, wet: 0.35 });
+  strike(b, hz(note) * 4, at, level * 0.12, 0.07, { pan, wet: 0.2 });
+}
+
+/** A soft, round kick. */
+function kick(b: Bus, at: number, level: number) {
+  const o = strike(b, 80, at, level, 0.38, { wet: 0.05 });
+  o.frequency.setValueAtTime(85, at);
+  o.frequency.exponentialRampToValueAtTime(44, at + 0.14);
+}
+
+/** A whispered shaker: band-limited noise, very short and very low. */
+function shaker(b: Bus, at: number, level: number, pan = 0.25) {
+  const { ctx } = b;
+  const src = ctx.createBufferSource();
+  src.buffer = b.noise;
+  const band = ctx.createBiquadFilter();
+  band.type = "bandpass";
+  band.frequency.value = 3200;
+  band.Q.value = 0.7;
+  const soft = ctx.createBiquadFilter();
+  soft.type = "lowpass";
+  soft.frequency.value = 5500;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, at);
+  g.gain.exponentialRampToValueAtTime(level, at + 0.006);
+  g.gain.exponentialRampToValueAtTime(0.0001, at + 0.06);
+  src.connect(band).connect(soft).connect(g);
+  send(b, g, pan, 0.15);
+  src.start(at, Math.random() * 0.5);
+  src.stop(at + 0.08);
+}
+
+/** A wooden knock (the brigadier's staff on the stage floor). */
+function knock(b: Bus, at: number) {
+  const o = strike(b, 120, at, 0.5, 0.22, { wet: 0.45 });
+  o.frequency.setValueAtTime(130, at);
+  o.frequency.exponentialRampToValueAtTime(62, at + 0.12);
+  strike(b, 340, at, 0.08, 0.06, { wet: 0.4 });
+}
+
+/** A deep stroke: a warm boom with its octave and fifth, long decay. */
+function stroke(b: Bus, at: number) {
+  strike(b, hz(26), at, 0.5, 3, { wet: 0.4 });
+  strike(b, hz(38), at, 0.22, 2.2, { wet: 0.5 });
+  strike(b, hz(45), at, 0.08, 1.6, { wet: 0.5 });
+}
+
+/** A soft hand clap: three tiny bursts of band-limited noise. */
+export function clap(b: Bus, at: number, pan: number, level = 0.1) {
+  const { ctx } = b;
+  for (const offset of [0, 0.009, 0.02]) {
+    const src = ctx.createBufferSource();
+    src.buffer = b.noise;
+    const band = ctx.createBiquadFilter();
+    band.type = "bandpass";
+    band.frequency.value = 1500 + Math.random() * 300;
+    band.Q.value = 0.9;
+    const g = ctx.createGain();
+    const t = at + offset;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(level, t + 0.003);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+    src.connect(band).connect(g);
+    send(b, g, pan, 0.4);
+    src.start(t, Math.random() * 0.5);
+    src.stop(t + 0.08);
+  }
+}
+
+/** Schedules the whole score from `t0` (in the context's time). */
+export function scheduleScore(b: Bus, t0: number) {
+  const T = (t: number) => t0 + t;
+
+  // Prélude: the three knocks, then the drone and a faint shimmer.
+  [0.6, 1.5, 2.4].forEach((t) => knock(b, T(t)));
+  voice(b, hz(38), T(3), 4, 0.16, 3, T(22.5), { wet: 0.3 });
+  voice(b, hz(45), T(4), 4, 0.06, 3, T(22.5), { wet: 0.4 });
+  voice(b, hz(81), T(5), 3, 0.006, 2, T(12), { wet: 0.8 });
+  voice(b, hz(86), T(6), 3, 0.004, 2, T(12), { wet: 0.8 });
+
+  // Éveil: a bell as each automaton wakes (center, left, right), the pad opening.
   [
     [9, 74, 0],
-    [10.8, 69, -0.6],
-    [12.6, 76, 0.6],
-  ].forEach(([at, note, pan]) => bell(s, note, t0 + at, pan, 0.16));
-  chord(s, [50, 57, 62, 64, 69], t0 + 10, 6, t0 + 22.4, 0.035, 900);
-  chord(s, [50, 57, 62, 65, 72], t0 + 16, 4, t0 + 22.4, 0.03, 1800);
-  noise(s, t0 + 20, 2, 0.15, "bandpass", 400, { to: 5000, attack: 1.9, wet: 0.4 });
+    [10.8, 78, -0.5],
+    [12.6, 81, 0.5],
+  ].forEach(([t, note, pan]) => bell(b, note, T(t), pan, 0.09));
+  pad(b, CHORD.D, T(10), T(18.5), 0.14, 500, 1300);
+  pad(b, CHORD.G, T(16), T(24.5), 0.12, 700, 1700);
+  voice(b, hz(31), T(16), 2, 0.1, 2, T(22.5), { wet: 0.3 });
+  bell(b, 69, T(19.5), 0, 0.05);
 
-  // Mechanical: 44 beats of pulse.
-  const BASS = [38, 38, 50, 38, 41, 38, 45, 43];
-  for (let b = 0; b < 44; b++) {
-    const at = t0 + 22 + b * BEAT;
-    const phrase = Math.floor(b / 8);
-    kick(s, at, b % 8 === 0 ? 1 : 0.75);
-    noise(s, at + BEAT / 2, 0.06, 0.06, "highpass", 7000, { pan: 0.3 });
-    if (b % 8 === 0) noise(s, at, 1.6, 0.18, "highpass", 3500, { wet: 0.5 });
-    // Each automaton's joints lock on the beat, panned where it stands (the canon spreads them).
-    const pans = [-0.6, 0, 0.6];
-    pans.forEach((pan, i) => clank(s, at + (phrase === 1 ? i * BEAT : 0) + i * 0.012, pan, phrase === 1 ? 0.14 : 0.08));
-    for (const half of [0, 0.5]) tone(s, "sawtooth", hz(BASS[(b * 2 + half * 2) % 8] - 12), at + half * BEAT, 0.005, 0.12, at + half * BEAT + 0.22, { cutoff: 520, wet: 0.05, exp: true });
+  // Mécanique: 44 beats. Kick on the bar's 1 and 3, shaker on the off-beats, the bass in eighths, a mallet per move.
+  const PROGRESSION = [CHORD.D, CHORD.Bm, CHORD.G, CHORD.A];
+  const ROOTS = [38, 35, 43, 45];
+  for (let k = 0; k < 6; k++) {
+    const at = 22 + k * 8 * BEAT;
+    pad(b, PROGRESSION[k % 4], T(at), T(Math.min(at + 8 * BEAT + 2.5, 46.5)), 0.1, 900);
   }
-  chord(s, [50, 57, 62, 66, 69], t0 + 42, 2, t0 + 46, 0.03, 2000, "sawtooth");
-
-  // Mirror: a night arpeggio in sixteenths, a slow pad, a soft half-time pulse.
-  const ARP = [62, 65, 69, 72, 74, 72, 69, 65];
-  for (let i = 0; i < 20 / (BEAT / 4); i++) {
-    const at = t0 + 44 + i * (BEAT / 4);
-    if (at > t0 + 63.8) break;
-    const n = ARP[i % 8] + (Math.floor(i / 32) % 2 === 1 ? -2 : 0);
-    tone(s, "triangle", hz(n + 12), at, 0.004, 0.05, at + 0.28, { pan: Math.sin(i * 0.7) * 0.7, wet: 0.6, exp: true });
+  const pans = [-0.55, 0, 0.55];
+  for (let beat = 0; beat < 44; beat++) {
+    const at = 22 + beat * BEAT;
+    const phrase = Math.floor(beat / 8);
+    const root = ROOTS[Math.floor(beat / 8) % 4];
+    if (beat % 2 === 0) kick(b, T(at), beat % 8 === 0 ? 0.6 : 0.48);
+    shaker(b, T(at + BEAT / 2), 0.03);
+    for (const half of [0, 0.5]) {
+      const note = root + (half ? 12 : 0) + (beat % 4 === 3 && half ? 7 : 0);
+      strike(b, hz(note - 12), T(at + half * BEAT), 0.18, 0.3, { type: "triangle", cutoff: 420, wet: 0.05 });
+    }
+    // The automatons lock into place: a mallet note each, in unison or (second phrase) in canon.
+    const note = PENTA[(beat * 3 + phrase) % PENTA.length];
+    if (phrase === 1) pans.forEach((pan, i) => mallet(b, note + (i === 1 ? 0 : i === 0 ? -5 : 7), T(at + i * BEAT * 0.5), pan, 0.11));
+    else mallet(b, note, T(at), pans[beat % 3], 0.15);
   }
-  chord(s, [46, 53, 58, 62, 69], t0 + 44, 4, t0 + 54.5, 0.03, 900);
-  chord(s, [43, 50, 55, 62, 67], t0 + 54, 4, t0 + 64.5, 0.03, 1100);
-  for (let b = 0; b < 20; b++) kick(s, t0 + 44 + b * BEAT * 2, 0.4);
 
-  // Finale: a riser, a rising chord, two hits, then silence for the blackout.
-  noise(s, t0 + 64, 7.5, 0.22, "bandpass", 200, { to: 7000, attack: 7.4, wet: 0.5, q: 1.5 });
-  chord(s, [50, 57, 62, 66, 69, 74], t0 + 66, 5, t0 + 74, 0.04, 2600, "sawtooth");
+  // Miroir: an arpeggio in eighths with a ping-pong echo, over Bm9 then Gmaj9.
+  const ARP = [
+    [59, 62, 66, 69, 73, 69, 66, 62],
+    [55, 59, 62, 66, 69, 66, 62, 59],
+  ];
+  for (let i = 0; i < 20 / (BEAT / 2); i++) {
+    const at = 44 + i * (BEAT / 2);
+    if (at > 63.7) break;
+    const notes = ARP[at < 54 ? 0 : 1];
+    strike(b, hz(notes[i % 8] + 12), T(at), 0.08, 0.9, { type: "triangle", cutoff: 2400, pan: Math.sin(i * 0.6) * 0.5, wet: 0.45, echo: 0.6 });
+  }
+  pad(b, CHORD.Bm, T(43.5), T(56.5), 0.13, 700);
+  pad(b, CHORD.G, T(54), T(66.5), 0.13, 800);
+  voice(b, hz(35), T(44), 2, 0.09, 2, T(54.5), { wet: 0.3 });
+  voice(b, hz(31), T(54), 2, 0.09, 2, T(64.5), { wet: 0.3 });
+  for (let bar = 0; bar < 10; bar++) kick(b, T(44 + bar * 4 * BEAT), 0.18);
+
+  // Finale: a swell that opens (A6sus → D), an arpeggio that accelerates, two deep strokes, then silence.
+  pad(b, CHORD.A, T(63.5), T(70.5), 0.15, 500, 1600);
+  pad(b, [...CHORD.D, 69, 74], T(68), T(74), 0.2, 900, 2600);
+  voice(b, hz(33), T(64), 2, 0.1, 1.5, T(68.4), { wet: 0.3 });
+  voice(b, hz(38), T(68), 1.5, 0.12, 1, T(74), { wet: 0.3 });
+  let at = 64.5;
+  let step = BEAT;
+  let i = 0;
+  while (at < 71.6) {
+    strike(b, hz(CHORD.Dhigh[i % 5] + (i % 10 >= 5 ? 12 : 0)), T(at), 0.07, 0.6, { type: "triangle", cutoff: 3000, pan: Math.sin(i) * 0.6, wet: 0.5 });
+    at += step;
+    step = Math.max(step * 0.9, BEAT / 4);
+    i++;
+  }
   for (const h of [72, 73]) {
-    kick(s, t0 + h, 1);
-    noise(s, t0 + h, 1.4, 0.3, "highpass", 2500, { wet: 0.6 });
-    chord(s, [38, 50, 57, 62, 66], t0 + h, 0.01, t0 + h + 0.9, 0.06, 3000, "sawtooth");
+    stroke(b, T(h));
+    CHORD.Dhigh.forEach((n, k) => strike(b, hz(n - 12), T(h + k * 0.012), 0.05, 1.6, { type: "triangle", cutoff: 2600, pan: (k - 2) * 0.25, wet: 0.6 }));
   }
 
-  // The bow: a warm chord and a few bells.
-  chord(s, [50, 57, 62, 64, 66, 69], t0 + 76.2, 2.5, t0 + 84, 0.035, 1200);
-  [77, 78.4, 79.6, 80.5].forEach((at, i) => bell(s, [74, 78, 81, 86][i], t0 + at, [-0.5, 0.5, -0.2, 0.2][i], 0.08));
+  // Salut: a warm chord and descending bells, then the house lights.
+  pad(b, [...CHORD.D, 69], T(76.2), T(88), 0.13, 800, 1200);
+  voice(b, hz(38), T(76.2), 2.5, 0.08, 3, T(88), { wet: 0.4 });
+  [77, 78.4, 79.6, 80.8].forEach((t, k) => bell(b, [86, 81, 78, 74][k], T(t), [-0.4, 0.4, -0.2, 0.2][k], 0.06));
 }
+
+type Live = { ctx: AudioContext; master: GainNode; bus: Bus };
+let live: Live | null = null;
 
 /** Starts the score `delay` seconds from now (call from the click that starts the show). */
 export function startScore(delay: number) {
   if (typeof AudioContext === "undefined") return;
   stopScore();
   const ctx = new AudioContext();
-  const master = ctx.createGain();
-  master.gain.value = VOLUME;
-  const comp = ctx.createDynamicsCompressor();
-  master.connect(comp).connect(ctx.destination);
-  const dry = ctx.createGain();
-  dry.connect(master);
-  const reverb = ctx.createConvolver();
-  reverb.buffer = hallImpulse(ctx, 3.8);
-  const hall = ctx.createGain();
-  hall.gain.value = 0.6;
-  hall.connect(reverb).connect(master);
-  score = { ctx, master, dry, hall, noise: noiseBuffer(ctx) };
+  const { bus, master } = createBus(ctx, ctx.destination);
+  live = { ctx, master, bus };
   void ctx.resume();
-  schedule(score, ctx.currentTime + delay);
+  scheduleScore(bus, ctx.currentTime + delay);
+}
+
+/** A clap from the audience (the visitor's applause), on the running score's mix. */
+export function applaud() {
+  if (!live) return;
+  clap(live.bus, live.ctx.currentTime + 0.005, Math.random() * 0.6 - 0.3);
 }
 
 /** Fades the score out and releases the audio device. */
 export function stopScore() {
-  const s = score;
+  const s = live;
   if (!s) return;
-  score = null;
+  live = null;
   const t = s.ctx.currentTime;
   s.master.gain.cancelScheduledValues(t);
   s.master.gain.setValueAtTime(s.master.gain.value, t);
-  s.master.gain.linearRampToValueAtTime(0, t + 0.8);
-  setTimeout(() => void s.ctx.close(), 1000);
+  s.master.gain.linearRampToValueAtTime(0, t + 1.2);
+  setTimeout(() => void s.ctx.close(), 1400);
+}
+
+/** Renders the whole score offline (debug: to listen to it and measure it). */
+export async function renderScore(seconds = 92, sampleRate = 44100): Promise<AudioBuffer> {
+  const ctx = new OfflineAudioContext(2, Math.ceil(seconds * sampleRate), sampleRate);
+  const { bus } = createBus(ctx, ctx.destination);
+  scheduleScore(bus, 0.05);
+  return ctx.startRendering();
 }

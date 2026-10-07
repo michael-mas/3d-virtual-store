@@ -261,13 +261,22 @@ export function respond(input: string, ctx: Context): Reply {
   }
   if (has(text, INTENTS.tour)) return reply(L("With pleasure. Follow me.", "Avec plaisir. Suivez-moi."), locale, [{ kind: "tour" }]);
   if (has(text, INTENTS.musicOn)) return reply(L("A little music for the salon.", "Un peu de musique pour le salon."), locale, [{ kind: "music", on: true }]);
+  if (has(text, ["prisma", "aurum", "le nom", "ton nom de maison", "the name", "pourquoi ce nom", "why the name", "que veut dire", "what does it mean"])) {
+    return reply(
+      L(
+        "Prisma Aurum: the golden prism. White light enters a prism and leaves as all its colors; here, you enter and leave wearing them. Our mark is that prism, under an arch.",
+        "Prisma Aurum : le prisme d'or. La lumière blanche entre dans un prisme et en ressort en toutes ses couleurs ; ici, vous entrez et repartez en les portant. Notre emblème est ce prisme, sous une arche.",
+      ),
+      locale,
+    );
+  }
   if (has(text, INTENTS.who)) {
-    return reply(L("I am the concierge of Maison Miroir. I know every piece in the salon and every work in the gallery, and I can dress you in the pieces.", "Je suis le concierge de la Maison Miroir. Je connais chaque pièce du salon et chaque œuvre de la galerie, et je peux vous faire porter les pièces."), locale);
+    return reply(L("I am the concierge of Maison Prisma Aurum. I know every piece in the salon and every work in the gallery, and I can dress you in the pieces.", "Je suis le concierge de la Maison Prisma Aurum. Je connais chaque pièce du salon et chaque œuvre de la galerie, et je peux vous faire porter les pièces."), locale);
   }
   if (has(text, INTENTS.help)) {
     return reply(L("Ask me about a piece, a price, the frame for your face, or the try-on. I can also guide you through the salon and the gallery.", "Demandez-moi une pièce, un prix, la monture pour votre visage, ou l'essayage. Je peux aussi vous guider dans le salon et la galerie."), locale);
   }
   if (has(text, INTENTS.thanks)) return reply(L("A pleasure. I remain at your service.", "Avec plaisir. Je reste à votre service."), locale);
-  if (has(text, INTENTS.greeting)) return reply(L("Good day, and welcome to Maison Miroir. How may I help you?", "Bonjour, et bienvenue à la Maison Miroir. Comment puis-je vous aider ?"), locale);
+  if (has(text, INTENTS.greeting)) return reply(L("Good day, and welcome to Maison Prisma Aurum. How may I help you?", "Bonjour, et bienvenue à la Maison Prisma Aurum. Comment puis-je vous aider ?"), locale);
   return reply(L("Forgive me, I did not quite understand. You may ask me about a piece, a price, or your face shape.", "Pardonnez-moi, je n'ai pas bien compris. Demandez-moi une pièce, un prix, ou la forme de votre visage."), locale);
 }
