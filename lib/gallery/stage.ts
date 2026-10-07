@@ -4,8 +4,8 @@ import { setAmbientMusic } from "@/lib/ambient";
 import { GALLERY } from "@/lib/explore/layout";
 import { player, walkTo } from "@/lib/explore/player";
 import { useAppStore } from "@/store/useAppStore";
-import { startScore, stopScore } from "./score";
-import { SHOW_DURATION } from "./show";
+import { applaud, startScore, stopScore } from "./score";
+import { APPLAUSE, SHOW_DURATION } from "./show";
 
 /**
  * The gallery's live state, shared by its shaders (TSL uniforms, updated once a frame by the Gallery and Theatre
@@ -35,8 +35,11 @@ export const stageUniforms = {
   swarmAttractor: uniform(new Vector3()),
 };
 
-/** The performance: playing or not, its start (performance.now seconds), and whether the director has the camera. */
-export const show = { playing: false, start: 0, cinema: true };
+/**
+ * The performance: playing or not, its start (performance.now seconds), whether the director has the camera, and the
+ * applause (claps; when it brought the automatons back for a second bow).
+ */
+export const show = { playing: false, start: 0, cinema: true, claps: 0, encore: null as number | null };
 
 const now = () => performance.now() / 1000;
 /** Seconds into the performance. */
@@ -51,6 +54,8 @@ export function startShow() {
   show.playing = true;
   show.cinema = true;
   show.start = now() + 0.2;
+  show.claps = 0;
+  show.encore = null;
   void setAmbientMusic(false);
   startScore(0.2);
   useAppStore.getState().setShow({ showPlaying: true, showCinema: true });
@@ -74,3 +79,12 @@ export function setCinema(on: boolean) {
 }
 
 export const showEnded = () => show.playing && showTime() > SHOW_DURATION;
+
+/** Applause during the bow: a clap; the third brings the automatons back for a second bow. */
+export function clap() {
+  const t = showTime();
+  if (!show.playing || t < APPLAUSE.start || t > APPLAUSE.end) return;
+  applaud();
+  show.claps++;
+  if (show.claps >= 3 && show.encore === null && t < APPLAUSE.end - 2) show.encore = t;
+}

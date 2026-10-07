@@ -23,13 +23,26 @@ export const ACTS: readonly Act[] = [
   { id: "mecanique", start: 22, end: 44, numeral: "II", title: "Mécanique", line: "The pulse takes hold: unison, canon, mirror." },
   { id: "miroir", start: 44, end: 64, numeral: "III", title: "Miroir", line: "Now they follow you. Move." },
   { id: "finale", start: 64, end: 76, numeral: "IV", title: "Finale", line: "Everything rises toward the light." },
-  { id: "salut", start: 76, end: 84, numeral: "", title: "Salut", line: "Thank you." },
+  { id: "salut", start: 76, end: 90, numeral: "", title: "Salut", line: "Thank you." },
 ];
 export const SHOW_DURATION = ACTS[ACTS.length - 1].end;
 /** The act in which the visitor is part of the piece (the camera is theirs, the automatons follow them). */
 export const INTERACTIVE_ACT: ActId = "miroir";
 
 export const actAt = (t: number): Act => ACTS.find((a) => t < a.end) ?? ACTS[ACTS.length - 1];
+
+/** When the visitor may applaud (the bow and the credits), and when the credits roll. */
+export const APPLAUSE = { start: 77, end: 88 };
+export const CREDITS = { start: 79.5, end: 88.5 };
+
+/**
+ * The curtain, 0 closed … 1 open: closed between performances; it opens after the three knocks (on the music's
+ * 0.6 / 1.5 / 2.4 s) and closes after the bow.
+ */
+export function curtainAt(t: number | null): number {
+  if (t === null) return 0;
+  return ramp(t, 2.9, 6.4) * (1 - ramp(t, 86, 89.2));
+}
 
 // ---------------------------------------------------------------- stage geometry
 
@@ -190,7 +203,7 @@ const PHRASE: readonly Pose[] = [POSES.front, POSES.gate, POSES.front, POSES.pun
  * Pose of automaton `i` (0 left, 1 center, 2 right, as the audience sees them) at show time `t`. `visitor` is the
  * visitor's position on the floor plan (the third act follows it), `time` is free-running (breathing).
  */
-export function poseAt(t: number, i: number, visitor: readonly [number, number]): Pose {
+export function poseAt(t: number, i: number, visitor: readonly [number, number], encore: number | null = null): Pose {
   const breathe = Math.sin(t * 1.3 + i) * 0.015;
   const withBreath = (p: Pose): Pose => ({ ...p, lumbarX: p.lumbarX + breathe, headX: p.headX + breathe * 0.5 });
   // Waking order: center, left, right.
@@ -217,7 +230,11 @@ export function poseAt(t: number, i: number, visitor: readonly [number, number])
     return t < 71.5 ? rise : blendPose(rise, hit, snap((t - 71.5) / 0.25));
   }
   const bow = blendPose(POSES.vUp, POSES.bow, ramp(t, 76.4 + order * 0.25, 78 + order * 0.25));
-  return blendPose(bow, POSES.neutral, ramp(t, 81, 83.5));
+  const up = blendPose(bow, POSES.neutral, ramp(t, 80.5, 82.5));
+  // The applause brings them back for a second bow (the encore), then they stand to see the curtain close.
+  if (encore === null || t < encore) return up;
+  const again = blendPose(up, POSES.bow, ramp(t, encore + 0.3 + order * 0.2, encore + 1.4 + order * 0.2));
+  return blendPose(again, POSES.neutral, ramp(t, encore + 3, encore + 4.5));
 }
 
 function mechanicalPose(t: number, i: number): Pose {
@@ -310,8 +327,8 @@ export function cueAt(t: number, visitor: readonly [number, number]): Cue {
   let house = lerp(1, 0.1, ramp(t, 0, 4));
   if (t > 74) house = 0;
   if (t > 76) house = lerp(0, 0.45, ramp(t, 76, 78));
-  if (t > 81) house = lerp(0.45, 1, ramp(t, 81, 84));
-  const letterbox = ramp(t, 0, 2) * (1 - ramp(t, 82, 84));
+  if (t > 86) house = lerp(0.45, 1, ramp(t, 86, 90));
+  const letterbox = ramp(t, 0, 2) * (1 - ramp(t, 88, 90));
 
   if (t < 8) {
     // A single white spot finds the center automaton.
@@ -377,11 +394,11 @@ export function cueAt(t: number, visitor: readonly [number, number]): Cue {
     swarm = { weights: [0, 0, 0.2, ramp(t, 66, 70), ramp(t, 72, 74)], intensity: t < 74 ? 1 : lerp(1, 0, ramp(t, 74, 75)), color: GOLD, attract: 0 };
   } else {
     // The bow, in a warm front light.
-    beams = FIXTURES.map((_, i) => ({ aim: mark3(Math.min(2, Math.floor(i / 2))), color: WHITE, intensity: ramp(t, 76, 77) * (1 - ramp(t, 81, 84)) * 0.7 }));
-    cyclo = { color: AMBER, level: 0.35 * (1 - ramp(t, 81, 84)) };
-    rim = { color: AMBER, level: 0.6 * (1 - ramp(t, 81, 84)) };
+    beams = FIXTURES.map((_, i) => ({ aim: mark3(Math.min(2, Math.floor(i / 2))), color: WHITE, intensity: ramp(t, 76, 77) * (1 - ramp(t, 86, 89)) * 0.7 }));
+    cyclo = { color: AMBER, level: 0.35 * (1 - ramp(t, 86, 89)) };
+    rim = { color: AMBER, level: 0.6 * (1 - ramp(t, 86, 89)) };
     visor = 0.6;
-    swarm = { weights: [0, 0, 0, 0, 1], intensity: 0.6 * (1 - ramp(t, 78, 82)), color: GOLD, attract: 0 };
+    swarm = { weights: [0, 0, 0, 0, 1], intensity: 0.6 * (1 - ramp(t, 80, 86)), color: GOLD, attract: 0 };
   }
   return { house, letterbox, cyclo, beams, swarm, rim, visor, flash };
 }

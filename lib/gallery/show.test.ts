@@ -46,6 +46,15 @@ describe("Les Trois Automates", () => {
     expect(right.headY).toBeLessThan(left.headY);
   });
 
+  it("bows again when the audience applauds (the encore), and opens the curtain after the three knocks", async () => {
+    const { curtainAt } = await import("./show");
+    expect(poseAt(83, 1, VISITORS[0], 82).lumbarX).toBeGreaterThan(poseAt(83, 1, VISITORS[0]).lumbarX + 0.3);
+    expect(curtainAt(null)).toBe(0);
+    expect(curtainAt(2.5)).toBe(0);
+    expect(curtainAt(7)).toBe(1);
+    expect(curtainAt(SHOW_DURATION)).toBe(0);
+  });
+
   it("mirrors poses left to right and back", () => {
     const p = POSES.punchL;
     expect(mirrorPose(mirrorPose(p))).toEqual(p);

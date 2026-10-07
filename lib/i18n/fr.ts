@@ -309,6 +309,15 @@ export const FR: Readonly<Record<string, string>> = {
   "Everything rises toward the light.": "Tout s'élève vers la lumière.",
   "Thank you.": "Merci.",
 
+  // ---------------------------------------------------------------- the theatre's ritual
+  Applaud: "Applaudir",
+  Choreography: "Chorégraphie",
+  Light: "Lumière",
+  Automatons: "Automates",
+  "Synthesized live, in your browser": "Synthétisée en direct, dans votre navigateur",
+  "Thank you for coming.": "Merci d'être venus.",
+  "Contains flashing lights.": "Contient des flashs lumineux.",
+
   // ---------------------------------------------------------------- passport and collections
   "Unlocked by the gallery passport": "Débloquée par le passeport de la galerie",
   "In the gallery, touch {gold} works for the Gold collection, all {all} for the Mirror.":

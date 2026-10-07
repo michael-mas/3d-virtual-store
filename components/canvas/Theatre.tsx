@@ -9,9 +9,10 @@ import { inGallery } from "@/lib/gallery/artworks";
 import { aimFixture, buildFixtures } from "@/lib/gallery/beams";
 import { applyPose, buildPerformers } from "@/lib/gallery/performers";
 import { renderScore } from "@/lib/gallery/score";
-import { cueAt, FIXTURES, MARKS, poseAt, POSES, SHOW_DURATION, STAGE_CENTER, STAGE_TOP, type Cue } from "@/lib/gallery/show";
+import { cueAt, curtainAt, FIXTURES, MARKS, poseAt, POSES, SHOW_DURATION, STAGE_CENTER, STAGE_TOP, type Cue } from "@/lib/gallery/show";
 import { show, showTime, stageUniforms as u, stopShow } from "@/lib/gallery/stage";
 import { buildSwarm } from "@/lib/gallery/swarm";
+import { buildCurtain, setCurtain } from "@/lib/gallery/curtain";
 import { isDebugEnabled } from "@/lib/debug";
 
 const PALM = new Vector3(0, -0.06, 0);
@@ -57,8 +58,9 @@ export default function Theatre() {
     const fixtures = buildFixtures(FIXTURES);
     for (const f of fixtures) root.add(f.group, f.pool);
     const swarm = buildSwarm();
-    root.add(swarm);
-    return { root, performers, fixtures };
+    const curtain = buildCurtain();
+    root.add(swarm, curtain.group);
+    return { root, performers, fixtures, curtain };
   }, []);
 
   useEffect(() => {
@@ -89,7 +91,7 @@ export default function Theatre() {
     const cue = playing ? cueAt(t, visitor) : idleCue(visitor);
 
     stage.performers.forEach((p, i) => {
-      const pose = playing ? poseAt(t, i, visitor) : { ...POSES.rest, lumbarX: POSES.rest.lumbarX + Math.sin(u.clock.value * 0.8 + i) * 0.015 };
+      const pose = playing ? poseAt(t, i, visitor, show.encore) : { ...POSES.rest, lumbarX: POSES.rest.lumbarX + Math.sin(u.clock.value * 0.8 + i) * 0.015 };
       applyPose(p.rig, pose, MARKS[i], STAGE_TOP);
     });
     // The conductor's open hand, which the swarm flows to (between performances, the visitor draws it).
@@ -99,6 +101,7 @@ export default function Theatre() {
     else u.swarmAttractor.value.set(visitor[0], STAGE_TOP + 1.3, Math.max(visitor[1], STAGE_CENTER[2] - 2.2));
 
     stage.fixtures.forEach((f, i) => aimFixture(f, cue.beams[i]));
+    setCurtain(stage.curtain, curtainAt(playing ? t : null));
     u.house.value = cue.house;
     u.cycloShow.value = playing ? 1 : 0;
     u.cycloColor.value.setRGB(...cue.cyclo.color);

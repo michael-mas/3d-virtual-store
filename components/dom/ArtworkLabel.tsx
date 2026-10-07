@@ -45,6 +45,7 @@ function CompactLabel({ work }: { work: Artwork }) {
           i
         </button>
       </div>
+      {work.kind === "performance" && <p className="mt-1 text-[0.62rem] text-taupe">⚠ {t("Contains flashing lights.")}</p>}
       {story && <p className="mt-2 max-h-[28dvh] overflow-y-auto font-display text-[0.85rem] leading-snug text-ivory/90 italic">{t(work.note)}</p>}
     </aside>
   );
@@ -90,6 +91,7 @@ export default function ArtworkLabel() {
                 {t(work.gesture)}
               </button>
             )}
+            {work.kind === "performance" && <p className="mt-1.5 text-[0.65rem] text-taupe">⚠ {t("Contains flashing lights.")}</p>}
           </div>
         ) : (
           <div role="status">
