@@ -6,12 +6,13 @@ const product = getProduct(DEFAULT_PRODUCT_ID)!;
 
 describe("pricing", () => {
   it("adds every option's price delta from the schema to the base price", () => {
-    const b = priceBreakdown(DEFAULT_PRODUCT_ID, { finish: "glass", frameColor: "#000000", lens: "holographic" });
+    const b = priceBreakdown(DEFAULT_PRODUCT_ID, { finish: "glass", frameColor: "#000000", lens: "holographic", collection: "atelier" });
     expect(b.base).toBe(product.basePrice);
     expect(b.lines.map((l) => [l.optionId, l.valueLabel, l.delta])).toEqual([
       ["finish", "Glass", 35],
       ["frameColor", "#000000", 0],
       ["lens", "Holographic", 40],
+      ["collection", "Atelier", 0],
     ]);
     expect(b.total).toBe(product.basePrice + 35 + 40);
   });

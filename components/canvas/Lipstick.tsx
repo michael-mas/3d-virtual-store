@@ -11,7 +11,7 @@ import {
   type BufferGeometry,
 } from "three/webgpu";
 import { LIP_FINISHES, readLipstickConfig, type LipFinish } from "@/lib/products/lipstick";
-import { useAppStore } from "@/store/useAppStore";
+import { useLookConfig } from "@/hooks/useLookConfig";
 import SurfaceProductDisplay from "./SurfaceProductDisplay";
 import PedestalMount, { TINY } from "./PedestalMount";
 
@@ -74,7 +74,7 @@ function bulletMaterials(): Record<LipFinish, MeshPhysicalNodeMaterial> {
  * the tube is shrunk away like every other displayed product.
  */
 export default function Lipstick({ productId }: { productId: string }) {
-  const config = readLipstickConfig(useAppStore((s) => s.configs[productId]));
+  const config = readLipstickConfig(useLookConfig(productId));
 
   const parts = useMemo(() => {
     const gold = new MeshPhysicalNodeMaterial({ name: "lipstick-case", color: "#c9a44c", roughness: 0.28, metalness: 1 });

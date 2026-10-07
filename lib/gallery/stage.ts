@@ -54,6 +54,7 @@ export function startShow() {
   void setAmbientMusic(false);
   startScore(0.2);
   useAppStore.getState().setShow({ showPlaying: true, showCinema: true });
+  useAppStore.getState().addStamp("automates");
 }
 
 /** Ends the performance (at its end, or when the visitor leaves it). */

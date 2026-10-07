@@ -309,6 +309,25 @@ export const FR: Readonly<Record<string, string>> = {
   "Everything rises toward the light.": "Tout s'élève vers la lumière.",
   "Thank you.": "Merci.",
 
+  // ---------------------------------------------------------------- passport and collections
+  "Unlocked by the gallery passport": "Débloquée par le passeport de la galerie",
+  "In the gallery, touch {gold} works for the Gold collection, all {all} for the Mirror.":
+    "Dans la galerie, touchez {gold} œuvres pour la collection Or, les {all} pour la Miroir.",
+  "Set by the collection": "Défini par la collection",
+  Passport: "Passeport",
+  "Touch the works: each one stamps your passport.": "Touchez les œuvres : chacune tamponne votre passeport.",
+  "Gold collection, on every piece": "Collection Or, sur toutes les pièces",
+  "Mirror collection, on every piece": "Collection Miroir, sur toutes les pièces",
+  Stamped: "Tamponné",
+  Unlocked: "Débloquée",
+  "The Gold collection": "La collection Or",
+  "The Mirror collection": "La collection Miroir",
+  "Now on every piece of the boutique: choose it when you customize one.":
+    "Désormais sur toutes les pièces de la boutique : choisissez-la en personnalisant l'une d'elles.",
+  Collection: "Collection",
+  Atelier: "Atelier",
+  Mirror: "Miroir",
+
   // ---------------------------------------------------------------- colors
   Amber: "Ambre",
   Berry: "Baie",

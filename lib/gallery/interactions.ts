@@ -1,5 +1,6 @@
 import { uniform } from "three/tsl";
 import { Vector3 } from "three/webgpu";
+import { useAppStore } from "@/store/useAppStore";
 import { stageUniforms } from "./stage";
 
 /**
@@ -45,6 +46,13 @@ const clock = () => stageUniforms.clock.value;
 
 /** The visitor touches a work (`uv`: where, on a wall work's face, 0..1). Returns whether it reacts to touch. */
 export function touchArtwork(id: string, uv: [number, number] = [0.5, 0.5]): boolean {
+  const answered = answer(id, uv);
+  // The passport's stamp.
+  if (answered) useAppStore.getState().addStamp(id);
+  return answered;
+}
+
+function answer(id: string, uv: [number, number]): boolean {
   const t = clock();
   switch (id) {
     case "maree": {

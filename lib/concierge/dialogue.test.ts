@@ -35,6 +35,10 @@ describe("concierge dialogue", () => {
     expect(respond("Montre-moi la montre", fr).actions).toEqual([{ kind: "walk", productId: "chrono" }]);
   });
 
+  it("explains the passport and its collections", () => {
+    expect(respond("Comment débloquer la collection Or ?", fr).text).toContain("Six tampons");
+  });
+
   it("explains the house's name", () => {
     expect(respond("Pourquoi ce nom, Prisma Aurum ?", fr).text).toContain("le prisme d'or");
   });

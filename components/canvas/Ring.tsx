@@ -20,6 +20,7 @@ import { isTryOnMode } from "@/lib/modes";
 import { readRingConfig, type RingMetal, type RingStone } from "@/lib/products/ring";
 import type { Finger } from "@/lib/tryon/handPose";
 import { useAppStore } from "@/store/useAppStore";
+import { useLookConfig } from "@/hooks/useLookConfig";
 import { depthOnlyMaterial, restOnPedestal } from "./displayHelpers";
 import HandAnchor from "./HandAnchor";
 import PedestalMount from "./PedestalMount";
@@ -67,7 +68,7 @@ function brilliantGeometry(): BufferGeometry {
  * the band geometry only: no shader rebuild. The stone sparkles with a view- and time-dependent TSL term.
  */
 export default function Ring({ productId }: { productId: string }) {
-  const config = readRingConfig(useAppStore((s) => s.configs[productId]));
+  const config = readRingConfig(useLookConfig(productId));
   const mode = useAppStore((s) => s.mode);
   const worn = useAppStore((s) => wornProductIds(s).includes(productId));
 

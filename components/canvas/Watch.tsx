@@ -20,6 +20,7 @@ import { wornProductIds } from "@/lib/cart/look";
 import { isTryOnMode } from "@/lib/modes";
 import { readWatchConfig, type WatchCase, type WatchStrap } from "@/lib/products/watch";
 import { useAppStore } from "@/store/useAppStore";
+import { useLookConfig } from "@/hooks/useLookConfig";
 import { depthOnlyMaterial, restOnPedestal } from "./displayHelpers";
 import HandAnchor from "./HandAnchor";
 import PedestalMount from "./PedestalMount";
@@ -86,7 +87,7 @@ function watchHand(length: number, width: number, y: number, material: MeshPhysi
  * shader is rebuilt. The hands show the current time.
  */
 export default function Watch({ productId }: { productId: string }) {
-  const config = readWatchConfig(useAppStore((s) => s.configs[productId]));
+  const config = readWatchConfig(useLookConfig(productId));
   const mode = useAppStore((s) => s.mode);
   const worn = useAppStore((s) => wornProductIds(s).includes(productId));
 

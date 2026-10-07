@@ -18,11 +18,12 @@ import {
 import { wornProductIds } from "@/lib/cart/look";
 import { setProductModel } from "@/lib/cart/registry";
 import { isTryOnMode } from "@/lib/modes";
-import { getProduct } from "@/lib/products";
+import { getProduct, lookConfig } from "@/lib/products";
 import { HAIR_FINISH_LOOK, readHairDyeConfig } from "@/lib/products/hairDye";
 import { tracking } from "@/lib/tryon/tracking";
 import { hairLayer } from "@/lib/tryon/videoLayer";
 import { useAppStore } from "@/store/useAppStore";
+import { useLookConfig } from "@/hooks/useLookConfig";
 import { restOnPedestal } from "./displayHelpers";
 import PedestalMount from "./PedestalMount";
 
@@ -65,7 +66,7 @@ function lockGeometries(): BufferGeometry[] {
  * lib/tryon/videoLayer.ts), which this component drives from the worn configuration.
  */
 export default function HairDye({ productId }: { productId: string }) {
-  const config = readHairDyeConfig(useAppStore((s) => s.configs[productId]));
+  const config = readHairDyeConfig(useLookConfig(productId));
 
   const parts = useMemo(() => {
     const bottleMat = new MeshPhysicalNodeMaterial({ name: "dye-bottle", color: "#141210", roughness: 0.3, clearcoat: 1 });
@@ -121,7 +122,7 @@ export default function HairDye({ productId }: { productId: string }) {
       if (!otherWorn) hairLayer.enabled.value = 0;
       return;
     }
-    const c = readHairDyeConfig(state.configs[productId]);
+    const c = readHairDyeConfig(lookConfig(getProduct(productId), state.configs[productId]));
     const look = HAIR_FINISH_LOOK[c.finish];
     hairLayer.color.value.set(c.color);
     hairLayer.intensity.value = c.intensity;

@@ -9,7 +9,7 @@ import { createFacePaintPreview } from "@/lib/tryon/surface/facePaint";
 import { createLipstickPreview } from "@/lib/tryon/surface/lipstick";
 import { createMannequinGeometry } from "@/lib/tryon/surface/mannequin";
 import type { SurfacePreview } from "@/lib/tryon/surface/types";
-import { useAppStore } from "@/store/useAppStore";
+import { useLookConfig } from "@/hooks/useLookConfig";
 
 /** Neutral plaster-like mannequin skin. */
 const SKIN = new Color("#d9d0c7");
@@ -25,7 +25,7 @@ const PREVIEWS: Partial<Record<ProductRenderer, (skin: Color) => SurfacePreview>
  * render the mannequin with the current configuration. Loaded lazily (its own chunk with the face topology).
  */
 export default function MannequinPreview({ productId, visible }: { productId: string; visible: boolean }) {
-  const config = useAppStore((s) => s.configs[productId]);
+  const config = useLookConfig(productId);
   const renderer = getProduct(productId)!.renderer;
 
   const parts = useMemo(() => {

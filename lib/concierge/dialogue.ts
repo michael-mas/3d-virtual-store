@@ -261,6 +261,17 @@ export function respond(input: string, ctx: Context): Reply {
   }
   if (has(text, INTENTS.tour)) return reply(L("With pleasure. Follow me.", "Avec plaisir. Suivez-moi."), locale, [{ kind: "tour" }]);
   if (has(text, INTENTS.musicOn)) return reply(L("A little music for the salon.", "Un peu de musique pour le salon."), locale, [{ kind: "music", on: true }]);
+  if (has(text, ["passeport", "passport", "collection or", "collection miroir", "gold collection", "mirror collection", "tampon", "tampons", "stamp", "stamps", "debloquer", "unlock"])) {
+    return reply(
+      L(
+        "Every work you touch in the gallery stamps your passport. Six stamps unlock the Gold collection, all eleven the Mirror collection, on every piece of the boutique.",
+        "Chaque œuvre que vous touchez dans la galerie tamponne votre passeport. Six tampons débloquent la collection Or, les onze la collection Miroir, sur toutes les pièces de la boutique.",
+      ),
+      locale,
+      [],
+      GALLERY_SUGGESTIONS(locale),
+    );
+  }
   if (has(text, ["prisma", "aurum", "le nom", "ton nom de maison", "the name", "pourquoi ce nom", "why the name", "que veut dire", "what does it mean"])) {
     return reply(
       L(

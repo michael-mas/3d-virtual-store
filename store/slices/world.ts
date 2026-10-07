@@ -45,6 +45,10 @@ export type WorldSlice = {
   /** The player is in the gallery (past the entrance wall) in EXPLORE. */
   inGallery: boolean;
   setInGallery: (inGallery: boolean) => void;
+  /** The gallery passport's stamps (artwork ids, in the order they were earned). */
+  stamps: string[];
+  addStamp: (artworkId: string) => void;
+  setStamps: (stamps: string[]) => void;
   /** The gallery's performance is playing, and whether the director's camera has the view. */
   showPlaying: boolean;
   showCinema: boolean;
@@ -79,6 +83,11 @@ export const createWorldSlice: Slice<WorldSlice> = (set, get) => ({
   setNearArtwork: (nearArtwork) => {
     if (get().nearArtwork !== nearArtwork) set({ nearArtwork });
   },
+  stamps: [],
+  addStamp: (id) => {
+    if (!get().stamps.includes(id)) set({ stamps: [...get().stamps, id] });
+  },
+  setStamps: (stamps) => set({ stamps }),
   showPlaying: false,
   showCinema: false,
   setShow: (state) => set(state),

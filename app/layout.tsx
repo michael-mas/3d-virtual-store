@@ -10,6 +10,7 @@ import ConciergePanel from "@/components/dom/ConciergePanel";
 import CustomizerPanel from "@/components/dom/CustomizerPanel";
 import DevPanel from "@/components/dom/DevPanel";
 import LoadingScreen from "@/components/dom/LoadingScreen";
+import Passport from "@/components/dom/Passport";
 import PhotoModal from "@/components/dom/PhotoModal";
 import ShowOverlay from "@/components/dom/ShowOverlay";
 import StatusOverlays from "@/components/dom/StatusOverlays";
@@ -80,6 +81,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ConciergePanel />
         <ArtworkLabel />
         <ShowOverlay />
+        <Passport />
         <CustomizerPanel />
         <TryOnPanel />
         <PhotoModal />

@@ -14,7 +14,7 @@ import {
   Vector3,
 } from "three/webgpu";
 import { readFacePaintConfig, type FacePaintStyle } from "@/lib/products/facePaint";
-import { useAppStore } from "@/store/useAppStore";
+import { useLookConfig } from "@/hooks/useLookConfig";
 import SurfaceProductDisplay from "./SurfaceProductDisplay";
 import PedestalMount from "./PedestalMount";
 
@@ -56,7 +56,7 @@ function jarGeometry() {
  * (SurfaceLayer + lib/tryon/surface/facePaint.ts).
  */
 export default function FacePaint({ productId }: { productId: string }) {
-  const config = readFacePaintConfig(useAppStore((s) => s.configs[productId]));
+  const config = readFacePaintConfig(useLookConfig(productId));
 
   const parts = useMemo(() => {
     const color = uniform(new Color("#22d3ee"));

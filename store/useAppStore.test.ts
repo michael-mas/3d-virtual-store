@@ -56,7 +56,7 @@ describe("useAppStore", () => {
     s.setOption("lens", "holographic");
     s.setCalibration(id, { scale: 1.1 });
     const next = useAppStore.getState();
-    expect(next.configs[id]).toEqual({ finish: "glass", frameColor: "#ff0000", lens: "holographic" });
+    expect(next.configs[id]).toEqual({ finish: "glass", frameColor: "#ff0000", lens: "holographic", collection: "atelier" });
     expect(next.calibrations[id]).toEqual({ offset: [0, 0, 0], scale: 1.1 });
   });
 

@@ -18,6 +18,7 @@ import { getProduct } from "@/lib/products";
 import { readGlassesConfig } from "@/lib/products/glasses";
 import { isTryOnMode } from "@/lib/modes";
 import { useAppStore } from "@/store/useAppStore";
+import { useLookConfig } from "@/hooks/useLookConfig";
 import FaceAnchor from "./FaceAnchor";
 import PedestalMount, { TINY } from "./PedestalMount";
 
@@ -32,7 +33,7 @@ const isLens = (o: Object3D) =>
  * During try-on a worn product's model (the active one, or the look's eyewear) is re-parented into the FaceAnchor (same objects, no reload).
  */
 export default function Glasses({ productId }: { productId: string }) {
-  const config = readGlassesConfig(useAppStore((s) => s.configs[productId]));
+  const config = readGlassesConfig(useLookConfig(productId));
   const mode = useAppStore((s) => s.mode);
   const worn = useAppStore((s) => wornProductIds(s).includes(productId));
   const product = getProduct(productId)!;

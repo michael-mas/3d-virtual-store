@@ -17,7 +17,7 @@ import {
 } from "three/webgpu";
 import { isTryOnMode } from "@/lib/modes";
 import { wornProductIds } from "@/lib/cart/look";
-import { getProduct, TRY_ON_ZONES, type Product, type ProductRenderer } from "@/lib/products";
+import { getProduct, lookConfig, type Product, type ProductRenderer, TRY_ON_ZONES } from "@/lib/products";
 import { createFaceMeshGeometry, updateFaceMeshPositions } from "@/lib/tryon/faceMesh";
 import { tracking } from "@/lib/tryon/tracking";
 import { createFacePaintSurface } from "@/lib/tryon/surface/facePaint";
@@ -117,7 +117,7 @@ export default function SurfaceLayer() {
         const product = getProduct(id);
         const entry = product?.attachment === "surface" ? productLayer(product) : undefined;
         if (!entry) continue;
-        entry.surface.apply(configs[id]);
+        entry.surface.apply(lookConfig(product, configs[id]));
         worn.add(entry.surface);
       }
     }

@@ -23,6 +23,7 @@ import { GLASSES_ANCHOR } from "@/lib/tryon/constants";
 import { hatScale } from "@/lib/tryon/hairFit";
 import { tracking } from "@/lib/tryon/tracking";
 import { useAppStore } from "@/store/useAppStore";
+import { useLookConfig } from "@/hooks/useLookConfig";
 import { restOnPedestal } from "./displayHelpers";
 import FaceAnchor from "./FaceAnchor";
 import PedestalMount from "./PedestalMount";
@@ -105,7 +106,7 @@ const FIT: Record<HeadwearStyle, { top: number; halfWidth: number; pivotY: numbe
  * visitor's hair (measured from the hair segmenter, lib/tryon/hairFit.ts), so the hair stays under it.
  */
 export default function Headwear({ productId }: { productId: string }) {
-  const config = readHeadwearConfig(useAppStore((s) => s.configs[productId]));
+  const config = readHeadwearConfig(useLookConfig(productId));
   const mode = useAppStore((s) => s.mode);
   const worn = useAppStore((s) => wornProductIds(s).includes(productId));
 

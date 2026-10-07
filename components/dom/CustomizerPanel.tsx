@@ -2,8 +2,10 @@
 
 import { formatPrice, priceOf } from "@/lib/cart/pricing";
 import { renderThumbnail } from "@/lib/cart/registry";
+import { GOLD_AT, MIRROR_AT, unlockedCollections } from "@/lib/gallery/passport";
 import {
   CATEGORY_LABELS,
+  collectionOverrides,
   getProduct,
   optionValueLabel,
   type ChoiceOption,
@@ -17,7 +19,17 @@ import PhotoPicker from "./PhotoPicker";
 
 const legendClass = "eyebrow mb-2 block";
 
-function ChoiceControl({ option, value, onChange }: { option: ChoiceOption; value: string; onChange: (v: string) => void }) {
+function ChoiceControl({
+  option,
+  value,
+  onChange,
+  locked = () => false,
+}: {
+  option: ChoiceOption;
+  value: string;
+  onChange: (v: string) => void;
+  locked?: (unlock: string | undefined) => boolean;
+}) {
   const t = useT();
   return (
     <fieldset>
@@ -27,19 +39,33 @@ function ChoiceControl({ option, value, onChange }: { option: ChoiceOption; valu
         // Up to 3 in a row; longer lists wrap into balanced rows (4 → 2×2).
         style={{ gridTemplateColumns: `repeat(${option.values.length <= 3 ? option.values.length : Math.ceil(option.values.length / 2)}, minmax(0, 1fr))` }}
       >
-        {option.values.map((v) => (
-          <button
-            key={v.value}
-            type="button"
-            aria-pressed={value === v.value}
-            onClick={() => onChange(v.value)}
-            className={`px-2 py-2 text-[0.8rem] tracking-wide transition-colors ${
-              value === v.value ? "bg-ivory text-noir" : "bg-onyx text-ivory/75 hover:bg-[#1f1b16] hover:text-ivory"
-            }`}
-          >
-            {t(v.label)}
-          </button>
-        ))}
+        {option.values.map((v) => {
+          const isLocked = locked(v.unlock);
+          return (
+            <button
+              key={v.value}
+              type="button"
+              aria-pressed={value === v.value}
+              disabled={isLocked}
+              title={isLocked ? t("Unlocked by the gallery passport") : undefined}
+              onClick={() => onChange(v.value)}
+              className={`px-2 py-2 text-[0.8rem] tracking-wide transition-colors ${
+                value === v.value
+                  ? "bg-ivory text-noir"
+                  : isLocked
+                    ? "cursor-not-allowed bg-onyx text-ivory/35"
+                    : "bg-onyx text-ivory/75 hover:bg-[#1f1b16] hover:text-ivory"
+              }`}
+            >
+              {isLocked && (
+                <svg aria-hidden viewBox="0 0 12 12" className="mr-1 inline h-2.5 w-2.5 -translate-y-px fill-current">
+                  <path d="M3.5 5V3.6a2.5 2.5 0 0 1 5 0V5H9.5v6h-7V5h1Zm1 0h3V3.6a1.5 1.5 0 0 0-3 0V5Z" />
+                </svg>
+              )}
+              {t(v.label)}
+            </button>
+          );
+        })}
       </div>
     </fieldset>
   );
@@ -103,9 +129,9 @@ function RangeControl({ option, value, onChange }: { option: RangeOption; value:
   );
 }
 
-function OptionControl(props: { option: OptionSchema; value: string; onChange: (v: string) => void }) {
-  const { option, value, onChange } = props;
-  if (option.kind === "choice") return <ChoiceControl option={option} value={value} onChange={onChange} />;
+function OptionControl(props: { option: OptionSchema; value: string; onChange: (v: string) => void; locked?: (unlock: string | undefined) => boolean }) {
+  const { option, value, onChange, locked } = props;
+  if (option.kind === "choice") return <ChoiceControl option={option} value={value} onChange={onChange} locked={locked} />;
   if (option.kind === "range") return <RangeControl option={option} value={value} onChange={onChange} />;
   return <ColorControl option={option} value={value} onChange={onChange} />;
 }
@@ -116,6 +142,7 @@ export default function CustomizerPanel() {
   const config = useAppStore((s) => s.configs[s.activeProductId]);
   const productId = useAppStore((s) => s.activeProductId);
   const locale = useAppStore((s) => s.locale);
+  const stamps = useAppStore((s) => s.stamps);
   const { setOption, transition, addToCart, setItemThumbnail } = useAppStore.getState();
   const product = getProduct(productId);
   const t = useT();
@@ -141,6 +168,7 @@ export default function CustomizerPanel() {
     );
   }
   if (mode !== "CUSTOMIZE" || !product) return null;
+  const overrides = collectionOverrides(product, config.collection);
 
   return (
     <aside
@@ -159,9 +187,38 @@ export default function CustomizerPanel() {
           <p className="mt-2 hidden text-xs leading-relaxed tracking-wide text-taupe md:block">{t(product.tagline)}</p>
         )}
       </header>
-      {product.options.map((o) => (
-        <OptionControl key={o.id} option={o} value={config[o.id]} onChange={(v) => setOption(o.id, v)} />
-      ))}
+      {/* The collection first: it sets some of the options below, shown as set by it. */}
+      {[...product.options]
+        .sort((a, b) => Number(b.id === "collection") - Number(a.id === "collection"))
+        .map((o) => {
+          if (o.id === "collection") {
+            const unlocked = unlockedCollections(stamps);
+            return (
+              <div key={o.id}>
+                <OptionControl
+                  option={o}
+                  value={config[o.id]}
+                  onChange={(v) => setOption(o.id, v)}
+                  locked={(unlock) => unlock !== undefined && !unlocked[unlock as keyof typeof unlocked]}
+                />
+                {!unlocked.miroir && (
+                  <p className="mt-1.5 text-[0.7rem] leading-snug text-taupe">
+                    {t("In the gallery, touch {gold} works for the Gold collection, all {all} for the Mirror.", { gold: String(GOLD_AT), all: String(MIRROR_AT) })}
+                  </p>
+                )}
+              </div>
+            );
+          }
+          const set = overrides[o.id];
+          return set === undefined ? (
+            <OptionControl key={o.id} option={o} value={config[o.id]} onChange={(v) => setOption(o.id, v)} />
+          ) : (
+            <div key={o.id} className="pointer-events-none opacity-45" aria-disabled>
+              <OptionControl option={o} value={set} onChange={() => {}} />
+              <p className="mt-1 text-[0.65rem] tracking-wide text-gold/80">{t("Set by the collection")}</p>
+            </div>
+          );
+        })}
 
       <button
         type="button"

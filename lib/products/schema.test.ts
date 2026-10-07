@@ -11,9 +11,9 @@ describe("product schema", () => {
   });
 
   it("keeps the glasses defaults of the previous model", () => {
-    expect(defaultConfig(aviator)).toEqual({ finish: "metal", frameColor: "#c9a44c", lens: "clear" });
-    expect(defaultConfig(getProduct("studio")!)).toEqual({ finish: "matte", frameColor: "#111827", lens: "clear" });
-    expect(defaultConfig(getProduct("crystal")!)).toEqual({ finish: "glass", frameColor: "#7c3aed", lens: "iridescent" });
+    expect(defaultConfig(aviator)).toEqual({ finish: "metal", frameColor: "#c9a44c", lens: "clear", collection: "atelier" });
+    expect(defaultConfig(getProduct("studio")!)).toEqual({ finish: "matte", frameColor: "#111827", lens: "clear", collection: "atelier" });
+    expect(defaultConfig(getProduct("crystal")!)).toEqual({ finish: "glass", frameColor: "#7c3aed", lens: "iridescent", collection: "atelier" });
   });
 
   it("validates choice values and custom colors", () => {
@@ -51,6 +51,7 @@ describe("product schema", () => {
       finish: "metal",
       frameColor: "#c9a44c",
       lens: "holographic",
+      collection: "atelier",
     });
   });
 });

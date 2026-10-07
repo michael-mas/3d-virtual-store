@@ -5,17 +5,20 @@ import { headwearProduct } from "./headwear";
 import { lipstickProduct } from "./lipstick";
 import { ringProduct } from "./ring";
 import { watchProduct } from "./watch";
+import { collectionOption } from "./collections";
 import { TRY_ON_ZONES, type Product, type Tracker } from "./types";
 
 export type * from "./types";
 export * from "./schema";
+export * from "./collections";
 export { CATEGORY_LABELS, TRY_ON_ZONES } from "./types";
 
 /**
  * The product registry. Adding a product = one entry here (plus its assets). The customizer, cart pricing,
- * pedestal placement (in registry order, see lib/explore/layout.ts) and rendering are derived from it.
+ * pedestal placement (in registry order, see lib/explore/layout.ts) and rendering are derived from it. Every piece
+ * also gets the house's collection option (lib/products/collections.ts).
  */
-export const PRODUCTS: readonly Product[] = [
+const ENTRIES: readonly Product[] = [
   {
     ...glassesProduct({
       id: "aviator",
@@ -80,6 +83,8 @@ export const PRODUCTS: readonly Product[] = [
     tip: "A cream beanie with L'Aviateur is a house favorite. Try them together from your selection.",
   },
 ];
+
+export const PRODUCTS: readonly Product[] = ENTRIES.map((p) => ({ ...p, options: [...p.options, collectionOption(p.basePrice)] }));
 
 export const DEFAULT_PRODUCT_ID = PRODUCTS[0].id;
 

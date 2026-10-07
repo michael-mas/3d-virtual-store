@@ -47,6 +47,8 @@ export type OptionValue = {
   label: string;
   /** Added to the base price when selected. */
   priceDelta?: number;
+  /** Selectable only once this collection is unlocked (the gallery's passport). */
+  unlock?: "or" | "miroir";
 };
 
 /** Pick one of a fixed list. */
